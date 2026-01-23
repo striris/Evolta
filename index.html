@@ -1,795 +1,639 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Evolta Foundation | Learn, play, evolve.</title>
-    <meta
-      name="description"
-      content="Evolta Foundation builds AI-powered learning, skill development, and performance tools through interactive games, simulations, and training."
-    />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolta - Learn, Play, Evolve</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Favicon in the same folder as this file -->
-    <link rel="icon" type="image/png" href="./favicon.png" />
+    <!-- Favicon -->
+    <!-- rename favicon.png if your file name is different -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
 
     <style>
-      :root {
-        --bg: #ffffff;
-        --panel: #ffffff;
-        --text: #0b0d12;
-        --muted: rgba(11, 13, 18, 0.65);
-        --faint: rgba(11, 13, 18, 0.45);
-        --border: rgba(11, 13, 18, 0.12);
-        --border2: rgba(11, 13, 18, 0.08);
-        --shadow: 0 24px 70px rgba(8, 12, 20, 0.08);
-        --shadow2: 0 16px 40px rgba(8, 12, 20, 0.06);
-        --radius: 18px;
-        --radius2: 26px;
-        --max: 1120px;
-        --accent: #0b0d12;
-
-        --a: #7c3aed;
-        --b: #22d3ee;
-        --c: #a3e635;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        height: 100%;
-      }
-
-      body {
-        margin: 0;
-        color: var(--text);
-        background: var(--bg);
-        line-height: 1.45;
-        overflow-x: hidden;
-        font-family: "Lato";
-      }
-
-      input,
-      textarea,
-      button {
-        font-family: "Lato";
-      }
-
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      .wrap {
-        max-width: var(--max);
-        margin: 0 auto;
-        padding: 0 22px;
-      }
-
-      .nav {
-        position: sticky;
-        top: 0;
-        z-index: 50;
-        background: rgba(255, 255, 255, 0.72);
-        backdrop-filter: blur(14px);
-        border-bottom: 1px solid var(--border2);
-      }
-
-      .nav-inner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: 78px;
-      }
-
-      .brand {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      /* Header icon now uses your favicon image */
-      .logo {
-        width: 34px;
-        height: 34px;
-        border-radius: 12px;
-        background-image: url("./favicon.png");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        box-shadow: 0 14px 30px rgba(11, 13, 18, 0.12);
-        border: 1px solid rgba(11, 13, 18, 0.08);
-      }
-
-      .brand-title {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-
-      .brand-title strong {
-        font-size: 14px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        font-weight: 900;
-      }
-
-      .brand-title span {
-        font-size: 12px;
-        color: var(--muted);
-        font-weight: 400;
-      }
-
-      .nav-links {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .nav-links a {
-        padding: 10px 10px;
-        border-radius: 12px;
-        transition: background 160ms ease, color 160ms ease;
-        font-weight: 400;
-      }
-
-      .nav-links a:hover {
-        background: rgba(11, 13, 18, 0.04);
-        color: var(--text);
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        height: 42px;
-        padding: 0 14px;
-        border-radius: 14px;
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.7);
-        color: var(--text);
-        font-size: 13px;
-        cursor: pointer;
-        transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-      }
-
-      .btn:hover {
-        background: rgba(11, 13, 18, 0.03);
-        border-color: rgba(11, 13, 18, 0.18);
-        transform: translateY(-1px);
-      }
-
-      .btn.primary {
-        background: var(--accent);
-        color: #ffffff;
-        border-color: rgba(11, 13, 18, 0.25);
-        box-shadow: 0 14px 30px rgba(11, 13, 18, 0.14);
-        font-weight: 700;
-      }
-
-      .btn.primary:hover {
-        background: #000000;
-        transform: translateY(-1px);
-      }
-
-      .btn.link {
-        background: rgba(11, 13, 18, 0.02);
-        box-shadow: none;
-        font-weight: 700;
-      }
-
-      .hero {
-        padding: 84px 0 46px;
-      }
-
-      .kicker {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--border2);
-        background: rgba(11, 13, 18, 0.02);
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 400;
-      }
-
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--a), var(--b));
-        box-shadow: 0 0 0 6px rgba(124, 58, 237, 0.08);
-      }
-
-      h1 {
-        margin: 16px 0 10px;
-        font-size: 54px;
-        letter-spacing: -0.04em;
-        line-height: 1.03;
-        font-weight: 900;
-      }
-
-      .subhead {
-        margin: 0;
-        color: var(--muted);
-        font-size: 16px;
-        max-width: 58ch;
-        font-weight: 400;
-      }
-
-      .tagline {
-        margin-top: 14px;
-        color: rgba(11, 13, 18, 0.8);
-        font-size: 14px;
-        font-weight: 400;
-      }
-
-      .hero-cta {
-        margin-top: 22px;
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-
-      section {
-        padding: 44px 0;
-      }
-
-      .section-title {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 14px;
-        margin-bottom: 16px;
-      }
-
-      .section-title h2 {
-        margin: 0;
-        font-size: 22px;
-        letter-spacing: -0.02em;
-        font-weight: 900;
-      }
-
-      .section-title p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 13px;
-        max-width: 62ch;
-        font-weight: 400;
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(12, 1fr);
-        gap: 16px;
-      }
-
-      .card {
-        grid-column: span 6;
-        border-radius: var(--radius2);
-        border: 1px solid var(--border2);
-        background: #ffffff;
-        box-shadow: var(--shadow2);
-        overflow: hidden;
-      }
-
-      .card-inner {
-        padding: 18px;
-      }
-
-      .card h3 {
-        margin: 0 0 6px;
-        font-size: 16px;
-        letter-spacing: -0.01em;
-        font-weight: 900;
-      }
-
-      .card p {
-        margin: 0 0 14px;
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 400;
-      }
-
-      .pill-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .pill {
-        font-size: 12px;
-        color: rgba(11, 13, 18, 0.78);
-        border: 1px solid var(--border2);
-        background: rgba(11, 13, 18, 0.02);
-        padding: 7px 10px;
-        border-radius: 999px;
-        font-weight: 400;
-      }
-
-      .card-actions {
-        margin-top: 14px;
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-
-      .panel {
-        border: 1px solid var(--border2);
-        background: var(--panel);
-        border-radius: var(--radius2);
-        box-shadow: var(--shadow);
-        overflow: hidden;
-      }
-
-      .panel-inner {
-        padding: 18px;
-      }
-
-      .panel-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 10px;
-      }
-
-      .panel-top strong {
-        font-size: 12px;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: rgba(11, 13, 18, 0.88);
-        font-weight: 900;
-      }
-
-      .badge {
-        font-size: 12px;
-        color: var(--muted);
-        border: 1px solid var(--border2);
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(11, 13, 18, 0.02);
-        font-weight: 400;
-      }
-
-      .about {
-        display: grid;
-        grid-template-columns: 0.95fr 1.05fr;
-        gap: 16px;
-      }
-
-      .about .panel-inner p {
-        margin: 10px 0 0;
-        color: var(--muted);
-        font-size: 13.5px;
-        font-weight: 400;
-      }
-
-      .contact {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-        align-items: start;
-      }
-
-      label {
-        display: block;
-        font-size: 12px;
-        color: var(--muted);
-        margin: 0 0 8px;
-        font-weight: 400;
-      }
-
-      input,
-      textarea {
-        width: 100%;
-        background: rgba(11, 13, 18, 0.02);
-        border: 1px solid var(--border2);
-        color: var(--text);
-        border-radius: 16px;
-        padding: 12px 12px;
-        outline: none;
-        transition: border-color 160ms ease, background 160ms ease;
-        font-size: 14px;
-      }
-
-      input:focus,
-      textarea:focus {
-        border-color: rgba(11, 13, 18, 0.28);
-        background: rgba(11, 13, 18, 0.025);
-      }
-
-      textarea {
-        min-height: 128px;
-        resize: vertical;
-      }
-
-      .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-
-      .form-actions {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .fineprint {
-        margin-top: 10px;
-        font-size: 12px;
-        color: var(--faint);
-        font-weight: 400;
-      }
-
-      footer {
-        padding: 26px 0 34px;
-        border-top: 1px solid var(--border2);
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .foot {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-      }
-
-      @media (max-width: 960px) {
-        h1 {
-          font-size: 40px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .about {
-          grid-template-columns: 1fr;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #ffffff;
+            overflow-x: hidden;
         }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        /* Header */
+        header {
+            padding: 40px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Replaced the colorful gradient icon with your favicon image */
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background-image: url('favicon.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 40px 80px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
+        .hero-content h1 {
+            font-size: 72px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+            color: #1a1a1a;
+            line-height: 1.1;
+        }
+
+        .tagline {
+            font-size: 24px;
+            color: #666;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: lowercase;
+            margin-bottom: 60px;
+        }
+
+        .hero-description {
+            font-size: 20px;
+            color: #555;
+            max-width: 700px;
+            margin: 0 auto 60px;
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        /* Products Section */
+        .products {
+            padding: 120px 40px;
+            background: #ffffff;
+        }
+
+        .section-title {
+            font-size: 16px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .products-tagline {
+            font-size: 18px;
+            color: #666;
+            text-align: center;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            margin-bottom: 60px;
+            font-style: italic;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 60px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .product-card {
+            padding: 50px 40px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .product-icon {
+            font-size: 48px;
+            margin-bottom: 24px;
+        }
+
+        .product-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+            letter-spacing: -0.5px;
+        }
+
+        .product-features {
+            list-style: none;
+            color: #666;
+            font-size: 16px;
+            line-height: 2;
+            font-weight: 300;
+        }
+
+        .product-features li {
+            padding: 4px 0;
+        }
+
+        .product-features li:before {
+            content: "—";
+            margin-right: 12px;
+            color: #999;
+        }
+
+        /* This is kept for the Trading "Try it out" button */
+        .coming-soon {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 8px 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .coming-soon:hover {
+            opacity: 0.85;
+        }
+
+        /* Contact Section */
         .contact {
-          grid-template-columns: 1fr;
+            padding: 120px 40px;
+            background: #f8f9fa;
+            text-align: center;
         }
-        .card {
-          grid-column: span 12;
-        }
-      }
 
-      @media (max-width: 560px) {
-        .nav-links a {
-          display: none;
+        /* Philosophy Section */
+        .philosophy {
+            padding: 120px 40px;
+            background: #ffffff;
+            text-align: center;
         }
-        .nav-links .btn.primary {
-          display: inline-flex;
+
+        .philosophy-content {
+            max-width: 800px;
+            margin: 0 auto;
         }
-      }
+
+        .philosophy h2 {
+            font-size: 16px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        .philosophy-text {
+            font-size: 20px;
+            line-height: 1.8;
+            color: #333;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        .contact-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .contact h2 {
+            font-size: 48px;
+            font-weight: 600;
+            margin-bottom: 40px;
+            letter-spacing: -1px;
+            color: #1a1a1a;
+        }
+
+        .contact-info {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-weight: 300;
+        }
+
+        .contact-email {
+            font-size: 24px;
+            color: #1a1a1a;
+            text-decoration: none;
+            border-bottom: 1px solid #1a1a1a;
+            display: inline-block;
+            margin-top: 20px;
+            transition: opacity 0.3s ease;
+        }
+
+        .contact-email:hover {
+            opacity: 0.6;
+        }
+
+        .contact-form {
+            max-width: 500px;
+            margin: 40px auto 0;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 2px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #1a1a1a;
+            background: #fff;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px 32px;
+            background: #1a1a1a;
+            color: #fff;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .submit-btn:hover {
+            opacity: 0.8;
+        }
+
+        .submit-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 40px;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 24px;
+            }
+
+            header {
+                padding: 24px 0;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .logo-icon {
+                width: 28px;
+                height: 28px;
+            }
+
+            .hero {
+                padding: 100px 24px 60px;
+                min-height: 90vh;
+            }
+
+            .hero-content h1 {
+                font-size: 48px;
+                margin-bottom: 24px;
+            }
+
+            .tagline {
+                font-size: 18px;
+            }
+
+            .hero-description {
+                font-size: 18px;
+            }
+
+            .products {
+                padding: 80px 24px;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .product-card {
+                padding: 40px 30px;
+            }
+
+            .philosophy {
+                padding: 80px 24px;
+            }
+
+            .philosophy-text {
+                font-size: 18px;
+                line-height: 1.7;
+            }
+
+            .contact {
+                padding: 80px 24px;
+            }
+
+            .contact h2 {
+                font-size: 36px;
+            }
+
+            .contact-email {
+                font-size: 20px;
+            }
+
+            .contact-form {
+                padding: 0 10px;
+            }
+
+            footer {
+                padding: 40px 24px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 22px;
+            }
+
+            .logo-icon {
+                width: 24px;
+                height: 24px;
+            }
+
+            .hero-content h1 {
+                font-size: 40px;
+            }
+
+            .tagline {
+                font-size: 16px;
+            }
+
+            .hero-description {
+                font-size: 16px;
+            }
+
+            .product-card {
+                padding: 32px 24px;
+            }
+
+            .product-title {
+                font-size: 22px;
+            }
+
+            .product-features {
+                font-size: 15px;
+            }
+
+            .philosophy-text {
+                font-size: 16px;
+            }
+
+            .contact h2 {
+                font-size: 32px;
+            }
+
+            .contact-form {
+                padding: 0;
+            }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
     </style>
-  </head>
-
-  <body>
-    <header class="nav">
-      <div class="wrap nav-inner">
-        <a class="brand" href="#top" aria-label="Evolta home">
-          <div class="logo" aria-hidden="true"></div>
-          <div class="brand-title">
-            <strong>Evolta</strong>
-            <span>Where learning evolves</span>
-          </div>
-        </a>
-
-        <nav class="nav-links" aria-label="Primary">
-          <a href="#products">Products</a>
-          <a href="#about">About</a>
-          <a href="#contact">Contact</a>
-          <a class="btn primary" href="#contact">Get updates</a>
-        </nav>
-      </div>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                Evolta
+            </div>
+        </div>
     </header>
 
-    <main id="top">
-      <section class="hero">
-        <div class="wrap">
-          <div class="kicker">
-            <span class="dot" aria-hidden="true"></span>
-            <span>AI-powered learning through play, practice, and simulation</span>
-          </div>
-
-          <h1>Learn, play, evolve.</h1>
-
-          <p class="subhead">
-            Evolta Foundation develops AI-powered software products that support learning, skill development, and
-            performance improvement for everyone.
-          </p>
-
-          <p class="tagline">Where learning evolves.</p>
-
-          <div class="hero-cta">
-            <a class="btn primary" href="#products">Explore products</a>
-            <a class="btn" href="#contact">Contact</a>
-          </div>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Evolta</h1>
+            <p class="tagline">learn, play, evolve</p>
+            <p class="hero-description">
+                AI-powered software products that support learning, skill development,
+                and performance improvement through interactive educational games,
+                simulations, and training tools for everyone.
+            </p>
         </div>
-      </section>
+    </section>
 
-      <section id="products">
-        <div class="wrap">
-          <div class="section-title">
-            <h2>Products</h2>
-            <p>Free experiences designed for practice, feedback, and progress.</p>
-          </div>
-
-          <div class="grid">
-            <article class="card" aria-label="Mathematics products">
-              <div class="card-inner">
-                <h3>Mathematics</h3>
-                <p>Fast, replayable practice to build intuition and speed.</p>
-                <div class="pill-row">
-                  <span class="pill">Math games</span>
-                  <span class="pill">Quick math</span>
-                  <span class="pill">Brain teaser</span>
-                  <span class="pill">Estimation practice</span>
-                </div>
-              </div>
-            </article>
-
-            <article class="card" aria-label="Science products">
-              <div class="card-inner">
-                <h3>Science</h3>
-                <p>Curiosity-driven learning with interactive prompts.</p>
-                <div class="pill-row">
-                  <span class="pill">One hundred thousands why</span>
-                  <span class="pill">What is my name</span>
-                  <span class="pill">Animal and plant name</span>
-                </div>
-              </div>
-            </article>
-
-            <article class="card" aria-label="Coding products">
-              <div class="card-inner">
-                <h3>Coding</h3>
-                <p>Learn by spotting patterns, reasoning about outputs, and fixing bugs.</p>
-                <div class="pill-row">
-                  <span class="pill">Where is the bug</span>
-                  <span class="pill">Which code produces results</span>
-                </div>
-              </div>
-            </article>
-
-            <article class="card" aria-label="Trading products">
-              <div class="card-inner">
-                <h3>Trading</h3>
-                <p>Hands-on simulations to explore strategies and market mechanics.</p>
-                <div class="pill-row">
-                  <span class="pill">Hedging</span>
-                  <span class="pill">Market making</span>
-                  <span class="pill">Stock trading simulation</span>
-                  <span class="pill">News and indicators</span>
-                  <span class="pill">Indicator meaning</span>
+    <!-- Products Section -->
+    <section class="products">
+        <div class="container">
+            <div class="section-title">Free Products</div>
+            <p class="products-tagline">learning is a right, not a privilege</p>
+            <div class="products-grid">
+                <!-- Mathematics -->
+                <div class="product-card">
+                    <div class="product-icon">∑</div>
+                    <h3 class="product-title">Mathematics</h3>
+                    <ul class="product-features">
+                        <li>Math games</li>
+                        <li>Quick math</li>
+                        <li>Brain teasers</li>
+                        <li>Estimation practice</li>
+                    </ul>
                 </div>
 
-                <div class="card-actions">
-                  <a class="btn primary" href="https://striris.github.io/trading_game/" target="_blank" rel="noopener">
-                    Try it out
-                  </a>
+                <!-- Coding -->
+                <div class="product-card">
+                    <div class="product-icon">{ }</div>
+                    <h3 class="product-title">Coding</h3>
+                    <ul class="product-features">
+                        <li>Where's the bug game</li>
+                        <li>Code output matching</li>
+                        <li>Logic challenges</li>
+                        <li>Pattern recognition</li>
+                    </ul>
                 </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
 
-      <section id="about">
-        <div class="wrap">
-          <div class="section-title">
-            <h2>About</h2>
-            <p>Learning tools that feel like games, and games that teach real skills.</p>
-          </div>
-
-          <div class="about">
-            <div class="panel">
-              <div class="panel-inner">
-                <div class="panel-top">
-                  <strong>What we build</strong>
-                  <span class="badge">AI-powered</span>
+                <!-- Science -->
+                <div class="product-card">
+                    <div class="product-icon">⌬</div>
+                    <h3 class="product-title">Science</h3>
+                    <ul class="product-features">
+                        <li>One hundred thousand whys</li>
+                        <li>Guess what is my name</li>
+                        <li>Science experiments</li>
+                        <li>Discovery challenges</li>
+                    </ul>
                 </div>
-                <p>
-                  Evolta Foundation creates interactive educational games, simulations, and training tools that support
-                  learning, skill development, and performance improvement for everyone.
-                </p>
-              </div>
+
+                <!-- Trading -->
+                <div class="product-card">
+                    <div class="product-icon">⇄</div>
+                    <h3 class="product-title">Trading</h3>
+                    <ul class="product-features">
+                        <li>Hedging simulations</li>
+                        <li>Market making</li>
+                        <li>Stock trading with news</li>
+                        <li>Indicator education</li>
+                    </ul>
+                    <a class="coming-soon" href="https://striris.github.io/trading_game/" target="_blank" rel="noopener noreferrer">Try It Out</a>
+                </div>
             </div>
-
-            <div class="panel">
-              <div class="panel-inner">
-                <div class="panel-top">
-                  <strong>Why free</strong>
-                  <span class="badge">Equal access</span>
-                </div>
-                <p>
-                  Learning should be accessible to everyone, regardless of economic background, race, or gender. That is
-                  why all games and simulations here are free to use.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
-      </section>
+    </section>
 
-      <section id="contact">
-        <div class="wrap">
-          <div class="section-title">
-            <h2>Contact</h2>
-            <p>Questions or early access. Send a message.</p>
-          </div>
+    <!-- Philosophy Section -->
+    <section class="philosophy">
+        <div class="philosophy-content">
+            <h2>Our Philosophy</h2>
+            <p class="philosophy-text">
+                Never in history has knowledge been so easy to access. The only wall stopping you is your desire to learn. We help you break that wall and evolve with a smile.
+            </p>
+            <p class="philosophy-text" style="margin-top: 32px;">
+                We believe learning is a right, not a privilege. That is why all games and simulations on Evolta are free and accessible to everyone, regardless of background.
+            </p>
+        </div>
+    </section>
 
-          <div class="contact">
-            <div class="panel">
-              <div class="panel-inner">
-                <div class="panel-top">
-                  <strong>Message</strong>
-                  <span class="badge">Direct</span>
+    <!-- Contact Section -->
+    <section class="contact" id="contact">
+        <div class="contact-content">
+            <h2>Get in Touch</h2>
+            <p class="contact-info">
+                Interested in learning more about Evolta?<br>
+                We'd love to hear from you.
+            </p>
+
+            <form class="contact-form" id="contactForm">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required placeholder="Your name">
                 </div>
 
-                <form id="contactForm">
-                  <div class="form-row">
-                    <div>
-                      <label for="name">Name</label>
-                      <input id="name" name="name" autocomplete="name" placeholder="Your name" required />
-                    </div>
-                    <div>
-                      <label for="email">Email</label>
-                      <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        autocomplete="email"
-                        placeholder="you@domain.com"
-                        required
-                      />
-                    </div>
-                  </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required placeholder="your.email@example.com">
+                </div>
 
-                  <div style="margin-top: 12px">
+                <div class="form-group">
                     <label for="message">Message</label>
-                    <textarea id="message" name="message" placeholder="Tell us what you are looking for" required></textarea>
-                  </div>
-
-                  <div class="form-actions">
-                    <button class="btn primary" type="submit">Send</button>
-                    <button class="btn" type="button" id="copyEmailBtn">Copy email</button>
-                  </div>
-
-                  <div class="fineprint">This form opens your email app. Replace the contact email in the code.</div>
-
-                  <span class="sr-only" aria-live="polite" id="liveRegion"></span>
-                </form>
-              </div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-inner">
-                <div class="panel-top">
-                  <strong>Contact info</strong>
-                  <span class="badge">Update in code</span>
+                    <textarea id="message" name="message" required placeholder="Tell us what you're interested in..."></textarea>
                 </div>
 
-                <div style="display: grid; gap: 10px; margin-top: 10px">
-                  <div
-                    style="
-                      display: flex;
-                      align-items: flex-start;
-                      gap: 10px;
-                      padding: 12px;
-                      border-radius: 18px;
-                      background: rgba(11, 13, 18, 0.02);
-                      border: 1px solid var(--border2);
-                    "
-                  >
-                    <div
-                      style="
-                        width: 34px;
-                        height: 34px;
-                        border-radius: 14px;
-                        background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(34, 211, 238, 0.10));
-                        border: 1px solid rgba(11, 13, 18, 0.08);
-                        display: grid;
-                        place-items: center;
-                        font-weight: 900;
-                      "
-                      aria-hidden="true"
-                    >
-                      @
-                    </div>
-                    <div>
-                      <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px">Email</div>
-                      <div style="font-size: 12.5px; color: var(--muted)" id="contactEmailText">hello@evolta.ai</div>
-                    </div>
-                  </div>
-                </div>
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
 
-                <p class="fineprint">You can add more contact methods later.</p>
-              </div>
-            </div>
-          </div>
+            <p class="contact-info" style="margin-top: 40px; font-size: 16px;">
+                Or email us directly at <a href="mailto:hello@evolta.ai" class="contact-email" style="font-size: 18px; margin-top: 0;">hello@evolta.ai</a>
+            </p>
         </div>
-      </section>
-
-      <footer>
-        <div class="wrap foot">
-          <div>© <span id="year"></span> Evolta Foundation</div>
-          <div>Where learning evolves</div>
-        </div>
-      </footer>
-    </main>
+    </section>
 
     <script>
-      document.querySelectorAll('a[href^="#"]').forEach((a) => {
-        a.addEventListener("click", (e) => {
-          const id = a.getAttribute("href");
-          if (!id || id === "#") return;
-          const el = document.querySelector(id);
-          if (!el) return;
-          e.preventDefault();
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            const subject = encodeURIComponent('Evolta Inquiry from ' + name);
+            const body = encodeURIComponent(
+                'Name: ' + name + '\n' +
+                'Email: ' + email + '\n\n' +
+                'Message:\n' + message
+            );
+
+            window.location.href = 'mailto:hello@evolta.ai?subject=' + subject + '&body=' + body;
         });
-      });
-
-      document.getElementById("year").textContent = String(new Date().getFullYear());
-
-      const CONTACT_EMAIL = "hello@evolta.ai";
-      const liveRegion = document.getElementById("liveRegion");
-      document.getElementById("contactEmailText").textContent = CONTACT_EMAIL;
-
-      const copyBtn = document.getElementById("copyEmailBtn");
-      if (copyBtn) {
-        copyBtn.addEventListener("click", async () => {
-          try {
-            await navigator.clipboard.writeText(CONTACT_EMAIL);
-            liveRegion.textContent = "Email copied";
-          } catch {
-            liveRegion.textContent = "Copy not available";
-          }
-        });
-      }
-
-      document.getElementById("contactForm").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const name = document.getElementById("name").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const message = document.getElementById("message").value.trim();
-
-        const subject = encodeURIComponent("Evolta inquiry");
-        const body = encodeURIComponent("Name: " + name + "\n" + "Email: " + email + "\n\n" + message + "\n");
-
-        window.location.href =
-          "mailto:" + encodeURIComponent(CONTACT_EMAIL) + "?subject=" + subject + "&body=" + body;
-      });
     </script>
-  </body>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            © 2026 Evolta. All rights reserved.
+        </div>
+    </footer>
+</body>
 </html>
