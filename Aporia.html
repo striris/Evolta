@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aporia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f9f7f4; --surface: #ffffff; --border: #e8e4de; --border-strong: #ccc8c0;
+    --text-primary: #1a1814; --text-secondary: #6b6860; --text-muted: #a09d98;
+    --accent: #1a1814; --accent-light: #f0ede8; --selected-bg: #1a1814; --selected-text: #f9f7f4;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* NAV */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--bg); border-bottom: 1px solid var(--border); padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 15px; letter-spacing: 0.02em; color: var(--text-primary); }
+  .nav-count { font-size: 12px; color: var(--text-muted); letter-spacing: 0.06em; }
+
+  main { flex: 1; padding-top: 56px; display: flex; align-items: flex-start; justify-content: center; padding-bottom: 4rem; }
+  .container { width: 100%; max-width: 620px; padding: 0 1.5rem; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* INTRO */
+  .intro-wrap { padding-top: 5rem; animation: fadeUp 0.5s ease both; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; font-weight: 400; }
+  .intro-title { font-family: 'Playfair Display', serif; font-size: clamp(36px, 6vw, 52px); font-weight: 400; line-height: 1.12; margin-bottom: 1.5rem; color: var(--text-primary); }
+  .intro-title em { font-style: italic; color: var(--text-secondary); }
+  .intro-body { font-size: 16px; color: var(--text-secondary); line-height: 1.75; max-width: 480px; margin-bottom: 2rem; font-weight: 300; }
+  .intro-divider { width: 48px; height: 1px; background: var(--border-strong); margin-bottom: 2rem; }
+
+  /* LIVE STATS */
+  .live-stats { background: var(--surface); border: 1px solid var(--border); padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+  .live-stats-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
+  .live-stats-row { display: flex; gap: 2rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .live-stat { display: flex; flex-direction: column; gap: 2px; }
+  .live-stat-num { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--text-primary); }
+  .live-stat-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em; }
+  .dist-bars { display: flex; flex-direction: column; gap: 7px; }
+  .dist-row { display: flex; align-items: center; gap: 10px; }
+  .dist-name { font-size: 11px; color: var(--text-secondary); min-width: 100px; font-weight: 300; }
+  .dist-track { flex: 1; height: 2px; background: var(--border); }
+  .dist-fill { height: 100%; background: var(--accent); transition: width 1s ease; }
+  .dist-pct { font-size: 11px; color: var(--text-muted); min-width: 28px; text-align: right; }
+  .stats-loading { font-size: 13px; color: var(--text-muted); font-weight: 300; }
+
+  .intro-meta { display: flex; gap: 2rem; margin-bottom: 2rem; }
+  .intro-stat { display: flex; flex-direction: column; gap: 2px; }
+  .intro-stat-num { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--text-primary); }
+  .intro-stat-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .btn-start { display: inline-flex; align-items: center; gap: 10px; background: var(--accent); color: var(--selected-text); border: none; padding: 14px 28px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 400; letter-spacing: 0.04em; cursor: pointer; transition: opacity 0.2s; }
+  .btn-start:hover { opacity: 0.85; }
+  .btn-start .arrow { font-size: 16px; transition: transform 0.2s; }
+  .btn-start:hover .arrow { transform: translateX(3px); }
+
+  /* DEMOGRAPHICS */
+  .demo-wrap { padding-top: 4rem; animation: fadeUp 0.4s ease both; }
+  .demo-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 400; margin-bottom: 0.5rem; }
+  .demo-sub { font-size: 14px; color: var(--text-secondary); font-weight: 300; margin-bottom: 2rem; line-height: 1.6; }
+  .demo-fields { display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem; }
+  .demo-field { display: flex; flex-direction: column; gap: 8px; }
+  .demo-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .demo-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: var(--surface); border: 1px solid var(--border); padding: 8px 16px; font-size: 13px; font-weight: 300; color: var(--text-primary); cursor: pointer; transition: border-color 0.15s, background 0.15s; font-family: 'DM Sans', sans-serif; }
+  .chip:hover { border-color: var(--border-strong); }
+  .chip.selected { background: var(--selected-bg); border-color: var(--selected-bg); color: var(--selected-text); }
+  .demo-skip { font-size: 12px; color: var(--text-muted); text-decoration: underline; cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+  .demo-skip:hover { color: var(--text-secondary); }
+  .demo-nav { display: flex; justify-content: space-between; align-items: center; }
+
+  /* PROGRESS */
+  .progress-wrap { padding: 2.5rem 0 2rem; }
+  .progress-track { height: 1px; background: var(--border); position: relative; margin-bottom: 1rem; }
+  .progress-fill { position: absolute; top: 0; left: 0; height: 100%; background: var(--accent); transition: width 0.4s ease; }
+  .progress-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* QUESTION */
+  .q-wrap { animation: fadeUp 0.35s ease both; }
+  .q-category { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; font-weight: 400; }
+  .q-text { font-family: 'Playfair Display', serif; font-size: clamp(20px, 4vw, 26px); font-weight: 400; line-height: 1.4; color: var(--text-primary); margin-bottom: 2.25rem; }
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 2.5rem; }
+  .opt { position: relative; background: var(--surface); border: 1px solid var(--border); padding: 16px 20px 16px 52px; cursor: pointer; transition: border-color 0.18s, background 0.18s, transform 0.12s; display: flex; align-items: flex-start; font-size: 15px; color: var(--text-primary); line-height: 1.55; font-weight: 300; text-align: left; }
+  .opt:hover { border-color: var(--border-strong); background: #fcfbf9; transform: translateX(2px); }
+  .opt-letter { position: absolute; left: 18px; top: 17px; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; color: var(--text-muted); transition: color 0.18s; font-family: 'DM Sans', sans-serif; }
+  .opt.selected { background: var(--selected-bg); border-color: var(--selected-bg); color: var(--selected-text); transform: translateX(0); }
+  .opt.selected .opt-letter { color: rgba(249,247,244,0.5); }
+  .opt.selected:hover { background: #2a2622; border-color: #2a2622; }
+
+  /* BUTTONS */
+  .nav-btns { display: flex; justify-content: space-between; align-items: center; padding-bottom: 2rem; }
+  .btn-ghost { background: none; border: 1px solid var(--border); padding: 10px 22px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; color: var(--text-secondary); cursor: pointer; letter-spacing: 0.04em; transition: border-color 0.18s, color 0.18s; }
+  .btn-ghost:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .btn-ghost:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+  .btn-next { background: var(--accent); border: 1px solid var(--accent); padding: 10px 28px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; color: var(--selected-text); cursor: pointer; letter-spacing: 0.06em; transition: opacity 0.18s; }
+  .btn-next:hover { opacity: 0.82; }
+  .btn-next:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+
+  /* RESULT */
+  .result-wrap { padding-top: 3.5rem; animation: fadeUp 0.5s ease both; }
+  .result-school-tag { display: inline-block; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; border: 1px solid var(--border-strong); padding: 5px 12px; color: var(--text-secondary); margin-bottom: 1.25rem; }
+  .result-type { font-family: 'Playfair Display', serif; font-size: clamp(30px, 6vw, 44px); font-weight: 400; line-height: 1.15; margin-bottom: 1.25rem; }
+  .result-desc { font-size: 15px; color: var(--text-secondary); line-height: 1.75; font-weight: 300; max-width: 500px; margin-bottom: 2rem; }
+  .traits { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 2.5rem; }
+  .trait { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 14px; border: 1px solid var(--border-strong); color: var(--text-secondary); font-weight: 400; }
+  .scores-section { margin-bottom: 2.5rem; }
+  .section-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; }
+  .score-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .score-name { font-size: 13px; color: var(--text-secondary); min-width: 110px; font-weight: 300; }
+  .score-track { flex: 1; height: 2px; background: var(--border); }
+  .score-bar { height: 100%; background: var(--accent); transition: width 0.9s cubic-bezier(0.4,0,0.2,1); }
+  .score-pct { font-size: 12px; color: var(--text-muted); min-width: 32px; text-align: right; }
+  .section-divider { height: 1px; background: var(--border); margin: 2.5rem 0; }
+  .phil-block { margin-bottom: 2.5rem; }
+  .phil-name-large { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 400; margin-bottom: 4px; }
+  .phil-dates { font-size: 12px; color: var(--text-muted); letter-spacing: 0.04em; margin-bottom: 1.25rem; }
+  .phil-bio { font-size: 14px; color: var(--text-secondary); line-height: 1.75; font-weight: 300; margin-bottom: 1.5rem; }
+  .phil-quote { font-family: 'Playfair Display', serif; font-size: 17px; font-style: italic; color: var(--text-primary); line-height: 1.6; padding: 1.25rem 1.5rem; border-left: 2px solid var(--accent); background: var(--accent-light); margin-bottom: 1.5rem; }
+  .match-box { background: var(--surface); border: 1px solid var(--border); padding: 1.25rem 1.5rem; }
+  .match-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .match-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; font-weight: 300; }
+  .result-actions { display: flex; gap: 12px; flex-wrap: wrap; padding-bottom: 4rem; }
+  .btn-outline { background: none; border: 1px solid var(--border-strong); padding: 11px 22px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; color: var(--text-primary); cursor: pointer; letter-spacing: 0.04em; transition: background 0.18s; }
+  .btn-outline:hover { background: var(--accent-light); }
+  .btn-dark { background: var(--accent); border: 1px solid var(--accent); padding: 11px 22px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; color: var(--selected-text); cursor: pointer; letter-spacing: 0.06em; transition: opacity 0.18s; }
+  .btn-dark:hover { opacity: 0.82; }
+
+  /* LANG SWITCHER */
+  .lang-switcher { display: flex; gap: 0; margin-bottom: 2rem; }
+  .lang-btn { background: none; border: 1px solid var(--border); padding: 7px 18px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 400; color: var(--text-secondary); cursor: pointer; letter-spacing: 0.06em; transition: background 0.15s, color 0.15s; }
+  .lang-btn:first-child { border-right: none; }
+  .lang-btn.active { background: var(--accent); color: var(--selected-text); border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { background: var(--accent-light); }
+
+  /* BUBBLES */
+  .bubbles-wrap { position: relative; height: 160px; margin-bottom: 2rem; overflow: hidden; }
+  .bubble { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; cursor: default; border: 1px solid var(--border-strong); background: var(--surface); transition: transform 0.2s, box-shadow 0.2s; }
+  .bubble:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .bubble-name { font-size: 10px; font-weight: 500; color: var(--text-primary); letter-spacing: 0.03em; padding: 0 6px; line-height: 1.3; }
+  .bubble-pct { font-size: 14px; font-weight: 400; color: var(--text-muted); font-family: 'Playfair Display', serif; margin-top: 2px; }
+
+  /* SCHOOLS MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,24,20,0.5); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg); max-width: 580px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 2rem; animation: fadeUp 0.3s ease both; }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.75rem; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 400; }
+  .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); padding: 0; line-height: 1; }
+  .modal-close:hover { color: var(--text-primary); }
+  .school-item { padding: 1.25rem 0; border-bottom: 1px solid var(--border); }
+  .school-item:last-child { border-bottom: none; }
+  .school-item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .school-item-name { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+  .school-item-phil { font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em; }
+  .school-item-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.65; font-weight: 300; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes floatBubble { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  @media (max-width: 480px) { .container { padding: 0 1.25rem; } .opt { padding: 14px 16px 14px 46px; font-size: 14px; } .opt-letter { left: 14px; } .live-stats-row { gap: 1.25rem; } .bubbles-wrap { height: 140px; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">Aporia</span>
+  <span class="nav-count" id="nav-count"></span>
+</nav>
+
+<main>
+  <div class="container">
+
+    <!-- INTRO -->
+    <div class="screen active" id="intro-screen">
+      <div class="intro-wrap">
+        <div class="lang-switcher">
+          <button class="lang-btn active" onclick="setLang('en')">English</button>
+          <button class="lang-btn" onclick="setLang('zh')">中文</button>
+        </div>
+        <p class="eyebrow" id="txt-eyebrow">Philosophy quiz</p>
+        <h1 class="intro-title" id="txt-title">What kind of<br><em>thinker</em> are you?</h1>
+        <p class="intro-body" id="txt-body">Twelve questions on ethics, reality, knowledge, and the good life. Discover which philosophical tradition fits how you see the world — and which great thinker you think most like.</p>
+        <div class="intro-divider"></div>
+
+        <!-- LIVE STATS -->
+        <div class="live-stats" id="live-stats">
+          <div class="live-stats-label">From people who've taken this quiz</div>
+          <div id="stats-content"><p class="stats-loading">Loading responses...</p></div>
+        </div>
+
+        <!-- BUBBLES -->
+        <div class="bubbles-wrap" id="bubbles-wrap"></div>
+
+        <div class="intro-meta">
+          <div class="intro-stat"><span class="intro-stat-num">12</span><span class="intro-stat-label" id="txt-q-label">Questions</span></div>
+          <div class="intro-stat"><span class="intro-stat-num">8</span><span class="intro-stat-label" id="txt-s-label">Schools</span></div>
+          <div class="intro-stat"><span class="intro-stat-num">8</span><span class="intro-stat-label" id="txt-p-label">Philosophers</span></div>
+        </div>
+        <button class="btn-start" onclick="goToDemographics()"><span id="txt-begin">Begin the inquiry</span> <span class="arrow">→</span></button>
+      </div>
+    </div>
+
+    <!-- DEMOGRAPHICS -->
+    <div class="screen" id="demo-screen">
+      <div class="demo-wrap">
+        <p class="eyebrow" id="txt-demo-eyebrow">Before you begin</p>
+        <h2 class="demo-title" id="txt-demo-title">A little about you</h2>
+        <p class="demo-sub" id="txt-demo-sub">Optional — all anonymous. Helps reveal how background shapes philosophical outlook. Skip any field you prefer not to answer.</p>
+        <div class="demo-fields">
+
+          <div class="demo-field">
+            <span class="demo-label" id="txt-age-label">Age group</span>
+            <div class="demo-chips" id="chips-age">
+              <button class="chip" data-group="age" data-val="Under 18">Under 18</button>
+              <button class="chip" data-group="age" data-val="18–24">18–24</button>
+              <button class="chip" data-group="age" data-val="25–34">25–34</button>
+              <button class="chip" data-group="age" data-val="35–49">35–49</button>
+              <button class="chip" data-group="age" data-val="50+">50+</button>
+            </div>
+          </div>
+
+          <div class="demo-field">
+            <span class="demo-label" id="txt-gender-label">Gender</span>
+            <div class="demo-chips" id="chips-gender">
+              <button class="chip" data-group="gender" data-val="Man">Man</button>
+              <button class="chip" data-group="gender" data-val="Woman">Woman</button>
+              <button class="chip" data-group="gender" data-val="Non-binary">Non-binary</button>
+              <button class="chip" data-group="gender" data-val="Prefer not to say">Prefer not to say</button>
+            </div>
+          </div>
+
+          <div class="demo-field">
+            <span class="demo-label" id="txt-region-label">Region</span>
+            <div class="demo-chips" id="chips-region">
+              <button class="chip" data-group="region" data-val="Asia">Asia</button>
+              <button class="chip" data-group="region" data-val="Africa">Africa</button>
+              <button class="chip" data-group="region" data-val="Europe">Europe</button>
+              <button class="chip" data-group="region" data-val="Middle East">Middle East</button>
+              <button class="chip" data-group="region" data-val="North America">North America</button>
+              <button class="chip" data-group="region" data-val="South America">South America</button>
+              <button class="chip" data-group="region" data-val="Oceania">Oceania</button>
+            </div>
+          </div>
+
+          <div class="demo-field">
+            <span class="demo-label" id="txt-religion-label">Religion</span>
+            <div class="demo-chips" id="chips-religion">
+              <button class="chip" data-group="religion" data-val="Christianity">Christianity</button>
+              <button class="chip" data-group="religion" data-val="Islam">Islam</button>
+              <button class="chip" data-group="religion" data-val="Hinduism">Hinduism</button>
+              <button class="chip" data-group="religion" data-val="Buddhism">Buddhism</button>
+              <button class="chip" data-group="religion" data-val="Judaism">Judaism</button>
+              <button class="chip" data-group="religion" data-val="None / Atheist">None / Atheist</button>
+              <button class="chip" data-group="religion" data-val="Spiritual">Spiritual</button>
+              <button class="chip" data-group="religion" data-val="Prefer not to say">Prefer not to say</button>
+            </div>
+          </div>
+
+        </div>
+        <div class="demo-nav">
+          <button class="btn-ghost" onclick="goToIntro()">← Back</button>
+          <div style="display:flex;align-items:center;gap:1.5rem">
+            <button class="demo-skip" onclick="startQuiz()" id="txt-skip">Skip all</button>
+            <button class="btn-next" onclick="startQuiz()"><span id="txt-start-quiz">Start quiz</span> →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUESTION -->
+    <div class="screen" id="question-screen">
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <span class="progress-label" id="progress-label">Question 1 of 12</span>
+      </div>
+      <div class="q-wrap" id="q-wrap">
+        <p class="q-category" id="q-category"></p>
+        <h2 class="q-text" id="q-text"></h2>
+        <div class="options" id="options"></div>
+        <div class="nav-btns">
+          <button class="btn-ghost" id="back-btn" onclick="goBack()">← Back</button>
+          <button class="btn-next" id="next-btn" onclick="goNext()" disabled>Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="screen" id="result-screen">
+      <div class="result-wrap">
+        <div class="result-school-tag" id="res-school"></div>
+        <h1 class="result-type" id="res-type"></h1>
+        <p class="result-desc" id="res-desc"></p>
+        <div class="traits" id="res-traits"></div>
+        <div class="scores-section">
+          <p class="section-label" id="txt-breakdown">Your philosophical breakdown</p>
+          <div id="score-bars"></div>
+        </div>
+        <div class="section-divider"></div>
+        <p class="section-label" id="txt-phil-match" style="margin-bottom:1.5rem">Your philosopher match</p>
+        <div class="phil-block" id="phil-block"></div>
+        <div class="result-actions">
+          <button class="btn-outline" onclick="restartQuiz()" id="txt-retake">Retake quiz</button>
+          <button class="btn-outline" onclick="openSchoolsModal()" id="txt-explore-schools">Explore other schools →</button>
+          <button class="btn-dark" id="explore-btn">Explore this philosopher →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- SCHOOLS MODAL -->
+<div class="modal-overlay" id="schools-modal" onclick="closeSchoolsModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">The eight schools of thought</h2>
+      <button class="modal-close" onclick="closeSchoolsModal()">&#x2715;</button>
+    </div>
+    <div id="schools-list"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://gtoohdnvyyihsmuxowxt.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0b29oZG52eXlpaHNtdXhvd3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3OTY3MTEsImV4cCI6MjA4OTM3MjcxMX0.WM9Jlp3axFzGCGuiUhw9303cSb9mBfRUBshjZzrnEfI';
+
+const headers = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': 'Bearer ' + SUPABASE_KEY
+};
+
+// Load live stats on page load
+async function loadStats() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/aporia_results?select=school`, { headers });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    renderStats(data);
+  } catch {
+    document.getElementById('stats-content').innerHTML = '<p class="stats-loading">Be the first to take this quiz.</p>';
+  }
+}
+
+function renderStats(data) {
+  if (!data || data.length === 0) {
+    document.getElementById('stats-content').innerHTML = '<p class="stats-loading">Be the first to take this quiz.</p>';
+    document.getElementById('bubbles-wrap').style.display = 'none';
+    return;
+  }
+  const total = data.length;
+  const counts = {};
+  data.forEach(r => { counts[r.school] = (counts[r.school] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const top = sorted[0];
+  const maxCount = top[1];
+
+  const barsHtml = sorted.slice(0,6).map(([school, count]) => {
+    const pct = Math.round((count / total) * 100);
+    const barW = Math.round((count / maxCount) * 100);
+    return `<div class="dist-row">
+      <span class="dist-name">${school}</span>
+      <div class="dist-track"><div class="dist-fill" style="width:0" data-w="${barW}%"></div></div>
+      <span class="dist-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('stats-content').innerHTML = `
+    <div class="live-stats-row">
+      <div class="live-stat"><span class="live-stat-num">${total.toLocaleString()}</span><span class="live-stat-label">Responses</span></div>
+      <div class="live-stat"><span class="live-stat-num">${top[0]}</span><span class="live-stat-label">Most common school</span></div>
+    </div>
+    <div class="dist-bars">${barsHtml}</div>`;
+
+  setTimeout(() => {
+    document.querySelectorAll('.dist-fill').forEach(el => { el.style.width = el.dataset.w; });
+  }, 100);
+
+  // Render bubbles — top 5 only
+  renderBubbles(sorted.slice(0, 5), total);
+}
+
+function renderBubbles(top5, total) {
+  const wrap = document.getElementById('bubbles-wrap');
+  wrap.innerHTML = '';
+  const wrapW = wrap.offsetWidth || 580;
+  const wrapH = wrap.offsetHeight || 160;
+  const maxCount = top5[0][1];
+
+  // Size range: largest bubble 100px, smallest 52px
+  const maxSize = Math.min(110, wrapW / 5.5);
+  const minSize = 52;
+
+  // Pre-compute sizes
+  const bubbles = top5.map(([school, count]) => {
+    const ratio = count / maxCount;
+    const size = Math.round(minSize + ratio * (maxSize - minSize));
+    const pct = Math.round((count / total) * 100);
+    return { school, pct, size };
+  });
+
+  // Place bubbles with simple non-overlapping positions
+  const placed = [];
+  const padding = 8;
+
+  bubbles.forEach((b, i) => {
+    let x, y, attempts = 0;
+    const delay = i * 0.9;
+    const duration = 3 + i * 0.7;
+
+    do {
+      x = padding + Math.random() * (wrapW - b.size - padding * 2);
+      y = padding + Math.random() * (wrapH - b.size - padding * 2);
+      attempts++;
+      const overlap = placed.some(p => {
+        const dx = (x + b.size/2) - (p.x + p.size/2);
+        const dy = (y + b.size/2) - (p.y + p.size/2);
+        return Math.sqrt(dx*dx + dy*dy) < (b.size/2 + p.size/2 + 6);
+      });
+      if (!overlap || attempts > 60) break;
+    } while (true);
+
+    placed.push({ x, y, size: b.size });
+
+    const el = document.createElement('div');
+    el.className = 'bubble';
+    el.style.cssText = `width:${b.size}px;height:${b.size}px;left:${x}px;top:${y}px;animation:floatBubble ${duration}s ease-in-out ${delay}s infinite;`;
+    el.innerHTML = `<span class="bubble-name">${b.school}</span><span class="bubble-pct">${b.pct}%</span>`;
+    wrap.appendChild(el);
+  });
+}
+
+// Schools modal
+const schoolDetails = [
+  { name: "Rationalism", phil: "Immanuel Kant", desc: "Reason is the primary source of knowledge. Truth can be discovered through logic and systematic thinking, independent of sensory experience." },
+  { name: "Empiricism", phil: "David Hume", desc: "All knowledge derives from sensory experience. What cannot be observed or tested should be treated with deep skepticism." },
+  { name: "Utilitarianism", phil: "John Stuart Mill", desc: "The morally right action is the one that produces the greatest good for the greatest number of people." },
+  { name: "Virtue Ethics", phil: "Aristotle", desc: "Ethics is about cultivating character. A good life comes from developing virtues — wisdom, courage, justice — through practice and community." },
+  { name: "Stoicism", phil: "Marcus Aurelius", desc: "Focus only on what is within your control. Tranquility comes from rational acceptance of what cannot be changed." },
+  { name: "Existentialism", phil: "Jean-Paul Sartre", desc: "Existence precedes essence. We are radically free and responsible for creating our own meaning in an indifferent universe." },
+  { name: "Pragmatism", phil: "William James", desc: "Truth is what works. Ideas are tools to be judged by their practical consequences, not by abstract correspondence to reality." },
+  { name: "Idealism", phil: "G.W.F. Hegel", desc: "Reality is fundamentally mental or spiritual. The physical world is secondary to mind, consciousness, or the unfolding of Spirit through history." }
+];
+
+function openSchoolsModal() {
+  const list = document.getElementById('schools-list');
+  list.innerHTML = schoolDetails.map(s => `
+    <div class="school-item">
+      <div class="school-item-header">
+        <span class="school-item-name">${s.name}</span>
+        <span class="school-item-phil">${s.phil}</span>
+      </div>
+      <p class="school-item-desc">${s.desc}</p>
+    </div>`).join('');
+  document.getElementById('schools-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSchoolsModal() {
+  document.getElementById('schools-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeSchoolsModalOutside(e) {
+  if (e.target === document.getElementById('schools-modal')) closeSchoolsModal();
+}
+
+async function saveResult(school, demographics) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/aporia_results`, {
+      method: 'POST',
+      headers: { ...headers, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        school,
+        age_group: demographics.age || null,
+        gender: demographics.gender || null,
+        region: demographics.region || null,
+        religion: demographics.religion || null
+      })
+    });
+  } catch { /* silent fail — don't block user */ }
+}
+
+// Demographics state
+const demographics = { age: null, gender: null, region: null, religion: null };
+
+document.addEventListener('click', e => {
+  if (!e.target.classList.contains('chip')) return;
+  const group = e.target.dataset.group;
+  const val = e.target.dataset.val;
+  const keyMap = { age: 'age', gender: 'gender', region: 'region', religion: 'religion' };
+  demographics[keyMap[group]] = val;
+  document.querySelectorAll(`.chip[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
+  e.target.classList.add('selected');
+});
+
+function goToIntro() {
+  document.getElementById('demo-screen').classList.remove('active');
+  document.getElementById('intro-screen').classList.add('active');
+  document.getElementById('nav-count').textContent = '';
+}
+
+function goToDemographics() {
+  document.getElementById('intro-screen').classList.remove('active');
+  document.getElementById('demo-screen').classList.add('active');
+}
+
+const questions = [
+  { category: "Ethics", text: "When you face a difficult moral decision, what guides you most?", options: [
+    { text: "The outcome — what will produce the most good for the most people?", scores: { utilitarian: 3, empiricist: 1 } },
+    { text: "Duty — there are rules that must not be broken regardless of consequences.", scores: { rationalist: 3, stoic: 1 } },
+    { text: "Virtue — what would a person of good character do here?", scores: { virtue: 3, stoic: 1 } },
+    { text: "My gut. Moral intuition runs deeper than any theory.", scores: { existentialist: 2, empiricist: 1 } }
+  ]},
+  { category: "Epistemology", text: "What is knowledge, at its root?", options: [
+    { text: "Sensory experience — we only know what we can observe and test.", scores: { empiricist: 3, utilitarian: 1 } },
+    { text: "Reason — the mind contains truths that experience merely confirms.", scores: { rationalist: 3, idealist: 1 } },
+    { text: "A tool for living — knowledge is what helps us navigate the world.", scores: { pragmatist: 3, utilitarian: 1 } },
+    { text: "A construction — we make sense of a chaotic reality through frameworks.", scores: { existentialist: 2, idealist: 1 } }
+  ]},
+  { category: "The Good Life", text: "What is the most important thing in a good life?", options: [
+    { text: "Tranquility — freedom from anxiety and desire.", scores: { stoic: 3, virtue: 1 } },
+    { text: "Creating authentic meaning for yourself.", scores: { existentialist: 3, pragmatist: 1 } },
+    { text: "Living virtuously and in accordance with your nature.", scores: { virtue: 3, stoic: 1 } },
+    { text: "Maximizing pleasure while minimizing suffering.", scores: { utilitarian: 3, empiricist: 1 } }
+  ]},
+  { category: "Metaphysics", text: "Reality, at its deepest level, is...", options: [
+    { text: "Material. Matter and energy, nothing more, nothing less.", scores: { empiricist: 3, utilitarian: 1 } },
+    { text: "Fundamentally mental or spiritual — the physical world is secondary.", scores: { idealist: 3, rationalist: 1 } },
+    { text: "A stage where conscious beings make free choices that define everything.", scores: { existentialist: 3, pragmatist: 1 } },
+    { text: "Governed by rational laws that the mind can uncover.", scores: { rationalist: 3, idealist: 1 } }
+  ]},
+  { category: "Politics", text: "How should society be organized?", options: [
+    { text: "Around the greatest happiness of the greatest number.", scores: { utilitarian: 3, pragmatist: 1 } },
+    { text: "By rational principles everyone could freely agree to.", scores: { rationalist: 3, virtue: 1 } },
+    { text: "To cultivate virtuous citizens and flourishing communities.", scores: { virtue: 3, stoic: 1 } },
+    { text: "To protect individual freedom — structure beyond that is suspect.", scores: { existentialist: 3, pragmatist: 1 } }
+  ]},
+  { category: "Science", text: "When you read a scientific study, your first instinct is:", options: [
+    { text: "Trust it — empirical evidence is the gold standard.", scores: { empiricist: 3, utilitarian: 1 } },
+    { text: "Ask what assumptions underlie the methodology.", scores: { rationalist: 2, pragmatist: 1 } },
+    { text: "Ask what it means for how we should live.", scores: { pragmatist: 3, utilitarian: 1 } },
+    { text: "Appreciate it, but science doesn't answer the deepest questions.", scores: { existentialist: 2, idealist: 2 } }
+  ]},
+  { category: "Free Will", text: "Free will — do you believe in it?", options: [
+    { text: "Fully. We are radically free and responsible for who we become.", scores: { existentialist: 3, virtue: 1 } },
+    { text: "Yes, grounded in reason — we can choose to act rationally.", scores: { rationalist: 3, stoic: 1 } },
+    { text: "The question is less about freedom than acting according to your nature.", scores: { stoic: 3, virtue: 1 } },
+    { text: "It's complicated — I'm skeptical of strong claims either way.", scores: { empiricist: 2, pragmatist: 2 } }
+  ]},
+  { category: "Psychology", text: "When you're struggling emotionally, what helps most?", options: [
+    { text: "Stepping back, reminding yourself what's in your control.", scores: { stoic: 3, rationalist: 1 } },
+    { text: "Finding practical action — doing something that moves you forward.", scores: { pragmatist: 3, utilitarian: 1 } },
+    { text: "Confronting the feeling honestly and sitting with it.", scores: { existentialist: 3, virtue: 1 } },
+    { text: "Seeking wisdom from great thinkers and traditions.", scores: { virtue: 2, rationalist: 1 } }
+  ]},
+  { category: "Tradition", text: "What do you think of tradition and inherited wisdom?", options: [
+    { text: "Tradition embodies centuries of human learning — respect it.", scores: { virtue: 3, stoic: 1 } },
+    { text: "Test it empirically. If it works, keep it; if not, discard it.", scores: { empiricist: 3, pragmatist: 1 } },
+    { text: "Each person must determine what is true for themselves.", scores: { existentialist: 3, pragmatist: 1 } },
+    { text: "It has a role, but reason must always take precedence.", scores: { rationalist: 3, idealist: 1 } }
+  ]},
+  { category: "Famous Quotes", text: "Which statement do you find most compelling?", options: [
+    { text: "\"I think, therefore I am.\" — Descartes", scores: { rationalist: 3, idealist: 1 } },
+    { text: "\"The unexamined life is not worth living.\" — Socrates", scores: { virtue: 3, stoic: 1 } },
+    { text: "\"Existence precedes essence.\" — Sartre", scores: { existentialist: 3, pragmatist: 1 } },
+    { text: "\"The greatest good for the greatest number.\" — Bentham", scores: { utilitarian: 3, empiricist: 1 } }
+  ]},
+  { category: "Disagreement", text: "When you disagree with someone, you tend to:", options: [
+    { text: "Lay out a logical argument — reason should settle the question.", scores: { rationalist: 3, utilitarian: 1 } },
+    { text: "Ask about their experience — where are they coming from?", scores: { empiricist: 2, virtue: 2 } },
+    { text: "Look for what's practically useful in both views.", scores: { pragmatist: 3, utilitarian: 1 } },
+    { text: "Hold firm — you have to live by your own convictions.", scores: { existentialist: 3, stoic: 1 } }
+  ]},
+  { category: "Emotion & Reason", text: "What is the role of emotion in good thinking?", options: [
+    { text: "Emotions distort judgment. Reason should govern.", scores: { stoic: 3, rationalist: 1 } },
+    { text: "Emotions are data — they often point to something real.", scores: { empiricist: 2, virtue: 2 } },
+    { text: "Emotion is where authentic human experience lives.", scores: { existentialist: 3, pragmatist: 1 } },
+    { text: "Cultivated emotions like compassion are central to virtue.", scores: { virtue: 3, utilitarian: 1 } }
+  ]}
+];
+
+const schoolNames = {
+  rationalist: "Rationalism", empiricist: "Empiricism", utilitarian: "Utilitarianism",
+  virtue: "Virtue Ethics", stoic: "Stoicism", existentialist: "Existentialism",
+  pragmatist: "Pragmatism", idealist: "Idealism"
+};
+
+const results = {
+  rationalist: { type: "The Rationalist", school: "Rationalism", desc: "You believe the mind is the primary tool for uncovering truth. Logic, structure, and systematic thinking are your natural habitat. You distrust what cannot be reasoned through — experience alone feels insufficient.", traits: ["Systematic", "Logical", "Principled", "Structured"], phil: { name: "Immanuel Kant", dates: "1724–1804 · Königsberg, Prussia", bio: "Kant revolutionized philosophy by arguing that the mind actively structures experience rather than passively receiving it. He believed morality could be derived from pure reason alone — his Categorical Imperative holds that we should act only by principles we could will to be universal laws.", quote: "Act only according to that maxim whereby you can at the same time will that it should become a universal law.", match: "Like Kant, you approach the world through reason and universal principles. You believe there are structures underlying reality that the mind — not just the senses — can access." } },
+  empiricist: { type: "The Empiricist", school: "Empiricism", desc: "Evidence is everything to you. You trust what can be observed, tested, and measured. Abstract theories that float free of experience leave you cold — show me the data.", traits: ["Evidence-driven", "Skeptical", "Curious", "Grounded"], phil: { name: "David Hume", dates: "1711–1776 · Edinburgh, Scotland", bio: "Hume was the most radical of the British empiricists, arguing that all knowledge derives from sensory experience. He famously dismantled the concept of causation — we don't observe causes, only sequences — and was deeply skeptical of metaphysical claims we cannot ground in experience.", quote: "A wise man proportions his belief to the evidence.", match: "Like Hume, you trust observation over theory. You're skeptical of claims that can't be grounded in experience, and you think careful reasoning means knowing what we cannot know." } },
+  utilitarian: { type: "The Utilitarian", school: "Utilitarianism", desc: "You're a consequentialist at heart. What matters is impact — real effects on real beings. You approach ethics practically, always asking: what actually produces the best outcome?", traits: ["Consequentialist", "Practical", "Fair-minded", "Outcome-focused"], phil: { name: "John Stuart Mill", dates: "1806–1873 · London, England", bio: "Mill refined Bentham's utilitarianism, arguing that not all pleasures are equal — intellectual and moral pleasures are higher than physical ones. In On Liberty, he argued society should only limit freedom when it prevents harm to others. He championed women's rights decades before it was respectable.", quote: "It is better to be Socrates dissatisfied than a fool satisfied.", match: "Like Mill, you believe ethics is about producing genuine human flourishing — and that good thinking requires taking everyone's wellbeing seriously, not just the majority." } },
+  virtue: { type: "The Virtue Ethicist", school: "Virtue Ethics", desc: "Character is everything to you. Rather than rules or outcomes, you ask: what kind of person am I becoming? Ethics, for you, is about cultivating wisdom, courage, justice, and temperance.", traits: ["Character-focused", "Reflective", "Community-minded", "Wise"], phil: { name: "Aristotle", dates: "384–322 BC · Stagira, Greece", bio: "Aristotle was perhaps history's most comprehensive thinker, making foundational contributions to logic, biology, politics, ethics, and metaphysics. His ethics centers on eudaimonia — human flourishing — achieved through developing virtues as stable character traits.", quote: "We are what we repeatedly do. Excellence, then, is not an act but a habit.", match: "Like Aristotle, you believe that living well is about becoming a certain kind of person — and that this happens through practice, honest self-examination, and community." } },
+  stoic: { type: "The Stoic", school: "Stoicism", desc: "You have a gift for perspective. You distinguish clearly between what is and isn't in your control — and you focus your energy only on the former. Emotions are real, but you don't let them govern you.", traits: ["Disciplined", "Clear-headed", "Resilient", "Principled"], phil: { name: "Marcus Aurelius", dates: "121–180 AD · Rome", bio: "Marcus Aurelius was Roman Emperor and a devoted Stoic philosopher. His private journal, Meditations, was never intended for publication. It shows a man constantly reminding himself of Stoic principles: focus only on what is in your control, treat others with justice, face death without fear.", quote: "You have power over your mind — not outside events. Realize this, and you will find strength.", match: "Like Marcus, you've internalized the Stoic insight: distress comes from our judgments, not from events. You meet difficulty with equanimity rather than reaction." } },
+  existentialist: { type: "The Existentialist", school: "Existentialism", desc: "Freedom and authenticity define you. You resist inherited identities and ready-made meanings. Life has no preset script — you must write your own. This is frightening and exhilarating in equal measure.", traits: ["Authentic", "Independent", "Courageous", "Intense"], phil: { name: "Jean-Paul Sartre", dates: "1905–1980 · Paris, France", bio: "Sartre was the central figure of 20th-century existentialism. His core claim — existence precedes essence — means that humans have no pre-given nature or purpose. We simply exist, and then define ourselves through choices. This makes radical freedom both our greatest burden and defining feature.", quote: "Man is condemned to be free. Once thrown into the world, he is responsible for everything he does.", match: "Like Sartre, you take freedom seriously — as a responsibility, not just a privilege. You resist defining yourself by categories others impose, and hold yourself accountable for who you're becoming." } },
+  pragmatist: { type: "The Pragmatist", school: "Pragmatism", desc: "Truth, for you, is what works. Philosophy shouldn't live in the clouds — it should change how we act. You're skeptical of abstract systems and drawn to ideas that make a practical difference.", traits: ["Action-oriented", "Flexible", "Problem-solving", "Experimental"], phil: { name: "William James", dates: "1842–1910 · New York, USA", bio: "James founded American pragmatism and pioneered the science of psychology. He argued that ideas are tools — judged not by abstract correspondence to reality, but by their practical consequences. He championed pluralism and individual experience, believing that philosophy should transform how we live.", quote: "Act as if what you do makes a difference. It does.", match: "Like James, you're drawn to ideas that actually work in the world. You're suspicious of grand theories that don't cash out in lived experience — philosophy, for you, is about making better choices." } },
+  idealist: { type: "The Idealist", school: "Idealism", desc: "You sense that the material world isn't the whole story. Mind, spirit, consciousness — these feel primary to you. Ideas shape reality more than we usually admit, and there's something deeper beneath the surface.", traits: ["Reflective", "Spiritual", "Conceptual", "Depth-seeking"], phil: { name: "GWF Hegel", dates: "1770–1831 · Stuttgart, Germany", bio: "Hegel is among the most ambitious of all philosophers. He argued that reality itself is the unfolding of Geist — Mind or Spirit — working through history toward self-understanding. His dialectical method shows how contradiction drives progress. He profoundly influenced Marx, existentialism, and continental philosophy.", quote: "The real is the rational and the rational is the real.", match: "Like Hegel, you sense that the surface of things doesn't exhaust reality. You're drawn to the deep structures — conceptual, spiritual, historical — that shape what appears to us as the world." } }
+};
+
+let current = 0, answers = [], scores = {}, topKey = '';
+
+function startQuiz() {
+  Object.keys(schoolNames).forEach(k => scores[k] = 0);
+  document.getElementById('demo-screen').classList.remove('active');
+  document.getElementById('question-screen').classList.add('active');
+  renderQ();
+}
+
+function renderQ() {
+  const q = questions[current];
+  const pct = (current / questions.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `Question ${current + 1} of ${questions.length}`;
+  document.getElementById('nav-count').textContent = `${current + 1} / ${questions.length}`;
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('back-btn').disabled = current === 0;
+  document.getElementById('next-btn').disabled = answers[current] === undefined;
+  const wrap = document.getElementById('q-wrap');
+  wrap.style.animation = 'none'; void wrap.offsetWidth; wrap.style.animation = 'fadeUp 0.35s ease both';
+  const letters = ['A','B','C','D'];
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  q.options.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt' + (answers[current] === i ? ' selected' : '');
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span>${o.text}`;
+    btn.onclick = () => select(i);
+    opts.appendChild(btn);
+  });
+}
+
+function select(i) {
+  answers[current] = i;
+  document.querySelectorAll('.opt').forEach((b, idx) => b.classList.toggle('selected', idx === i));
+  document.getElementById('next-btn').disabled = false;
+}
+
+function goBack() {
+  if (current > 0) { current--; renderQ(); }
+}
+
+function goNext() {
+  if (answers[current] === undefined) return;
+  if (current < questions.length - 1) { current++; renderQ(); }
+  else showResult();
+}
+
+function showResult() {
+  answers.forEach((ans, qi) => {
+    Object.entries(questions[qi].options[ans].scores).forEach(([k,v]) => { scores[k] += v; });
+  });
+  topKey = Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+  const r = results[topKey];
+
+  // Save to Supabase (fire and forget)
+  saveResult(r.school, demographics);
+
+  document.getElementById('question-screen').classList.remove('active');
+  document.getElementById('result-screen').classList.add('active');
+  document.getElementById('nav-count').textContent = '';
+  document.getElementById('res-school').textContent = r.school;
+  document.getElementById('res-type').textContent = r.type;
+  document.getElementById('res-desc').textContent = r.desc;
+  document.getElementById('res-traits').innerHTML = r.traits.map(t => `<span class="trait">${t}</span>`).join('');
+
+  const maxS = Math.max(...Object.values(scores));
+  document.getElementById('score-bars').innerHTML = Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v]) => {
+    const pct = maxS > 0 ? Math.round((v/maxS)*100) : 0;
+    return `<div class="score-row"><span class="score-name">${schoolNames[k]}</span><div class="score-track"><div class="score-bar" style="width:0" data-w="${pct}%"></div></div><span class="score-pct">${pct}%</span></div>`;
+  }).join('');
+  setTimeout(() => { document.querySelectorAll('.score-bar').forEach(el => { el.style.width = el.dataset.w; }); }, 120);
+
+  const p = r.phil;
+  document.getElementById('phil-block').innerHTML = `
+    <div class="phil-name-large">${p.name}</div>
+    <div class="phil-dates">${p.dates}</div>
+    <div class="phil-bio">${p.bio}</div>
+    <div class="phil-quote">${p.quote}</div>
+    <div class="match-box"><div class="match-label">Why you match</div><div class="match-text">${p.match}</div></div>`;
+
+  const wikiSlug = p.name.replace(/\./g,'').replace(/\s+/g,'_');
+  document.getElementById('explore-btn').onclick = () => { window.open(`https://en.wikipedia.org/wiki/${wikiSlug}`, '_blank'); };
+}
+
+function restartQuiz() {
+  current = 0; answers = []; scores = {};
+  Object.keys(demographics).forEach(k => demographics[k] = null);
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('result-screen').classList.remove('active');
+  document.getElementById('intro-screen').classList.add('active');
+  document.getElementById('nav-count').textContent = '';
+  document.getElementById('progress-fill').style.width = '0%';
+  loadStats();
+}
+
+// ─── i18n ───────────────────────────────────────────────────────────────────
+let lang = 'en';
+
+const i18n = {
+  en: {
+    eyebrow: 'Philosophy quiz',
+    title: 'What kind of<br><em>thinker</em> are you?',
+    body: 'Twelve questions on ethics, reality, knowledge, and the good life. Discover which philosophical tradition fits how you see the world — and which great thinker you think most like.',
+    statsLabel: "From people who've taken this quiz",
+    qLabel: 'Questions', sLabel: 'Schools', pLabel: 'Philosophers',
+    begin: 'Begin the inquiry',
+    demoEyebrow: 'Before you begin', demoTitle: 'A little about you',
+    demoSub: 'Optional — all anonymous. Helps reveal how background shapes philosophical outlook. Skip any field you prefer not to answer.',
+    ageLabel: 'Age group', genderLabel: 'Gender', regionLabel: 'Region', religionLabel: 'Religion',
+    skip: 'Skip all', startQuiz: 'Start quiz',
+    breakdown: 'Your philosophical breakdown', philMatch: 'Your philosopher match',
+    whyMatch: 'Why you match',
+    retake: 'Retake quiz', exploreSchools: 'Explore other schools →',
+    explorePhil: 'Explore this philosopher →',
+    progressLabel: (c, t) => `Question ${c} of ${t}`,
+    back: '← Back', continue: 'Continue →',
+    modalTitle: 'The eight schools of thought',
+    responses: 'Responses', mostCommon: 'Most common school',
+    loading: 'Loading responses...', firstToTake: 'Be the first to take this quiz.',
+    navCount: (c, t) => `${c} / ${t}`,
+    gender: { Man: 'Man', Woman: 'Woman', 'Non-binary': 'Non-binary', 'Prefer not to say': 'Prefer not to say' },
+    religion: { Christianity: 'Christianity', Islam: 'Islam', Hinduism: 'Hinduism', Buddhism: 'Buddhism', Judaism: 'Judaism', 'None / Atheist': 'None / Atheist', Spiritual: 'Spiritual', 'Prefer not to say': 'Prefer not to say' },
+    age: { 'Under 18': 'Under 18', '18–24': '18–24', '25–34': '25–34', '35–49': '35–49', '50+': '50+' },
+    region: { Asia: 'Asia', Africa: 'Africa', Europe: 'Europe', 'Middle East': 'Middle East', 'North America': 'North America', 'South America': 'South America', Oceania: 'Oceania' }
+  },
+  zh: {
+    eyebrow: '哲学测验',
+    title: '你是哪种<br><em>思考者</em>？',
+    body: '十二道题，涵盖伦理、现实、知识与美好生活。探索哪个哲学流派最贴近你看世界的方式——以及你与哪位伟大思想家最为相似。',
+    statsLabel: '参与者数据',
+    qLabel: '题目', sLabel: '流派', pLabel: '哲学家',
+    begin: '开始探索',
+    demoEyebrow: '开始之前', demoTitle: '关于你的一些信息',
+    demoSub: '可选 · 完全匿名。有助于揭示背景如何影响哲学倾向。每项均可跳过。',
+    ageLabel: '年龄段', genderLabel: '性别', regionLabel: '地区', religionLabel: '宗教信仰',
+    skip: '全部跳过', startQuiz: '开始测验',
+    breakdown: '你的哲学倾向分析', philMatch: '你的哲学家匹配',
+    whyMatch: '为何匹配',
+    retake: '重新测验', exploreSchools: '探索其他哲学流派 →',
+    explorePhil: '探索这位哲学家 →',
+    progressLabel: (c, t) => `第 ${c} 题，共 ${t} 题`,
+    back: '← 返回', continue: '继续 →',
+    modalTitle: '八大哲学流派',
+    responses: '参与人数', mostCommon: '最多人的流派',
+    loading: '加载中…', firstToTake: '成为第一个参与者。',
+    navCount: (c, t) => `${c} / ${t}`,
+    gender: { Man: '男性', Woman: '女性', 'Non-binary': '非二元性别', 'Prefer not to say': '不愿透露' },
+    religion: { Christianity: '基督教', Islam: '伊斯兰教', Hinduism: '印度教', Buddhism: '佛教', Judaism: '犹太教', 'None / Atheist': '无宗教 / 无神论', Spiritual: '灵性信仰', 'Prefer not to say': '不愿透露' },
+    age: { 'Under 18': '18岁以下', '18–24': '18–24岁', '25–34': '25–34岁', '35–49': '35–49岁', '50+': '50岁以上' },
+    region: { Asia: '亚洲', Africa: '非洲', Europe: '欧洲', 'Middle East': '中东', 'North America': '北美洲', 'South America': '南美洲', Oceania: '大洋洲' }
+  }
+};
+
+// Chinese translations for results
+const resultsCN = {
+  rationalist: { type: '理性主义者', school: '理性主义', desc: '你相信理性是探寻真理的首要工具。逻辑、结构与系统性思考是你的天然栖息地。无法被推理验证的事物让你感到不安——单凭感官经验远远不够。', traits: ['系统性', '逻辑性', '原则性', '结构化'], phil: { name: '伊曼努尔·康德', dates: '1724–1804 · 普鲁士柯尼斯堡', bio: '康德通过论证心智主动建构经验而非被动接受，彻底革新了哲学。他认为道德可以纯粹从理性中推导出来——他的"绝对命令"主张，我们只应按照可以普遍化的原则行事。', quote: '只按照你同时能够意愿其成为普遍法则的准则行事。', match: '如同康德，你以理性和普遍原则审视世界。你相信存在心智能够触及的深层结构——而非仅靠感官感知。' } },
+  empiricist: { type: '经验主义者', school: '经验主义', desc: '证据对你来说就是一切。你相信可以观察、测试和测量的事物。脱离经验的抽象理论让你感到冷漠——把数据给我看。', traits: ['以证据为导向', '怀疑精神', '好奇心强', '脚踏实地'], phil: { name: '大卫·休谟', dates: '1711–1776 · 苏格兰爱丁堡', bio: '休谟是英国经验主义者中最激进的一位，主张所有知识来源于感官经验。他著名地解构了因果关系——我们观察到的只是序列，而非原因本身——对无法在经验中找到根基的形而上学主张持深度怀疑。', quote: '一个智者按证据的比例来分配信念。', match: '如同休谟，你信任观察而非理论。你对无法在经验中找到根基的主张持怀疑态度，认为审慎的推理也意味着知道我们不知道什么。' } },
+  utilitarian: { type: '功利主义者', school: '功利主义', desc: '你本质上是一个结果论者。重要的是影响——对真实存在的生命产生真实的影响。你以务实的态度看待伦理，始终追问：什么方案能产生最好的结果？', traits: ['结果导向', '务实', '公平意识强', '注重成效'], phil: { name: '约翰·斯图尔特·密尔', dates: '1806–1873 · 英国伦敦', bio: '密尔完善了边沁的功利主义，认为并非所有快乐都是平等的——智识与道德的快乐高于物质的快乐。在《论自由》中，他主张社会只应在防止伤害他人时限制个人自由。', quote: '做一个不满足的苏格拉底，胜过做一个满足的蠢人。', match: '如同密尔，你相信伦理关乎真正的人类繁荣——良好的思考需要认真对待每个人的福祉，而非仅仅是多数人的。' } },
+  virtue: { type: '美德伦理论者', school: '美德伦理学', desc: '品格对你来说就是一切。你不问规则或结果，而是追问：我正在成为怎样的人？伦理对你而言，是培育智慧、勇气、公正与节制。', traits: ['以品格为核心', '善于反思', '重视社群', '智慧'], phil: { name: '亚里士多德', dates: '公元前384–322 · 希腊斯塔基拉', bio: '亚里士多德可能是历史上最全面的思想家，在逻辑、生物学、政治、伦理和形而上学方面均有奠基性贡献。他的伦理学以幸福（eudaimonia）——人类的繁荣为中心，通过将美德培养为稳定的品格特质来实现。', quote: '我们是我们反复所做之事。因此，卓越不是一种行为，而是一种习惯。', match: '如同亚里士多德，你相信好的生活意味着成为某种人——这通过实践、诚实的自我审视和社群来实现。' } },
+  stoic: { type: '斯多葛主义者', school: '斯多葛主义', desc: '你有一种洞察事物本质的天赋。你清晰地区分什么在你的掌控之内、什么在其之外——并将精力只投放在前者上。情绪是真实的，但你不让它们主宰你。', traits: ['自律', '头脑清醒', '韧性强', '原则性'], phil: { name: '马可·奥勒留', dates: '公元121–180 · 罗马', bio: '马可·奥勒留是罗马皇帝，同时也是虔诚的斯多葛哲学家。他的私人日记《沉思录》从未打算出版。它展示了一个不断提醒自己遵循斯多葛原则的人：只专注于自己能掌控的，公正待人，无惧死亡。', quote: '你能掌控的是你的心智，而非外部事件。认识到这一点，你将找到力量。', match: '如同马可，你内化了斯多葛的洞见：痛苦源于我们的判断，而非事件本身。你以平静而非冲动面对困境。' } },
+  existentialist: { type: '存在主义者', school: '存在主义', desc: '自由与真实性定义了你。你抗拒被继承的身份和现成的意义。生命没有预设剧本——你必须自己书写。这既令人恐惧，又令人振奋。', traits: ['真实', '独立', '勇敢', '深刻'], phil: { name: '让-保罗·萨特', dates: '1905–1980 · 法国巴黎', bio: '萨特是二十世纪存在主义的核心人物。他的核心主张——存在先于本质——意味着人类没有预设的本性或目的。我们只是存在，然后通过选择定义自己。这使得激进的自由既是我们最沉重的负担，也是我们的决定性特征。', quote: '人被判定为自由。一旦被抛入世界，他就要为自己所做的一切负责。', match: '如同萨特，你认真对待自由——将其视为责任而非特权。你抗拒被他人强加的标签定义，并为自己正在成为的人负责。' } },
+  pragmatist: { type: '实用主义者', school: '实用主义', desc: '对你来说，真理就是有用的东西。哲学不应活在云端——它应该改变我们的行动方式。你对抽象体系持怀疑态度，更倾向于能产生实际差异的思想。', traits: ['行动导向', '灵活', '解决问题', '善于实验'], phil: { name: '威廉·詹姆斯', dates: '1842–1910 · 美国纽约', bio: '詹姆斯创立了美国实用主义，并开创了心理学科学。他认为思想是工具——不以与现实的抽象对应来评判，而以其实际后果来衡量。他倡导多元主义和个人经验，相信哲学应该改变我们的生活方式。', quote: '相信你所做的事有所不同，它确实有。', match: '如同詹姆斯，你被真正在世界中起作用的思想所吸引。你对无法在实际经验中体现的宏大理论持怀疑态度——哲学对你而言，是做出更好选择的工具。' } },
+  idealist: { type: '唯心主义者', school: '唯心主义', desc: '你感觉物质世界并非全部。心智、精神、意识——这些对你来说是首要的。思想对现实的塑造远超我们通常所承认的，表象之下有某种更深层的东西。', traits: ['善于反思', '灵性', '概念性', '追求深度'], phil: { name: '格奥尔格·威廉·弗里德里希·黑格尔', dates: '1770–1831 · 德国斯图加特', bio: '黑格尔是最雄心勃勃的哲学家之一。他认为现实本身是精神（Geist）的展开——精神通过历史走向自我认识。他的辩证法展示了矛盾如何推动进步。他深刻影响了马克思、存在主义和二十世纪的欧陆哲学。', quote: '凡是现实的都是合理的，凡是合理的都是现实的。', match: '如同黑格尔，你感觉事物的表面并不能穷尽现实。你被深层结构所吸引——概念的、精神的、历史的——这些结构塑造了我们所看到的世界。' } }
+};
+
+const questionsCN = [
+  { category: '伦理学', text: '面对艰难的道德抉择时，什么最能引导你？', options: [
+    { text: '结果——什么能为最多人带来最大利益？', scores: { utilitarian: 3, empiricist: 1 } },
+    { text: '义务——有些规则无论后果如何都不能违背。', scores: { rationalist: 3, stoic: 1 } },
+    { text: '美德——一个品格高尚的人会怎么做？', scores: { virtue: 3, stoic: 1 } },
+    { text: '直觉——道德本能比任何理论都更深刻。', scores: { existentialist: 2, empiricist: 1 } }
+  ]},
+  { category: '认识论', text: '知识，从根本上说，是什么？', options: [
+    { text: '感官经验——我们只知道能观察和测试的东西。', scores: { empiricist: 3, utilitarian: 1 } },
+    { text: '理性——心智包含经验只能确认的真理。', scores: { rationalist: 3, idealist: 1 } },
+    { text: '生活的工具——知识是帮助我们驾驭世界的东西。', scores: { pragmatist: 3, utilitarian: 1 } },
+    { text: '一种建构——我们通过框架来理解混乱的现实。', scores: { existentialist: 2, idealist: 1 } }
+  ]},
+  { category: '美好生活', text: '美好生活中最重要的事是什么？', options: [
+    { text: '宁静——远离焦虑与欲望的自由。', scores: { stoic: 3, virtue: 1 } },
+    { text: '为自己创造真实的意义。', scores: { existentialist: 3, pragmatist: 1 } },
+    { text: '有德性地生活，顺应本性。', scores: { virtue: 3, stoic: 1 } },
+    { text: '最大化快乐，最小化痛苦。', scores: { utilitarian: 3, empiricist: 1 } }
+  ]},
+  { category: '形而上学', text: '现实，在最深层，是……', options: [
+    { text: '物质的。物质与能量，仅此而已。', scores: { empiricist: 3, utilitarian: 1 } },
+    { text: '根本上是精神性的——物质世界是次要的。', scores: { idealist: 3, rationalist: 1 } },
+    { text: '一个有意识的存在自由选择、定义一切的舞台。', scores: { existentialist: 3, pragmatist: 1 } },
+    { text: '被理性法则支配，心智可以发现这些法则。', scores: { rationalist: 3, idealist: 1 } }
+  ]},
+  { category: '政治哲学', text: '社会应该如何组织？', options: [
+    { text: '围绕最多数人的最大幸福。', scores: { utilitarian: 3, pragmatist: 1 } },
+    { text: '根据每个人都能自由同意的理性原则。', scores: { rationalist: 3, virtue: 1 } },
+    { text: '培养有美德的公民和繁荣的社群。', scores: { virtue: 3, stoic: 1 } },
+    { text: '保护个人自由——超出此范围的结构值得怀疑。', scores: { existentialist: 3, pragmatist: 1 } }
+  ]},
+  { category: '科学态度', text: '当你读到一项科学研究，你的第一反应是：', options: [
+    { text: '相信它——实证证据是黄金标准。', scores: { empiricist: 3, utilitarian: 1 } },
+    { text: '追问其方法论背后的假设是什么。', scores: { rationalist: 2, pragmatist: 1 } },
+    { text: '追问这对我们应该如何生活意味着什么。', scores: { pragmatist: 3, utilitarian: 1 } },
+    { text: '欣赏它，但科学无法回答最深刻的问题。', scores: { existentialist: 2, idealist: 2 } }
+  ]},
+  { category: '自由意志', text: '自由意志——你相信它吗？', options: [
+    { text: '完全相信。我们是彻底自由的，要为自己成为的人负责。', scores: { existentialist: 3, virtue: 1 } },
+    { text: '相信，基于理性——我们可以选择理性行事。', scores: { rationalist: 3, stoic: 1 } },
+    { text: '问题不在于自由，而在于按照本性行事。', scores: { stoic: 3, virtue: 1 } },
+    { text: '很复杂——我对强烈的主张持怀疑态度。', scores: { empiricist: 2, pragmatist: 2 } }
+  ]},
+  { category: '心理与情绪', text: '当你情绪上挣扎时，什么最有帮助？', options: [
+    { text: '退一步，提醒自己什么在掌控之内。', scores: { stoic: 3, rationalist: 1 } },
+    { text: '寻找实际行动——做一件推动你前进的事。', scores: { pragmatist: 3, utilitarian: 1 } },
+    { text: '诚实地面对感受，与之共处。', scores: { existentialist: 3, virtue: 1 } },
+    { text: '从伟大的思想家和传统中寻求智慧。', scores: { virtue: 2, rationalist: 1 } }
+  ]},
+  { category: '传统与智慧', text: '你如何看待传统和继承的智慧？', options: [
+    { text: '传统凝聚了数百年的人类学习——值得尊重。', scores: { virtue: 3, stoic: 1 } },
+    { text: '用经验验证它。有用则保留，无用则舍弃。', scores: { empiricist: 3, pragmatist: 1 } },
+    { text: '每个人都必须自己判断什么是真的。', scores: { existentialist: 3, pragmatist: 1 } },
+    { text: '它有其作用，但理性必须始终优先。', scores: { rationalist: 3, idealist: 1 } }
+  ]},
+  { category: '名言选择', text: '你觉得哪句话最有说服力？', options: [
+    { text: '「我思故我在。」——笛卡尔', scores: { rationalist: 3, idealist: 1 } },
+    { text: '「未经审视的生活不值得过。」——苏格拉底', scores: { virtue: 3, stoic: 1 } },
+    { text: '「存在先于本质。」——萨特', scores: { existentialist: 3, pragmatist: 1 } },
+    { text: '「为最多人谋最大利益。」——边沁', scores: { utilitarian: 3, empiricist: 1 } }
+  ]},
+  { category: '处理分歧', text: '当你与人意见不合时，你倾向于：', options: [
+    { text: '摆出逻辑论证——理性应该解决问题。', scores: { rationalist: 3, utilitarian: 1 } },
+    { text: '询问对方的经历——他们从哪里来？', scores: { empiricist: 2, virtue: 2 } },
+    { text: '寻找两种观点中实际有用的部分。', scores: { pragmatist: 3, utilitarian: 1 } },
+    { text: '坚持立场——你必须按照自己的信念生活。', scores: { existentialist: 3, stoic: 1 } }
+  ]},
+  { category: '情感与理性', text: '情感在良好思考中扮演什么角色？', options: [
+    { text: '情感扭曲判断。理性应该主导。', scores: { stoic: 3, rationalist: 1 } },
+    { text: '情感是数据——它们往往指向真实的东西。', scores: { empiricist: 2, virtue: 2 } },
+    { text: '情感是真实人类体验的所在。', scores: { existentialist: 3, pragmatist: 1 } },
+    { text: '培养好的情感如同情心，是美德的核心。', scores: { virtue: 3, utilitarian: 1 } }
+  ]}
+];
+
+const schoolDetailsCN = [
+  { name: '理性主义', phil: '伊曼努尔·康德', desc: '理性是知识的首要来源。真理可以通过逻辑和系统性思考来发现，独立于感官经验。' },
+  { name: '经验主义', phil: '大卫·休谟', desc: '所有知识来源于感官经验。无法观察或测试的主张应受到深度怀疑。' },
+  { name: '功利主义', phil: '约翰·斯图尔特·密尔', desc: '道德上正确的行为是为最多数人带来最大利益的行为。' },
+  { name: '美德伦理学', phil: '亚里士多德', desc: '伦理关乎培育品格。美好生活来自通过实践和社群培养美德——智慧、勇气、公正。' },
+  { name: '斯多葛主义', phil: '马可·奥勒留', desc: '只专注于你掌控之内的事。平静来自理性接受无法改变的事物。' },
+  { name: '存在主义', phil: '让-保罗·萨特', desc: '存在先于本质。我们是彻底自由的，并负责在漠然的宇宙中创造自己的意义。' },
+  { name: '实用主义', phil: '威廉·詹姆斯', desc: '真理就是有用的东西。思想是工具，以其实际后果而非与现实的抽象对应来评判。' },
+  { name: '唯心主义', phil: '格奥尔格·威廉·弗里德里希·黑格尔', desc: '现实根本上是精神性的。物质世界是次要的，心智、意识或精神通过历史展开才是首要的。' }
+];
+
+const schoolNamesCN = {
+  rationalist: '理性主义', empiricist: '经验主义', utilitarian: '功利主义',
+  virtue: '美德伦理学', stoic: '斯多葛主义', existentialist: '存在主义',
+  pragmatist: '实用主义', idealist: '唯心主义'
+};
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === (l === 'en' ? 'English' : '中文')));
+  const t = i18n[l];
+
+  // Intro
+  const el = id => document.getElementById(id);
+  if (el('txt-eyebrow')) el('txt-eyebrow').textContent = t.eyebrow;
+  if (el('txt-title')) el('txt-title').innerHTML = t.title;
+  if (el('txt-body')) el('txt-body').textContent = t.body;
+  if (el('txt-q-label')) el('txt-q-label').textContent = t.qLabel;
+  if (el('txt-s-label')) el('txt-s-label').textContent = t.sLabel;
+  if (el('txt-p-label')) el('txt-p-label').textContent = t.pLabel;
+  if (el('txt-begin')) el('txt-begin').textContent = t.begin;
+  if (el('live-stats')) el('live-stats').querySelector('.live-stats-label').textContent = t.statsLabel;
+
+  // Demo
+  if (el('txt-demo-eyebrow')) el('txt-demo-eyebrow').textContent = t.demoEyebrow;
+  if (el('txt-demo-title')) el('txt-demo-title').textContent = t.demoTitle;
+  if (el('txt-demo-sub')) el('txt-demo-sub').textContent = t.demoSub;
+  if (el('txt-age-label')) el('txt-age-label').textContent = t.ageLabel;
+  if (el('txt-gender-label')) el('txt-gender-label').textContent = t.genderLabel;
+  if (el('txt-region-label')) el('txt-region-label').textContent = t.regionLabel;
+  if (el('txt-religion-label')) el('txt-religion-label').textContent = t.religionLabel;
+  if (el('txt-skip')) el('txt-skip').textContent = t.skip;
+  if (el('txt-start-quiz')) el('txt-start-quiz').textContent = t.startQuiz;
+
+  // Chips
+  document.querySelectorAll('.chip[data-group="age"]').forEach(c => { c.textContent = t.age[c.dataset.val] || c.dataset.val; if (c.classList.contains('selected')) c.textContent = t.age[c.dataset.val] || c.dataset.val; });
+  document.querySelectorAll('.chip[data-group="gender"]').forEach(c => { c.textContent = t.gender[c.dataset.val] || c.dataset.val; });
+  document.querySelectorAll('.chip[data-group="region"]').forEach(c => { c.textContent = t.region[c.dataset.val] || c.dataset.val; });
+  document.querySelectorAll('.chip[data-group="religion"]').forEach(c => { c.textContent = t.religion[c.dataset.val] || c.dataset.val; });
+
+  // Result static labels
+  if (el('txt-breakdown')) el('txt-breakdown').textContent = t.breakdown;
+  if (el('txt-phil-match')) el('txt-phil-match').textContent = t.philMatch;
+  if (el('txt-retake')) el('txt-retake').textContent = t.retake;
+  if (el('txt-explore-schools')) el('txt-explore-schools').textContent = t.exploreSchools;
+  if (el('explore-btn')) el('explore-btn').textContent = t.explorePhil;
+
+  // Nav buttons if visible
+  if (el('back-btn')) el('back-btn').textContent = t.back;
+  if (el('next-btn')) el('next-btn').textContent = t.continue;
+
+  // Re-render question if mid-quiz
+  if (document.getElementById('question-screen').classList.contains('active')) renderQ();
+}
+
+// Override renderQ to use current lang
+const _origRenderQ = renderQ;
+// Monkey-patch renderQ for i18n
+function renderQ() {
+  const q = lang === 'zh' ? questionsCN[current] : questions[current];
+  const t = i18n[lang];
+  const pct = (current / questions.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = t.progressLabel(current + 1, questions.length);
+  document.getElementById('nav-count').textContent = t.navCount(current + 1, questions.length);
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('back-btn').textContent = current === 0 ? t.back : t.back;
+  document.getElementById('back-btn').disabled = current === 0;
+  document.getElementById('next-btn').textContent = t.continue;
+  document.getElementById('next-btn').disabled = answers[current] === undefined;
+  const wrap = document.getElementById('q-wrap');
+  wrap.style.animation = 'none'; void wrap.offsetWidth; wrap.style.animation = 'fadeUp 0.35s ease both';
+  const letters = ['A','B','C','D'];
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  q.options.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt' + (answers[current] === i ? ' selected' : '');
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span>${o.text}`;
+    btn.onclick = () => select(i);
+    opts.appendChild(btn);
+  });
+}
+
+// Override showResult to use current lang
+function showResult() {
+  answers.forEach((ans, qi) => {
+    Object.entries(questions[qi].options[ans].scores).forEach(([k,v]) => { scores[k] += v; });
+  });
+  topKey = Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+  const rEn = results[topKey];
+  const r = lang === 'zh' ? resultsCN[topKey] : rEn;
+  const t = i18n[lang];
+
+  // Always save English school name to DB
+  saveResult(rEn.school, demographics);
+
+  document.getElementById('question-screen').classList.remove('active');
+  document.getElementById('result-screen').classList.add('active');
+  document.getElementById('nav-count').textContent = '';
+  document.getElementById('res-school').textContent = r.school;
+  document.getElementById('res-type').textContent = r.type;
+  document.getElementById('res-desc').textContent = r.desc;
+  document.getElementById('res-traits').innerHTML = r.traits.map(tr => `<span class="trait">${tr}</span>`).join('');
+
+  const sNames = lang === 'zh' ? schoolNamesCN : schoolNames;
+  const maxS = Math.max(...Object.values(scores));
+  document.getElementById('score-bars').innerHTML = Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v]) => {
+    const pct = maxS > 0 ? Math.round((v/maxS)*100) : 0;
+    return `<div class="score-row"><span class="score-name">${sNames[k]}</span><div class="score-track"><div class="score-bar" style="width:0" data-w="${pct}%"></div></div><span class="score-pct">${pct}%</span></div>`;
+  }).join('');
+  setTimeout(() => { document.querySelectorAll('.score-bar').forEach(el => { el.style.width = el.dataset.w; }); }, 120);
+
+  const p = r.phil;
+  const pEn = rEn.phil;
+  document.getElementById('txt-breakdown').textContent = t.breakdown;
+  document.getElementById('txt-phil-match').textContent = t.philMatch;
+  document.getElementById('txt-retake').textContent = t.retake;
+  document.getElementById('txt-explore-schools').textContent = t.exploreSchools;
+  document.getElementById('phil-block').innerHTML = `
+    <div class="phil-name-large">${p.name}</div>
+    <div class="phil-dates">${p.dates}</div>
+    <div class="phil-bio">${p.bio}</div>
+    <div class="phil-quote">${p.quote}</div>
+    <div class="match-box"><div class="match-label">${t.whyMatch}</div><div class="match-text">${p.match}</div></div>`;
+
+  const wikiSlug = pEn.name.replace(/\./g,'').replace(/\s+/g,'_');
+  const exploreBtn = document.getElementById('explore-btn');
+  exploreBtn.textContent = t.explorePhil;
+  exploreBtn.onclick = () => { window.open(`https://en.wikipedia.org/wiki/${wikiSlug}`, '_blank'); };
+}
+
+// Override openSchoolsModal for i18n
+function openSchoolsModal() {
+  const t = i18n[lang];
+  const details = lang === 'zh' ? schoolDetailsCN : schoolDetails;
+  document.querySelector('.modal-title').textContent = t.modalTitle;
+  const list = document.getElementById('schools-list');
+  list.innerHTML = details.map(s => `
+    <div class="school-item">
+      <div class="school-item-header">
+        <span class="school-item-name">${s.name}</span>
+        <span class="school-item-phil">${s.phil}</span>
+      </div>
+      <p class="school-item-desc">${s.desc}</p>
+    </div>`).join('');
+  document.getElementById('schools-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// Override renderStats for i18n labels
+function renderStats(data) {
+  const t = i18n[lang];
+  if (!data || data.length === 0) {
+    document.getElementById('stats-content').innerHTML = `<p class="stats-loading">${t.firstToTake}</p>`;
+    document.getElementById('bubbles-wrap').style.display = 'none';
+    return;
+  }
+  const total = data.length;
+  const counts = {};
+  data.forEach(r => { counts[r.school] = (counts[r.school] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const top = sorted[0];
+  const maxCount = top[1];
+
+  const sNames = lang === 'zh' ? schoolNamesCN : schoolNames;
+  // Map english school keys to display names
+  const schoolKeyMap = { 'Rationalism': 'rationalist', 'Empiricism': 'empiricist', 'Utilitarianism': 'utilitarian', 'Virtue Ethics': 'virtue', 'Stoicism': 'stoic', 'Existentialism': 'existentialist', 'Pragmatism': 'pragmatist', 'Idealism': 'idealist' };
+
+  const barsHtml = sorted.slice(0,6).map(([school, count]) => {
+    const pct = Math.round((count / total) * 100);
+    const barW = Math.round((count / maxCount) * 100);
+    const key = schoolKeyMap[school];
+    const displayName = key && sNames[key] ? sNames[key] : school;
+    return `<div class="dist-row">
+      <span class="dist-name">${displayName}</span>
+      <div class="dist-track"><div class="dist-fill" style="width:0" data-w="${barW}%"></div></div>
+      <span class="dist-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  const topKey2 = schoolKeyMap[top[0]];
+  const topDisplay = topKey2 && sNames[topKey2] ? sNames[topKey2] : top[0];
+
+  document.getElementById('stats-content').innerHTML = `
+    <div class="live-stats-row">
+      <div class="live-stat"><span class="live-stat-num">${total.toLocaleString()}</span><span class="live-stat-label">${t.responses}</span></div>
+      <div class="live-stat"><span class="live-stat-num">${topDisplay}</span><span class="live-stat-label">${t.mostCommon}</span></div>
+    </div>
+    <div class="dist-bars">${barsHtml}</div>`;
+
+  setTimeout(() => { document.querySelectorAll('.dist-fill').forEach(el => { el.style.width = el.dataset.w; }); }, 100);
+  renderBubbles(sorted.slice(0, 5), total, sNames, schoolKeyMap);
+}
+
+function renderBubbles(top5, total, sNames, schoolKeyMap) {
+  const wrap = document.getElementById('bubbles-wrap');
+  wrap.innerHTML = '';
+  const wrapW = wrap.offsetWidth || 580;
+  const wrapH = wrap.offsetHeight || 160;
+  const maxCount = top5[0][1];
+  const maxSize = Math.min(110, wrapW / 5.5);
+  const minSize = 52;
+  const placed = [];
+  const padding = 8;
+
+  top5.forEach(([school, count], i) => {
+    const ratio = count / maxCount;
+    const size = Math.round(minSize + ratio * (maxSize - minSize));
+    const pct = Math.round((count / total) * 100);
+    const key = schoolKeyMap[school];
+    const displayName = key && sNames[key] ? sNames[key] : school;
+
+    let x, y, attempts = 0;
+    do {
+      x = padding + Math.random() * (wrapW - size - padding * 2);
+      y = padding + Math.random() * (wrapH - size - padding * 2);
+      attempts++;
+      const overlap = placed.some(p => {
+        const dx = (x + size/2) - (p.x + p.size/2);
+        const dy = (y + size/2) - (p.y + p.size/2);
+        return Math.sqrt(dx*dx + dy*dy) < (size/2 + p.size/2 + 6);
+      });
+      if (!overlap || attempts > 60) break;
+    } while (true);
+
+    placed.push({ x, y, size });
+    const delay = i * 0.9;
+    const duration = 3 + i * 0.7;
+    const el = document.createElement('div');
+    el.className = 'bubble';
+    el.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;animation:floatBubble ${duration}s ease-in-out ${delay}s infinite;`;
+    el.innerHTML = `<span class="bubble-name">${displayName}</span><span class="bubble-pct">${pct}%</span>`;
+    wrap.appendChild(el);
+  });
+}
+
+// Init
+loadStats();
+</script>
+</body>
+</html>
