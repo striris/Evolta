@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REVERSI — Flip Chess</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #080810;
+  --bg-panel: #10101c;
+  --bg-board-a: #161626;
+  --bg-board-b: #1c1c30;
+  --gold: #c9a84c;
+  --gold-light: #f0d080;
+  --gold-dark: #7a5c10;
+  --gold-dim: rgba(201,168,76,0.15);
+  --text-primary: #e4dac8;
+  --text-muted: #5a5470;
+  --green: rgba(72,196,100,0.22);
+  --green-border: rgba(72,196,100,0.55);
+  --border: rgba(201,168,76,0.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg-deep);
+  color:var(--text-primary);
+  font-family:'Crimson Pro',Georgia,serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  padding:24px 16px;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 15% 15%, rgba(201,168,76,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 85% 85%, rgba(80,60,160,0.06) 0%, transparent 60%);
+  pointer-events:none;
+}
+
+/* ── HEADER ── */
+header{text-align:center}
+header h1{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.8rem,4vw,2.8rem);
+  font-weight:900;
+  letter-spacing:0.35em;
+  text-transform:uppercase;
+  background:linear-gradient(135deg,var(--gold-dark) 0%,var(--gold) 40%,var(--gold-light) 65%,var(--gold) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.ornament{
+  display:flex;align-items:center;gap:10px;justify-content:center;
+  margin:6px 0 3px;color:var(--gold-dark);font-size:.65rem;letter-spacing:.35em;
+}
+.ornament::before,.ornament::after{
+  content:'';flex:1;max-width:70px;height:1px;
+}
+.ornament::before{background:linear-gradient(to right,transparent,var(--gold-dark))}
+.ornament::after{background:linear-gradient(to left,transparent,var(--gold-dark))}
+.subtitle{font-size:.72rem;letter-spacing:.4em;color:var(--text-muted);text-transform:uppercase;font-weight:300}
+
+/* ── LAYOUT ── */
+.game-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.panel{width:188px;display:flex;flex-direction:column;gap:14px}
+.card{
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:14px 16px;
+}
+.card-title{
+  font-family:'Cinzel',serif;
+  font-size:.55rem;letter-spacing:.38em;
+  color:var(--gold);opacity:.65;
+  text-transform:uppercase;
+  margin-bottom:11px;
+}
+
+/* ── SCORES ── */
+.score-block{display:flex;flex-direction:column;gap:9px}
+.score-row{display:flex;align-items:center;gap:10px;transition:all .3s}
+.s-disc{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  transition:box-shadow .4s;
+}
+.s-disc.b{background:radial-gradient(circle at 33% 28%,#3c3c60,#090912);border:1px solid #2a2a3e;box-shadow:0 3px 10px rgba(0,0,0,.7)}
+.s-disc.w{background:radial-gradient(circle at 33% 28%,#fff,#c0b8a8);border:1px solid #bbb;box-shadow:0 3px 10px rgba(0,0,0,.5)}
+.s-info{flex:1}
+.s-label{font-size:.6rem;color:var(--text-muted);letter-spacing:.2em;text-transform:uppercase}
+.s-val{font-family:'Cinzel',serif;font-size:1.6rem;font-weight:600;color:var(--text-primary);line-height:1;transition:color .3s}
+.score-row.active .s-val{color:var(--gold)}
+.score-row.active .s-disc.b{box-shadow:0 0 16px rgba(201,168,76,.5)}
+.score-row.active .s-disc.w{box-shadow:0 0 16px rgba(201,168,76,.5)}
+
+/* ── TURN ── */
+.turn-body{text-align:center;padding:4px 0}
+.turn-disc-lg{
+  width:44px;height:44px;border-radius:50%;
+  margin:0 auto 9px;
+  transition:background .5s,box-shadow .5s;
+}
+.turn-disc-lg.b{background:radial-gradient(circle at 33% 28%,#3c3c60,#090912);border:1px solid #2a2a3e;box-shadow:0 4px 16px rgba(0,0,0,.8)}
+.turn-disc-lg.w{background:radial-gradient(circle at 33% 28%,#fff,#c0b8a8);border:1px solid #bbb;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.turn-lbl{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.22em;color:var(--gold);text-transform:uppercase}
+.turn-sub{font-size:.8rem;color:var(--text-muted);margin-top:2px}
+
+/* ── AI ── */
+.ai-body{display:flex;flex-direction:column;gap:6px}
+.ai-status-text{font-size:.72rem;color:var(--text-muted);line-height:1.5}
+.thinking{display:none;align-items:center;gap:7px;font-size:.65rem;color:var(--gold);letter-spacing:.25em;text-transform:uppercase}
+.thinking.on{display:flex}
+.dots span{
+  display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--gold);margin:0 1px;
+  animation:bounce 1.1s ease-in-out infinite;
+}
+.dots span:nth-child(2){animation-delay:.18s}
+.dots span:nth-child(3){animation-delay:.36s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.35}40%{transform:translateY(-6px);opacity:1}}
+
+/* ── DIFF ── */
+.diff-btns{display:flex;flex-direction:column;gap:6px}
+.diff-btn{
+  padding:7px 10px;background:transparent;
+  border:1px solid rgba(201,168,76,.18);border-radius:4px;
+  color:var(--text-muted);
+  font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;
+  cursor:pointer;text-transform:uppercase;transition:all .2s;
+}
+.diff-btn:hover{border-color:var(--gold);color:var(--gold)}
+.diff-btn.on{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+
+/* ── ACTIONS ── */
+.act-btns{display:flex;flex-direction:column;gap:7px}
+.btn-gold{
+  padding:9px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+  border:none;border-radius:5px;color:#120e00;
+  font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.28em;font-weight:700;
+  cursor:pointer;text-transform:uppercase;transition:all .2s;
+}
+.btn-gold:hover{filter:brightness(1.18);transform:translateY(-1px)}
+.btn-ghost{
+  padding:8px;background:transparent;
+  border:1px solid rgba(201,168,76,.25);border-radius:5px;
+  color:var(--text-muted);
+  font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;
+  cursor:pointer;text-transform:uppercase;transition:all .2s;
+}
+.btn-ghost:hover{color:var(--gold);border-color:var(--gold)}
+
+/* ── LOG ── */
+.log-scroll{
+  max-height:150px;overflow-y:auto;
+  font-size:.71rem;color:var(--text-muted);line-height:2;
+  scrollbar-width:thin;scrollbar-color:var(--gold-dark) transparent;
+}
+.log-scroll::-webkit-scrollbar{width:3px}
+.log-scroll::-webkit-scrollbar-thumb{background:var(--gold-dark);border-radius:2px}
+.log-entry .mv{color:var(--gold)}
+.log-entry .ai-mv{color:#8ab4f8}
+
+/* ── BOARD AREA ── */
+.board-area{display:flex;flex-direction:column;align-items:center;gap:8px}
+.lbl-row{
+  display:grid;
+  grid-template-columns:24px repeat(8, 58px);
+  padding-left:0;
+}
+.lbl-row .c-lbl{
+  text-align:center;
+  font-family:'Cinzel',serif;font-size:.58rem;
+  color:var(--text-muted);letter-spacing:.08em;
+}
+.board-outer{display:flex;gap:0}
+.r-lbls{
+  display:flex;flex-direction:column;
+  width:24px;
+}
+.r-lbl{
+  height:58px;display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:.58rem;color:var(--text-muted);
+}
+
+/* ── BOARD ── */
+.board{
+  display:grid;
+  grid-template-columns:repeat(8,58px);
+  grid-template-rows:repeat(8,58px);
+  border:2px solid var(--gold-dark);
+  border-radius:5px;overflow:hidden;
+  box-shadow:0 0 60px rgba(0,0,0,.9),0 0 0 1px rgba(201,168,76,.06),inset 0 0 50px rgba(0,0,0,.4);
+  position:relative;
+}
+
+/* ── CELL ── */
+.cell{
+  width:58px;height:58px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:default;position:relative;
+  transition:background .12s;
+}
+.cell.hint{cursor:pointer}
+.cell.hint::after{
+  content:'';position:absolute;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--green);border:2px solid var(--green-border);
+  animation:hpulse 1.6s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes hpulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.15);opacity:1}}
+.cell.hint:hover{background:rgba(201,168,76,.07) !important}
+.cell.hint:hover::after{background:rgba(72,196,100,.4)}
+.cell.last::before{
+  content:'';position:absolute;inset:3px;
+  border:2px solid rgba(201,168,76,.38);border-radius:3px;
+  pointer-events:none;
+}
+
+/* ── PIECE ── */
+.pw{width:44px;height:44px;perspective:220px}
+.piece{
+  width:100%;height:100%;border-radius:50%;
+  transform-style:preserve-3d;
+  position:relative;
+}
+.pf{
+  position:absolute;inset:0;border-radius:50%;
+  backface-visibility:hidden;
+}
+.pb{
+  background:radial-gradient(circle at 33% 28%,#3c3c64,#080812);
+  border:1.5px solid #282840;
+  box-shadow:inset 0 -3px 8px rgba(0,0,0,.7),inset 0 2px 5px rgba(255,255,255,.08),0 5px 14px rgba(0,0,0,.8);
+}
+.pw-face{
+  background:radial-gradient(circle at 33% 28%,#fff,#b8b0a0);
+  border:1.5px solid #c0b8a8;
+  box-shadow:inset 0 -3px 8px rgba(0,0,0,.25),inset 0 2px 5px rgba(255,255,255,.9),0 5px 14px rgba(0,0,0,.5);
+  transform:rotateY(180deg);
+}
+@keyframes place-anim{
+  0%{transform:scale(0) translateY(-12px);opacity:0}
+  100%{transform:scale(1) translateY(0);opacity:1}
+}
+
+/* ── STATUS BAR ── */
+.status-bar{
+  height:20px;font-size:.72rem;
+  color:var(--text-muted);letter-spacing:.22em;text-transform:uppercase;
+  text-align:center;
+}
+.status-bar.hi{color:var(--gold)}
+
+.ai-think-bar{
+  display:none;align-items:center;justify-content:center;gap:8px;
+  font-size:.68rem;color:var(--text-muted);letter-spacing:.2em;text-transform:uppercase;
+  height:20px;
+}
+.ai-think-bar.on{display:flex}
+
+/* ── GAME OVER OVERLAY ── */
+.go-overlay{
+  position:absolute;inset:0;
+  background:rgba(8,8,16,.93);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  border-radius:3px;
+  animation:fadein .5s ease;
+  z-index:20;
+}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.go-title{
+  font-family:'Cinzel',serif;font-size:2rem;font-weight:900;letter-spacing:.3em;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-align:center;
+}
+.go-sub{font-size:1rem;color:var(--text-primary);letter-spacing:.1em;text-align:center}
+
+/* ── TUTORIAL OVERLAY ── */
+#tut-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(4,4,12,.97);
+  display:flex;align-items:center;justify-content:center;
+  animation:fadein .5s ease;
+}
+#tut-overlay.hidden{display:none}
+.tut-box{
+  width:min(540px,94vw);
+  background:var(--bg-panel);
+  border:1px solid rgba(201,168,76,.22);
+  border-radius:14px;
+  padding:38px 36px 30px;
+  display:flex;flex-direction:column;align-items:center;gap:22px;
+  position:relative;
+  box-shadow:0 0 100px rgba(0,0,0,.95),0 0 0 1px rgba(201,168,76,.05),inset 0 1px 0 rgba(201,168,76,.08);
+}
+.tut-top{width:100%;display:flex;flex-direction:column;align-items:center;gap:9px}
+.tut-step-lbl{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.44em;color:var(--gold);opacity:.55;text-transform:uppercase}
+.tut-progress{width:200px;height:2px;background:rgba(201,168,76,.1);border-radius:1px;overflow:hidden}
+.tut-bar{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));border-radius:1px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.tut-content{
+  width:100%;min-height:295px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;text-align:center;
+}
+.tut-ttl{
+  font-family:'Cinzel',serif;font-size:clamp(1rem,2.4vw,1.38rem);
+  font-weight:700;letter-spacing:.24em;color:var(--gold);
+  text-transform:uppercase;line-height:1.3;
+}
+.tut-desc{
+  font-size:.9rem;color:var(--text-primary);line-height:1.85;
+  max-width:400px;font-weight:300;
+}
+.tut-desc b{color:var(--gold-light);font-weight:400}
+.tut-nav{display:flex;gap:10px;align-items:center}
+.tut-skip{
+  position:absolute;top:14px;right:18px;
+  background:none;border:none;color:var(--text-muted);
+  font-size:.57rem;letter-spacing:.3em;cursor:pointer;
+  font-family:'Cinzel',serif;text-transform:uppercase;transition:color .2s;
+}
+.tut-skip:hover{color:var(--gold)}
+/* mini board */
+.mb{display:grid;border:1.5px solid rgba(201,168,76,.28);border-radius:5px;overflow:hidden;box-shadow:0 0 28px rgba(0,0,0,.7)}
+.mc{display:flex;align-items:center;justify-content:center;position:relative}
+.mc.a{background:var(--bg-board-a)}.mc.b{background:var(--bg-board-b)}
+.td{border-radius:50%;display:block;flex-shrink:0}
+.td.bk{background:radial-gradient(circle at 33% 28%,#3c3c64,#080812);border:1.5px solid #282840;box-shadow:0 3px 8px rgba(0,0,0,.8)}
+.td.wh{background:radial-gradient(circle at 33% 28%,#fff,#b8b0a0);border:1.5px solid #c0b8a8;box-shadow:0 3px 8px rgba(0,0,0,.5)}
+.td.ht{background:rgba(72,196,100,.22);border:2px solid rgba(72,196,100,.6);animation:hpulse 1.4s ease-in-out infinite}
+/* tutorial animations */
+@keyframes float-bk{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-10px) rotate(-8deg)}}
+@keyframes float-wh{0%,100%{transform:translateY(0) rotate(8deg) }50%{transform:translateY(-10px) rotate(8deg)}}
+@keyframes row-in{from{opacity:0;transform:translateX(-3px)}to{opacity:1;transform:translateX(0)}}
+@keyframes drop-in{from{transform:scale(0) translateY(-8px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+@keyframes new-piece{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes disc-flip{
+  0%  {background:radial-gradient(circle at 33% 28%,#fff,#b8b0a0);transform:scaleX(1)}
+  44% {transform:scaleX(0)}
+  56% {background:radial-gradient(circle at 33% 28%,#3c3c64,#080812);transform:scaleX(0)}
+  100%{background:radial-gradient(circle at 33% 28%,#3c3c64,#080812);box-shadow:0 3px 8px rgba(0,0,0,.8);transform:scaleX(1)}
+}
+@keyframes count-up{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes arrow-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+</style>
+</head>
+<body>
+
+<!-- ── TUTORIAL OVERLAY ── -->
+<div id="tut-overlay" class="hidden">
+  <div class="tut-box">
+    <button class="tut-skip" onclick="closeTutorial()">Skip ✕</button>
+    <div class="tut-top">
+      <div class="tut-step-lbl" id="tut-step-lbl">Step 1 of 6</div>
+      <div class="tut-progress"><div class="tut-bar" id="tut-bar" style="width:16.6%"></div></div>
+    </div>
+    <div class="tut-content" id="tut-content"></div>
+    <div class="tut-nav">
+      <button class="btn-ghost" id="tut-prev-btn" onclick="tutPrev()" disabled style="padding:9px 18px;font-size:.6rem">← Back</button>
+      <button class="btn-gold" id="tut-next-btn" onclick="tutNext()" style="padding:9px 24px">Next →</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1>Reversi</h1>
+  <div class="ornament">◆ Flip Chess ◆</div>
+  <div class="subtitle">A Game of Positional Dominance</div>
+</header>
+
+<div class="game-wrap">
+
+  <!-- LEFT PANEL -->
+  <div class="panel">
+    <div class="card">
+      <div class="card-title">Score</div>
+      <div class="score-block">
+        <div class="score-row active" id="sr-b">
+          <div class="s-disc b"></div>
+          <div class="s-info">
+            <div class="s-label">You (Black)</div>
+            <div class="s-val" id="sv-b">2</div>
+          </div>
+        </div>
+        <div class="score-row" id="sr-w">
+          <div class="s-disc w"></div>
+          <div class="s-info">
+            <div class="s-label">AI (White)</div>
+            <div class="s-val" id="sv-w">2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Current Turn</div>
+      <div class="turn-body">
+        <div class="turn-disc-lg b" id="turn-disc"></div>
+        <div class="turn-lbl" id="turn-lbl">Your Move</div>
+        <div class="turn-sub" id="turn-sub">Black</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">AI Status</div>
+      <div class="ai-body">
+        <div class="thinking" id="thinking-ind">
+          <div class="dots"><span></span><span></span><span></span></div>
+          Thinking
+        </div>
+        <div class="ai-status-text" id="ai-status-txt">Awaiting your move</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOARD -->
+  <div class="board-area">
+    <div class="lbl-row">
+      <div></div>
+      <div class="c-lbl">A</div><div class="c-lbl">B</div><div class="c-lbl">C</div><div class="c-lbl">D</div>
+      <div class="c-lbl">E</div><div class="c-lbl">F</div><div class="c-lbl">G</div><div class="c-lbl">H</div>
+    </div>
+    <div class="board-outer">
+      <div class="r-lbls">
+        <div class="r-lbl">1</div><div class="r-lbl">2</div><div class="r-lbl">3</div><div class="r-lbl">4</div>
+        <div class="r-lbl">5</div><div class="r-lbl">6</div><div class="r-lbl">7</div><div class="r-lbl">8</div>
+      </div>
+      <div class="board" id="board"></div>
+    </div>
+    <div class="status-bar" id="status-bar">Place your piece on a highlighted square</div>
+    <div class="ai-think-bar" id="ai-think-bar">
+      <div class="dots"><span></span><span></span><span></span></div>
+      AI is calculating the best move
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel">
+    <div class="card">
+      <div class="card-title">Difficulty</div>
+      <div class="diff-btns">
+        <button class="diff-btn" onclick="setDiff(this,2)">Novice (2-ply)</button>
+        <button class="diff-btn on" onclick="setDiff(this,4)">Adept (4-ply)</button>
+        <button class="diff-btn" onclick="setDiff(this,6)">Master (6-ply)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Actions</div>
+      <div class="act-btns">
+        <button class="btn-gold" onclick="newGame()">New Game</button>
+        <button class="btn-ghost" onclick="toggleHints()">Toggle Hints</button>
+        <button class="btn-ghost" onclick="undoMove()">Undo Move</button>
+        <button class="btn-ghost" onclick="showTutorial()" style="border-color:rgba(201,168,76,.4);color:rgba(201,168,76,.7)">Learn Rules</button>
+      </div>
+    </div>
+
+    <div class="card" style="flex:1;min-height:160px">
+      <div class="card-title">Move Log</div>
+      <div class="log-scroll" id="move-log"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────── CONSTANTS ───────────────
+const EMPTY=0,BLACK=1,WHITE=2;
+const DIRS=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const COLS='ABCDEFGH';
+// Positional weight table
+const W=[
+  [120,-20,20, 5, 5,20,-20,120],
+  [-20,-40,-5,-5,-5,-5,-40,-20],
+  [ 20, -5,15, 3, 3,15, -5, 20],
+  [  5, -5, 3, 3, 3, 3, -5,  5],
+  [  5, -5, 3, 3, 3, 3, -5,  5],
+  [ 20, -5,15, 3, 3,15, -5, 20],
+  [-20,-40,-5,-5,-5,-5,-40,-20],
+  [120,-20,20, 5, 5,20,-20,120]
+];
+
+// ─────────────── STATE ───────────────
+let board,currentPlayer,aiDepth=4,showHints=true,gameOver=false;
+let lastMove=null,moveHistory=[],logCount=0;
+
+// ─────────────── CORE LOGIC ───────────────
+function initBoard(){
+  board=Array.from({length:8},()=>Array(8).fill(EMPTY));
+  board[3][3]=WHITE;board[4][4]=WHITE;
+  board[3][4]=BLACK;board[4][3]=BLACK;
+}
+
+function getFlips(b,r,c,p){
+  const opp=p===BLACK?WHITE:BLACK,flips=[];
+  for(const[dr,dc]of DIRS){
+    const line=[];let nr=r+dr,nc=c+dc;
+    while(nr>=0&&nr<8&&nc>=0&&nc<8&&b[nr][nc]===opp){line.push([nr,nc]);nr+=dr;nc+=dc;}
+    if(line.length&&nr>=0&&nr<8&&nc>=0&&nc<8&&b[nr][nc]===p)flips.push(...line);
+  }
+  return flips;
+}
+
+function getLegal(b,p){
+  const m=[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++)
+    if(b[r][c]===EMPTY&&getFlips(b,r,c,p).length>0)m.push([r,c]);
+  return m;
+}
+
+function applyMove(b,r,c,p){
+  const nb=b.map(row=>[...row]);
+  getFlips(nb,r,c,p).forEach(([fr,fc])=>nb[fr][fc]=p);
+  nb[r][c]=p;
+  return nb;
+}
+
+function countPieces(b){
+  let bl=0,wh=0;
+  for(const row of b)for(const v of row){if(v===BLACK)bl++;else if(v===WHITE)wh++;}
+  return{black:bl,white:wh};
+}
+
+// ─────────────── AI: MINIMAX + ALPHA-BETA ───────────────
+function evaluate(b){
+  const{black,white}=countPieces(b);
+  const total=black+white;
+  const late=total>=44;
+
+  // Positional score
+  let pos=0;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    if(b[r][c]===WHITE)pos+=W[r][c];
+    else if(b[r][c]===BLACK)pos-=W[r][c];
+  }
+
+  // Mobility
+  const wm=getLegal(b,WHITE).length,bm=getLegal(b,BLACK).length;
+  const mob=(wm-bm)*(late?2:6);
+
+  // Piece count
+  const cnt=(white-black)*(late?4:1);
+
+  // Corner bonus
+  const corners=[[0,0],[0,7],[7,0],[7,7]];
+  let cor=0;
+  for(const[cr,cc]of corners){
+    if(b[cr][cc]===WHITE)cor+=30;
+    else if(b[cr][cc]===BLACK)cor-=30;
+  }
+
+  return pos*1.4+mob+cnt+cor*2;
+}
+
+function minimax(b,depth,alpha,beta,maxing){
+  const p=maxing?WHITE:BLACK;
+  const moves=getLegal(b,p);
+  if(depth===0||(moves.length===0&&getLegal(b,maxing?BLACK:WHITE).length===0))
+    return evaluate(b);
+  if(moves.length===0)return minimax(b,depth-1,alpha,beta,!maxing);
+
+  if(maxing){
+    let best=-Infinity;
+    for(const[r,c]of moves){
+      best=Math.max(best,minimax(applyMove(b,r,c,WHITE),depth-1,alpha,beta,false));
+      alpha=Math.max(alpha,best);
+      if(beta<=alpha)break;
+    }
+    return best;
+  }else{
+    let best=Infinity;
+    for(const[r,c]of moves){
+      best=Math.min(best,minimax(applyMove(b,r,c,BLACK),depth-1,alpha,beta,true));
+      beta=Math.min(beta,best);
+      if(beta<=alpha)break;
+    }
+    return best;
+  }
+}
+
+function getBestMove(b,depth){
+  const moves=getLegal(b,WHITE);
+  if(!moves.length)return null;
+  let best=-Infinity,bestMove=null;
+  for(const[r,c]of moves){
+    const score=minimax(applyMove(b,r,c,WHITE),depth-1,-Infinity,Infinity,false);
+    if(score>best){best=score;bestMove=[r,c];}
+  }
+  return bestMove;
+}
+
+// ─────────────── RENDERING ───────────────
+function buildBoardDOM(){
+  const el=document.getElementById('board');
+  el.innerHTML='';
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const cell=document.createElement('div');
+    cell.className='cell';
+    cell.style.background=(r+c)%2===0?'var(--bg-board-a)':'var(--bg-board-b)';
+    cell.dataset.r=r;cell.dataset.c=c;
+    cell.addEventListener('click',()=>onCellClick(r,c));
+    el.appendChild(cell);
+  }
+}
+
+function getCellEl(r,c){
+  return document.getElementById('board').children[r*8+c];
+}
+
+function render(){
+  const legal=(!gameOver&&currentPlayer===BLACK)?getLegal(board,BLACK):[];
+  const lset=new Set(legal.map(([r,c])=>`${r},${c}`));
+
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const cell=getCellEl(r,c);
+    const isHint=showHints&&lset.has(`${r},${c}`);
+    const isLast=lastMove&&lastMove[0]===r&&lastMove[1]===c;
+    cell.classList.toggle('hint',isHint);
+    cell.classList.toggle('last',isLast);
+
+    const existing=cell.querySelector('.pw');
+    const val=board[r][c];
+    if(val===EMPTY){if(existing)cell.removeChild(existing);}
+    else{
+      if(!existing){
+        const wrap=document.createElement('div');wrap.className='pw';
+        const piece=document.createElement('div');piece.className='piece';
+        const pf1=document.createElement('div');pf1.className='pf pb';
+        const pf2=document.createElement('div');pf2.className='pf pw-face';
+        piece.appendChild(pf1);piece.appendChild(pf2);
+        wrap.appendChild(piece);cell.appendChild(wrap);
+      }
+      const piece=cell.querySelector('.piece');
+      piece.style.transition='transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+      piece.style.transform=val===BLACK?'rotateY(0deg)':'rotateY(180deg)';
+    }
+  }
+  updateScoreUI();updateTurnUI();
+}
+
+function animatePlace(r,c,player,flips,cb){
+  const cell=getCellEl(r,c);
+  // Place piece — animation goes on WRAPPER so it never fights .piece's rotateY
+  const wrap=document.createElement('div');wrap.className='pw';
+  wrap.style.animation='place-anim 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards';
+  const piece=document.createElement('div');
+  piece.className='piece';
+  const pf1=document.createElement('div');pf1.className='pf pb';
+  const pf2=document.createElement('div');pf2.className='pf pw-face';
+  piece.appendChild(pf1);piece.appendChild(pf2);
+  wrap.appendChild(piece);cell.appendChild(wrap);
+  // Set color immediately — no animation conflict
+  piece.style.transform=player===BLACK?'rotateY(0deg)':'rotateY(180deg)';
+
+  // Flip captured pieces with stagger
+  let delay=100;
+  flips.forEach(([fr,fc])=>{
+    const p=getCellEl(fr,fc).querySelector('.piece');
+    if(!p)return;
+    setTimeout(()=>{
+      p.style.transition='transform 0.32s cubic-bezier(0.4,0,0.2,1)';
+      p.style.transform=player===BLACK?'rotateY(0deg)':'rotateY(180deg)';
+    },delay);
+    delay+=45;
+  });
+
+  setTimeout(cb,delay+100);
+}
+
+function updateScoreUI(){
+  const{black,white}=countPieces(board);
+  document.getElementById('sv-b').textContent=black;
+  document.getElementById('sv-w').textContent=white;
+  document.getElementById('sr-b').classList.toggle('active',currentPlayer===BLACK);
+  document.getElementById('sr-w').classList.toggle('active',currentPlayer===WHITE);
+}
+
+function updateTurnUI(){
+  const disc=document.getElementById('turn-disc');
+  disc.className='turn-disc-lg '+(currentPlayer===BLACK?'b':'w');
+  document.getElementById('turn-lbl').textContent=currentPlayer===BLACK?'Your Move':'AI Thinking';
+  document.getElementById('turn-sub').textContent=currentPlayer===BLACK?'Black':'White';
+}
+
+function setThinking(on){
+  document.getElementById('thinking-ind').classList.toggle('on',on);
+  document.getElementById('ai-think-bar').classList.toggle('on',on);
+  document.getElementById('ai-status-txt').textContent=on?'Calculating optimal move…':'Awaiting your move';
+}
+
+function setStatus(msg,hi=false){
+  const el=document.getElementById('status-bar');
+  el.textContent=msg;
+  el.className='status-bar'+(hi?' hi':'');
+}
+
+function addLog(txt,isAI){
+  logCount++;
+  const log=document.getElementById('move-log');
+  const div=document.createElement('div');div.className='log-entry';
+  const sp=document.createElement('span');sp.className=isAI?'ai-mv':'mv';
+  sp.textContent=`${logCount}. `;
+  div.appendChild(sp);
+  div.appendChild(document.createTextNode(txt));
+  log.appendChild(div);
+  log.scrollTop=log.scrollHeight;
+}
+
+// ─────────────── GAME FLOW ───────────────
+function onCellClick(r,c){
+  if(gameOver||currentPlayer!==BLACK)return;
+  if(board[r][c]!==EMPTY)return;          // Bug 2 fix: block occupied cells
+  const flips=getFlips(board,r,c,BLACK);
+  if(!flips.length)return;
+
+  moveHistory.push({board:board.map(row=>[...row]),lastMove:[...( lastMove||[])],currentPlayer});
+  board=applyMove(board,r,c,BLACK);
+  lastMove=[r,c];
+  addLog(`You → ${COLS[c]}${r+1}  (+${flips.length})`,false);
+
+  // Animate then advance
+  animatePlace(r,c,BLACK,flips,()=>{
+    render();
+    advance(WHITE);
+  });
+}
+
+function advance(player){
+  currentPlayer=player;
+  const moves=getLegal(board,player);
+
+  if(!moves.length){
+    const other=player===BLACK?WHITE:BLACK;
+    if(!getLegal(board,other).length){endGame();return;}
+    const skipMsg=player===BLACK?'No moves for you — AI goes again':'No moves for AI — Your turn';
+    setStatus(skipMsg,true);
+    updateTurnUI();
+    setTimeout(()=>{
+      setStatus('Place your piece on a highlighted square');
+      advance(other);
+    },1600);
+    return;
+  }
+
+  if(player===WHITE){
+    setThinking(true);updateTurnUI();render();
+    setTimeout(()=>{
+      const move=getBestMove(board,aiDepth);
+      setThinking(false);
+      if(!move){advance(BLACK);return;}
+      const[r,c]=move;
+      const flips=getFlips(board,r,c,WHITE);
+      moveHistory.push({board:board.map(row=>[...row]),lastMove:[...(lastMove||[])],currentPlayer});
+      board=applyMove(board,r,c,WHITE);
+      lastMove=move;
+      addLog(`AI  → ${COLS[c]}${r+1}  (+${flips.length})`,true);
+      animatePlace(r,c,WHITE,flips,()=>{
+        render();
+        advance(BLACK);
+      });
+    },300+Math.random()*300);
+  }else{
+    render();
+    setStatus('Place your piece on a highlighted square');
+  }
+}
+
+function endGame(){
+  gameOver=true;render();
+  const{black,white}=countPieces(board);
+  let title,sub;
+  if(black>white){title='Victory!';sub=`You win — Black ${black}  vs  White ${white}`;}
+  else if(white>black){title='Defeated';sub=`AI wins — White ${white}  vs  Black ${black}`;}
+  else{title='Draw';sub=`${black} — ${white}  ·  Perfectly balanced`;}
+
+  const boardEl=document.getElementById('board');
+  const ov=document.createElement('div');ov.className='go-overlay';
+  ov.innerHTML=`
+    <div class="go-title">${title}</div>
+    <div class="go-sub">${sub}</div>
+    <button class="btn-gold" style="margin-top:10px;padding:10px 24px" onclick="newGame()">Play Again</button>
+  `;
+  boardEl.appendChild(ov);
+}
+
+// ─────────────── CONTROLS ───────────────
+function newGame(){
+  gameOver=false;isAITurn=false;lastMove=null;moveHistory=[];logCount=0;
+  currentPlayer=BLACK;
+  initBoard();buildBoardDOM();
+  setThinking(false);
+  document.getElementById('move-log').innerHTML='';
+  setStatus('Place your piece on a highlighted square');
+  render();
+}
+
+function setDiff(btn,depth){
+  aiDepth=depth;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function toggleHints(){showHints=!showHints;render();}
+
+function undoMove(){
+  if(moveHistory.length<2||gameOver)return;
+  moveHistory.pop();
+  const s=moveHistory.pop();
+  board=s.board;lastMove=s.lastMove.length?s.lastMove:null;
+  currentPlayer=BLACK;gameOver=false;
+  logCount=Math.max(0,logCount-2);
+  const log=document.getElementById('move-log');
+  for(let i=0;i<2;i++)if(log.lastChild)log.removeChild(log.lastChild);
+  buildBoardDOM();render();
+}
+
+// ─────────────── TUTORIAL ───────────────
+const TSTEPS=6;
+let tStep=0;
+
+function mb(rows,cols,px,fn){
+  let h='';
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const bg=(r+c)%2===0?'a':'b';
+    h+=`<div class="mc ${bg}" style="width:${px}px;height:${px}px">${fn(r,c)}</div>`;
+  }
+  return `<div class="mb" style="grid-template-columns:repeat(${cols},${px}px)">${h}</div>`;
+}
+function td(cls,sz,st=''){return `<div class="td ${cls}" style="width:${sz}px;height:${sz}px;${st}"></div>`;}
+
+const TUT_CONTENT=[
+  // 0 — Welcome
+  ()=>`
+    <div style="display:flex;gap:32px;align-items:center">
+      <div class="td bk" style="width:66px;height:66px;animation:float-bk 2.8s ease-in-out infinite;transform:rotate(-8deg)"></div>
+      <div class="td wh" style="width:66px;height:66px;animation:float-wh 2.8s ease-in-out .4s infinite;transform:rotate(8deg)"></div>
+    </div>
+    <div class="tut-ttl" style="font-size:1.55rem;letter-spacing:.32em">Welcome</div>
+    <div style="font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.38em;color:var(--gold-dark);text-transform:uppercase;margin-top:-10px">to Reversi · Flip Chess</div>
+    <div class="tut-desc">A classic game of <b>strategic placement</b> and <b>territorial control</b>.<br>Learn the rules in 5 quick steps, then challenge the AI.</div>
+  `,
+  // 1 — The Board
+  ()=>`
+    <div class="tut-ttl">The Board</div>
+    ${(()=>{
+      let h='';
+      for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+        const bg=(r+c)%2===0?'a':'b';
+        h+=`<div class="mc ${bg}" style="width:20px;height:20px;opacity:0;animation:row-in .32s ease ${(r*.065).toFixed(3)}s forwards"></div>`;
+      }
+      return `<div class="mb" style="grid-template-columns:repeat(8,20px)">${h}</div>`;
+    })()}
+    <div class="tut-desc">The game is played on an <b>8 × 8 grid</b> of 64 squares.<br>You play as <b>Black ●</b> · The AI plays as <b>White ○</b>.<br>Black always moves first.</div>
+  `,
+  // 2 — Starting Setup
+  ()=>`
+    <div class="tut-ttl">Starting Setup</div>
+    ${mb(6,6,38,(r,c)=>{
+      const d={};
+      d['2,2']=['wh',.1]; d['2,3']=['bk',.3]; d['3,2']=['bk',.5]; d['3,3']=['wh',.7];
+      const k=`${r},${c}`;
+      if(d[k])return td(d[k][0],28,`animation:drop-in .45s ${d[k][1]}s cubic-bezier(.34,1.56,.64,1) both`);
+      return '';
+    })}
+    <div class="tut-desc"><b>White</b> and <b>Black</b> each begin with <b>2 pieces</b> arranged diagonally in the center.<br>Watch them fall into position ↑</div>
+  `,
+  // 3 — Legal Moves
+  ()=>`
+    <div class="tut-ttl">Making a Move</div>
+    ${mb(5,5,42,(r,c)=>{
+      if(r===1&&c===1)return td('wh',32);
+      if(r===1&&c===2)return td('bk',32);
+      if(r===2&&c===1)return td('bk',32);
+      if(r===2&&c===2)return td('wh',32);
+      if(r===0&&c===1)return td('ht',20);
+      if(r===1&&c===3)return td('ht',20);
+      if(r===3&&c===0)return td('ht',20);
+      return '';
+    })}
+    <div style="font-size:.72rem;letter-spacing:.12em;color:rgba(72,196,100,.85);margin-top:-4px">● Green dots show all legal moves</div>
+    <div class="tut-desc">You may only place a piece on a square that <b>flanks</b> at least one opponent piece in a straight line — horizontal, vertical, or diagonal.</div>
+  `,
+  // 4 — Capturing
+  ()=>`
+    <div class="tut-ttl">Capturing Pieces</div>
+    <div id="tut-flip-wrap">
+      ${mb(5,5,42,(r,c)=>{
+        if(r===1&&c===1)return `<div class="td wh" id="tf-wh" style="width:32px;height:32px"></div>`;
+        if(r===1&&c===2)return td('bk',32);
+        if(r===2&&c===1)return td('bk',32);
+        if(r===2&&c===2)return td('wh',32);
+        if(r===0&&c===1)return `<div class="td ht" id="tf-ht" style="width:20px;height:20px"></div>`;
+        return '';
+      })}
+    </div>
+    <div class="tut-desc" id="tut-flip-txt">A <b>Black</b> piece lands on the highlighted square — sandwiching the <b>White</b> piece above it between two Black pieces.<br>That White piece <b>flips to Black!</b></div>
+  `,
+  // 5 — Win Condition
+  ()=>`
+    <div class="tut-ttl">How to Win</div>
+    <div style="display:flex;gap:32px;align-items:center">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+        <div class="td bk" style="width:50px;height:50px;animation:count-up .5s .1s both"></div>
+        <div style="font-family:'Cinzel',serif;font-size:2rem;font-weight:700;color:var(--text-primary);animation:count-up .5s .25s both">34</div>
+        <div style="font-size:.58rem;letter-spacing:.28em;color:var(--text-muted);text-transform:uppercase">You · Black</div>
+      </div>
+      <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--gold-dark);margin-top:-20px">vs</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+        <div class="td wh" style="width:50px;height:50px;animation:count-up .5s .1s both"></div>
+        <div style="font-family:'Cinzel',serif;font-size:2rem;font-weight:700;color:var(--text-primary);animation:count-up .5s .4s both">30</div>
+        <div style="font-size:.58rem;letter-spacing:.28em;color:var(--text-muted);text-transform:uppercase">AI · White</div>
+      </div>
+    </div>
+    <div style="font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;animation:count-up .6s .6s both">♛  Black Wins!</div>
+    <div class="tut-desc">The game ends when the board is <b>full</b> or neither player can move.<br>The player with the <b>most pieces wins</b>.<br>Pro tip: <b>capture the corners</b> — they can never be flipped!</div>
+  `,
+];
+
+// after-render side-effects per step
+const TUT_AFTER=[
+  null,null,null,null,
+  ()=>{
+    // Step 4: animate the flip after 900ms
+    setTimeout(()=>{
+      const ht=document.getElementById('tf-ht');
+      const wh=document.getElementById('tf-wh');
+      if(!ht||!wh)return;
+      // Replace hint dot with new black piece
+      ht.className='td bk';
+      ht.style.cssText='width:32px;height:32px;animation:new-piece .32s cubic-bezier(.34,1.56,.64,1) both';
+      // Flip the white piece after a short delay
+      setTimeout(()=>{
+        if(!wh)return;
+        wh.style.animation='disc-flip .58s ease forwards';
+      },420);
+    },900);
+  },
+  null,
+];
+
+function showTutorial(){
+  tStep=0;
+  document.getElementById('tut-overlay').classList.remove('hidden');
+  renderTutStep();
+}
+function closeTutorial(){
+  document.getElementById('tut-overlay').classList.add('hidden');
+  try{localStorage.setItem('reversi-tut-seen','1');}catch(e){}
+}
+function tutNext(){
+  if(tStep<TSTEPS-1){tStep++;renderTutStep();}
+  else{closeTutorial();}
+}
+function tutPrev(){
+  if(tStep>0){tStep--;renderTutStep();}
+}
+function renderTutStep(){
+  const pct=((tStep+1)/TSTEPS*100).toFixed(1);
+  document.getElementById('tut-bar').style.width=pct+'%';
+  document.getElementById('tut-step-lbl').textContent=`Step ${tStep+1} of ${TSTEPS}`;
+  document.getElementById('tut-prev-btn').disabled=tStep===0;
+  document.getElementById('tut-next-btn').textContent=tStep===TSTEPS-1?'Play Now ▶':'Next →';
+  const box=document.getElementById('tut-content');
+  box.style.opacity='0';box.style.transform='translateY(10px)';
+  setTimeout(()=>{
+    box.innerHTML=TUT_CONTENT[tStep]();
+    if(TUT_AFTER[tStep])TUT_AFTER[tStep]();
+    requestAnimationFrame(()=>{
+      box.style.transition='opacity .32s ease,transform .32s ease';
+      box.style.opacity='1';box.style.transform='translateY(0)';
+    });
+  },160);
+}
+
+// ─────────────── INIT ───────────────
+newGame();
+// Show tutorial on first visit
+try{if(!localStorage.getItem('reversi-tut-seen'))showTutorial();}catch(e){showTutorial();}
+</script>
+</body>
+</html>

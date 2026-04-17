@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Math Challenge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #faf9f6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            max-width: 420px;
+            width: 100%;
+            padding: 32px;
+        }
+
+        h1 {
+            color: #2c2c2c;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .difficulty-screen, .game-screen, .results-screen {
+            display: none;
+        }
+
+        .difficulty-screen.active, .game-screen.active, .results-screen.active {
+            display: block;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 500;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            color: #2c2c2c;
+        }
+
+        .btn:hover {
+            background: #f5f5f5;
+            border-color: #2c2c2c;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: #2c2c2c;
+            color: white;
+            border-color: #2c2c2c;
+        }
+
+        .btn-primary:hover {
+            background: #1a1a1a;
+            border-color: #1a1a1a;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #faf9f6;
+            border-radius: 6px;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c2c2c;
+        }
+
+        .timer {
+            color: #2c2c2c;
+        }
+
+        .timer.warning {
+            color: #d63031;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .question {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 600;
+            color: #2c2c2c;
+            margin: 32px 0 24px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: -0.5px;
+        }
+
+        .input-group {
+            margin: 24px 0;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 16px;
+            font-size: 24px;
+            border: 2px solid #e5e5e5;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 500;
+            transition: border-color 0.2s;
+            background: #faf9f6;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #2c2c2c;
+            background: white;
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .numpad-btn {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 500;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            cursor: pointer;
+            background: white;
+            color: #2c2c2c;
+            transition: all 0.15s;
+        }
+
+        .numpad-btn:active {
+            transform: scale(0.95);
+            background: #f5f5f5;
+        }
+
+        .numpad-btn.wide {
+            grid-column: span 2;
+        }
+
+        .numpad-btn.delete {
+            background: #faf9f6;
+        }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 16px;
+            padding: 18px;
+            font-size: 16px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e5e5e5;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #2c2c2c;
+            transition: width 0.3s;
+        }
+
+        .results-screen {
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 64px;
+            font-weight: 600;
+            color: #2c2c2c;
+            margin: 24px 0;
+            letter-spacing: -2px;
+        }
+
+        .stats {
+            background: #faf9f6;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 24px 0;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 400;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            color: #2c2c2c;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .feedback {
+            margin: 16px 0;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .feedback.close {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .feedback.wrong {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .question {
+                font-size: 28px;
+            }
+
+            .numpad-btn {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Quick Math Challenge</h1>
+
+        <!-- Difficulty Selection Screen -->
+        <div class="difficulty-screen active">
+            <p style="text-align: center; color: #666; margin-bottom: 24px; font-size: 14px;">
+                Choose your difficulty level
+            </p>
+            <div class="difficulty-buttons">
+                <button class="btn" onclick="startGame('easy')">
+                    Easy<br><small style="font-size: 13px; opacity: 0.6; font-weight: 400;">Single digit operations</small>
+                </button>
+                <button class="btn" onclick="startGame('medium')">
+                    Medium<br><small style="font-size: 13px; opacity: 0.6; font-weight: 400;">Double digit operations</small>
+                </button>
+                <button class="btn" onclick="startGame('hard')">
+                    Hard<br><small style="font-size: 13px; opacity: 0.6; font-weight: 400;">Advanced calculations</small>
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+
+            <div class="game-info">
+                <div class="info-item">
+                    <div class="info-label">Round</div>
+                    <div class="info-value" id="roundDisplay">1/10</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Timer</div>
+                    <div class="info-value timer" id="timerDisplay">5</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Score</div>
+                    <div class="info-value" id="scoreDisplay">0</div>
+                </div>
+            </div>
+
+            <div id="feedbackArea"></div>
+
+            <div class="question" id="questionDisplay"></div>
+
+            <div class="input-group">
+                <input type="text" class="answer-input" id="answerInput" 
+                       placeholder="Your answer" readonly>
+            </div>
+
+            <div class="numpad">
+                <button class="numpad-btn" onclick="addDigit('7')">7</button>
+                <button class="numpad-btn" onclick="addDigit('8')">8</button>
+                <button class="numpad-btn" onclick="addDigit('9')">9</button>
+                <button class="numpad-btn" onclick="addDigit('4')">4</button>
+                <button class="numpad-btn" onclick="addDigit('5')">5</button>
+                <button class="numpad-btn" onclick="addDigit('6')">6</button>
+                <button class="numpad-btn" onclick="addDigit('1')">1</button>
+                <button class="numpad-btn" onclick="addDigit('2')">2</button>
+                <button class="numpad-btn" onclick="addDigit('3')">3</button>
+                <button class="numpad-btn" onclick="toggleNegative()">±</button>
+                <button class="numpad-btn" onclick="addDigit('0')">0</button>
+                <button class="numpad-btn delete" onclick="deleteDigit()">⌫</button>
+            </div>
+
+            <button class="btn btn-primary submit-btn" onclick="submitAnswer()">Submit Answer</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="results-screen">
+            <h2 style="color: #2c2c2c; margin-bottom: 8px; font-size: 20px; font-weight: 600;">Game Complete</h2>
+            
+            <div class="score-display" id="finalScore">0</div>
+            <p style="color: #999; margin-bottom: 24px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Total Points</p>
+
+            <div class="stats">
+                <div class="stat-row">
+                    <span class="stat-label">Total Time</span>
+                    <span class="stat-value" id="totalTime">0s</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Average Score per Round</span>
+                    <span class="stat-value" id="avgScore">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Difficulty</span>
+                    <span class="stat-value" id="difficultyDisplay">-</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" 
+                    onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        let currentRound = 1;
+        let totalRounds = 10;
+        let score = 0;
+        let currentAnswer = 0;
+        let timeLeft = 5;
+        let timerInterval = null;
+        let difficulty = 'easy';
+        let gameStartTime = 0;
+        let totalGameTime = 0;
+
+        function addDigit(digit) {
+            const input = document.getElementById('answerInput');
+            if (input.value === '0' || input.value === '') {
+                input.value = digit;
+            } else {
+                input.value += digit;
+            }
+        }
+
+        function deleteDigit() {
+            const input = document.getElementById('answerInput');
+            if (input.value.length > 0) {
+                input.value = input.value.slice(0, -1);
+            }
+        }
+
+        function toggleNegative() {
+            const input = document.getElementById('answerInput');
+            if (input.value === '' || input.value === '0') return;
+            
+            if (input.value.startsWith('-')) {
+                input.value = input.value.substring(1);
+            } else {
+                input.value = '-' + input.value;
+            }
+        }
+
+        function startGame(selectedDifficulty) {
+            difficulty = selectedDifficulty;
+            currentRound = 1;
+            score = 0;
+            gameStartTime = Date.now();
+            
+            document.querySelector('.difficulty-screen').classList.remove('active');
+            document.querySelector('.game-screen').classList.add('active');
+            
+            nextRound();
+        }
+
+        function generateQuestion() {
+            let num1, num2, operation, answer;
+            
+            if (difficulty === 'easy') {
+                num1 = Math.floor(Math.random() * 10) + 1;
+                num2 = Math.floor(Math.random() * 10) + 1;
+                const ops = ['+', '-', '×'];
+                operation = ops[Math.floor(Math.random() * ops.length)];
+            } else if (difficulty === 'medium') {
+                num1 = Math.floor(Math.random() * 50) + 10;
+                num2 = Math.floor(Math.random() * 50) + 10;
+                const ops = ['+', '-', '×'];
+                operation = ops[Math.floor(Math.random() * ops.length)];
+            } else { // hard
+                num1 = Math.floor(Math.random() * 100) + 10;
+                num2 = Math.floor(Math.random() * 100) + 10;
+                const ops = ['+', '-', '×', '÷'];
+                operation = ops[Math.floor(Math.random() * ops.length)];
+                
+                // For division, make sure it's clean
+                if (operation === '÷') {
+                    num2 = Math.floor(Math.random() * 12) + 1;
+                    num1 = num2 * (Math.floor(Math.random() * 20) + 1);
+                }
+            }
+
+            switch(operation) {
+                case '+':
+                    answer = num1 + num2;
+                    break;
+                case '-':
+                    answer = num1 - num2;
+                    break;
+                case '×':
+                    answer = num1 * num2;
+                    break;
+                case '÷':
+                    answer = num1 / num2;
+                    break;
+            }
+
+            return {
+                question: `${num1} ${operation} ${num2}`,
+                answer: answer
+            };
+        }
+
+        function nextRound() {
+            if (currentRound > totalRounds) {
+                endGame();
+                return;
+            }
+
+            const q = generateQuestion();
+            currentAnswer = q.answer;
+            
+            document.getElementById('questionDisplay').textContent = q.question;
+            document.getElementById('answerInput').value = '';
+            document.getElementById('roundDisplay').textContent = `${currentRound}/${totalRounds}`;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('feedbackArea').innerHTML = '';
+            
+            updateProgressBar();
+            startTimer();
+        }
+
+        function startTimer() {
+            timeLeft = 5;
+            updateTimerDisplay();
+            
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timerEl = document.getElementById('timerDisplay');
+            timerEl.textContent = timeLeft;
+            
+            if (timeLeft <= 2) {
+                timerEl.classList.add('warning');
+            } else {
+                timerEl.classList.remove('warning');
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = (currentRound / totalRounds) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function submitAnswer() {
+            const userAnswer = parseFloat(document.getElementById('answerInput').value);
+            
+            if (isNaN(userAnswer)) {
+                return;
+            }
+
+            clearInterval(timerInterval);
+            calculateScore(userAnswer);
+            
+            setTimeout(() => {
+                currentRound++;
+                nextRound();
+            }, 1500);
+        }
+
+        function timeUp() {
+            showFeedback('Time\'s up!', 'wrong', `Correct answer: ${currentAnswer}`);
+            
+            setTimeout(() => {
+                currentRound++;
+                nextRound();
+            }, 1500);
+        }
+
+        function calculateScore(userAnswer) {
+            const difference = Math.abs(userAnswer - currentAnswer);
+            const percentError = (difference / Math.abs(currentAnswer)) * 100;
+            
+            let points = 0;
+            let message = '';
+            let type = 'wrong';
+
+            if (difference === 0) {
+                points = 100;
+                message = 'Perfect!';
+                type = 'correct';
+            } else if (percentError <= 5) {
+                points = 80;
+                message = 'Very close!';
+                type = 'close';
+            } else if (percentError <= 10) {
+                points = 60;
+                message = 'Pretty close';
+                type = 'close';
+            } else if (percentError <= 20) {
+                points = 40;
+                message = 'Not bad';
+                type = 'close';
+            } else if (percentError <= 30) {
+                points = 20;
+                message = 'Keep trying';
+                type = 'wrong';
+            } else {
+                points = 10;
+                message = 'Practice more';
+                type = 'wrong';
+            }
+
+            score += points;
+            document.getElementById('scoreDisplay').textContent = score;
+            
+            showFeedback(
+                `${message} • +${points} points`, 
+                type, 
+                `Your answer: ${userAnswer} • Correct: ${currentAnswer}`
+            );
+        }
+
+        function showFeedback(message, type, detail) {
+            const feedbackArea = document.getElementById('feedbackArea');
+            feedbackArea.innerHTML = `
+                <div class="feedback ${type}">
+                    <div>${message}</div>
+                    <small style="font-size: 14px; opacity: 0.8;">${detail}</small>
+                </div>
+            `;
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            totalGameTime = Math.round((Date.now() - gameStartTime) / 1000);
+            
+            document.querySelector('.game-screen').classList.remove('active');
+            document.querySelector('.results-screen').classList.add('active');
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('totalTime').textContent = totalGameTime + 's';
+            document.getElementById('avgScore').textContent = Math.round(score / totalRounds);
+            document.getElementById('difficultyDisplay').textContent = 
+                difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+        }
+
+        function resetGame() {
+            document.querySelector('.results-screen').classList.remove('active');
+            document.querySelector('.difficulty-screen').classList.add('active');
+        }
+
+    </script>
+</body>
+</html>

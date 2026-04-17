@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Trading Sandbox</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 to-purple-100 min-h-screen flex flex-col items-center justify-center">
+  <div class="max-w-3xl mx-auto text-center px-6 py-12">
+    <h1 class="text-5xl font-bold text-gray-800 mb-4">The Trading Sandbox</h1>
+    <p class="text-lg text-gray-600 mb-8">
+      Welcome to the <strong>The Trading Sandbox</strong> — an interactive learning space 
+      where you can explore the world of trading and risk management through simulation games.  
+      Test your decision-making skills, understand market behavior, and learn financial 
+      concepts in a fun, hands-on way.
+    </p>
+
+    <div class="bg-white/70 backdrop-blur-sm p-6 rounded-xl shadow-lg mb-10 text-left text-gray-700 leading-relaxed">
+      <h2 class="text-2xl font-semibold mb-3 text-indigo-700">🎯 What You'll Learn</h2>
+      <ul class="list-disc pl-6 space-y-2">
+        <li><strong>Risk Hedging:</strong> Discover how to protect portfolios using derivatives and smart diversification.</li>
+        <li><strong>Market Making:</strong> Learn how traders provide liquidity by setting bid-ask spreads and managing inventory.</li>
+        <li><strong>Strategic Thinking:</strong> Balance profit, cost, and risk under uncertain market events.</li>
+      </ul>
+      <p class="mt-4">
+        Each game is self-contained, browser-based, and designed to give you insight into real-world finance mechanics — no installation or signup needed.
+      </p>
+    </div>
+
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">Choose Your Game</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <a href="hedging-game.html"
+         class="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl hover:scale-105 transition-transform duration-200 border-t-4 border-indigo-400">
+        <h3 class="text-2xl font-semibold mb-2 text-indigo-600">📉 Portfolio Hedging Game</h3>
+        <p class="text-gray-500 mb-3">Protect your investments from unpredictable market events using hedging instruments.</p>
+        <p class="text-sm text-gray-400">Learn how diversification and derivatives reduce risk exposure.</p>
+      </a>
+
+      <a href="market-making-game.html"
+         class="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl hover:scale-105 transition-transform duration-200 border-t-4 border-blue-400">
+        <h3 class="text-2xl font-semibold mb-2 text-blue-600">💹 Market Making Game</h3>
+        <p class="text-gray-500 mb-3">Set bid and ask prices, manage inventory, and earn profit from the spread.</p>
+        <p class="text-sm text-gray-400">Practice liquidity provision and price-making under volatility.</p>
+      </a>
+    </div>
+  </div>
+
+  <footer class="mt-auto py-6 text-gray-500 text-sm">
+    © 2025 Learn with XR — Built for interactive learning.
+  </footer>
+</body>
+</html>
