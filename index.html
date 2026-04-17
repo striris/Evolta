@@ -7,8 +7,8 @@
 
     <!-- Favicon -->
     <!-- rename favicon.png if your file name is different -->
-    <link rel="icon" type="image/png" href="logo t.png">
-    <link rel="apple-touch-icon" href="logo t.png">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
 
     <style>
         * {
@@ -57,7 +57,7 @@
             width: 32px;
             height: 32px;
             border-radius: 8px;
-            background-image: url('logo t.png');
+            background-image: url('logo.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -235,6 +235,99 @@
             letter-spacing: 0.3px;
         }
 
+        /* Contributors Section */
+        .contributors {
+            padding: 120px 40px;
+            background: #f8f9fa;
+            text-align: center;
+        }
+
+        .contributors-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .contributors h2 {
+            font-size: 16px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .contributors-intro {
+            color: #666;
+            font-size: 18px;
+            font-weight: 300;
+            margin-bottom: 48px;
+        }
+
+        .contributors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 28px;
+            text-align: left;
+        }
+
+        .contributor-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04);
+        }
+
+        .contributor-name {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.4px;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        .contributor-role {
+            display: inline-block;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            background: #f0f1f3;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 999px;
+            padding: 6px 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .contributor-projects-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1.3px;
+            color: #777;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .contributor-projects {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .contributor-projects li {
+            font-size: 14px;
+            color: #2f2f2f;
+            background: #f8f9fa;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            padding: 8px 12px;
+            line-height: 1.3;
+        }
+
         .contact-content {
             max-width: 600px;
             margin: 0 auto;
@@ -400,9 +493,26 @@
                 padding: 80px 24px;
             }
 
+            .contributors {
+                padding: 80px 24px;
+            }
+
             .philosophy-text {
                 font-size: 18px;
                 line-height: 1.7;
+            }
+
+            .contributors-intro {
+                font-size: 16px;
+                margin-bottom: 36px;
+            }
+
+            .contributors-grid {
+                gap: 20px;
+            }
+
+            .contributor-card {
+                padding: 22px;
             }
 
             .contact {
@@ -463,6 +573,14 @@
 
             .philosophy-text {
                 font-size: 16px;
+            }
+
+            .contributor-name {
+                font-size: 22px;
+            }
+
+            .contributor-projects li {
+                font-size: 13px;
             }
 
             .contact h2 {
@@ -559,7 +677,7 @@
                         <li>Stock trading with news</li>
                         <li>Indicator education</li>
                     </ul>
-                    <a class="coming-soon" href="trading_game.html" target="_blank" rel="noopener noreferrer">Try It Out</a>
+                    <a class="coming-soon" href="TradingGamePortal.html" target="_blank" rel="noopener noreferrer">Try It Out</a>
                 </div>
             </div>
         </div>
@@ -575,6 +693,37 @@
             <p class="philosophy-text" style="margin-top: 32px;">
                 We believe learning is a right, not a privilege. That is why all games and simulations on Evolta are free and accessible to everyone, regardless of background.
             </p>
+        </div>
+    </section>
+
+    <!-- Contributors Section -->
+    <section class="contributors">
+        <div class="contributors-content">
+            <h2>Contributors</h2>
+            <p class="contributors-intro">Meet the people building playful tools for learning.</p>
+
+            <div class="contributors-grid">
+                <article class="contributor-card">
+                    <h3 class="contributor-name">Xinran Liu</h3>
+                    <p class="contributor-role">Founder</p>
+                    <p class="contributor-projects-title">Projects</p>
+                    <ul class="contributor-projects">
+                        <li>Portfolio Hedging Game</li>
+                        <li>Market Making Game</li>
+                        <li>Quick Math Game</li>
+                        <li>Aporia Psycology Test</li>
+                    </ul>
+                </article>
+
+                <article class="contributor-card">
+                    <h3 class="contributor-name">Bangyuan Zhu</h3>
+                    <p class="contributor-role">Contributor</p>
+                    <p class="contributor-projects-title">Project</p>
+                    <ul class="contributor-projects">
+                        <li>Reversi Flip Chess Game</li>
+                    </ul>
+                </article>
+            </div>
         </div>
     </section>
 
