@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sweet Spread — Sugar Trading Simulation | Evolta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7f5;
+    --bg2:#ffffff;
+    --panel:#ffffff;
+    --panel2:#f0f5f2;
+    --line:#e2e9e4;
+    --line2:#d6e0da;
+    /* Wilmar palette */
+    --green:#1a7a4c;       /* Wilmar green */
+    --green-lt:#2e9d68;
+    --blue:#0b5ea8;        /* Wilmar blue */
+    --blue-lt:#3a86c8;
+    --accent:#1a7a4c;
+    --pos:#1a7a4c;         /* up */
+    --neg:#c0392b;         /* down */
+    --white:#1a2622;       /* on light, "white" text role = darkest ink */
+    --txt:#243530;
+    --txt-dim:#5e7068;
+    --txt-faint:#94a59d;
+    --mono:'IBM Plex Mono',monospace;
+    --sans:'Inter',-apple-system,sans-serif;
+    --disp:'Fraunces',serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:
+      radial-gradient(ellipse at 12% -5%, #e6f1ea 0%, transparent 45%),
+      radial-gradient(ellipse at 95% 5%, #e7f0f8 0%, transparent 42%),
+      var(--bg);
+    color:var(--txt);
+    font-family:var(--sans);
+    font-size:13px;
+    line-height:1.5;
+    min-height:100vh;
+    padding:0 0 60px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px;position:relative;z-index:2}
+
+  /* Header */
+  header{
+    border-bottom:1px solid var(--line);
+    padding:30px 0 20px;
+    margin-bottom:24px;
+    display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  }
+  .brand h1{
+    font-family:var(--disp);font-weight:500;font-size:40px;line-height:.95;
+    letter-spacing:-.02em;color:var(--green);
+  }
+  .brand h1 .amp{color:var(--blue);font-style:italic}
+  .brand .sub{color:var(--txt-dim);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin-top:8px;font-family:var(--mono)}
+  .brand .evolta{color:var(--blue);font-weight:600}
+  .clock{text-align:right}
+  .clock .month{font-family:var(--disp);font-size:28px;color:var(--blue);font-weight:500}
+  .clock .turn{color:var(--txt-faint);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-family:var(--mono)}
+
+  /* Layout */
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 20px;
+    margin-bottom:18px;
+    box-shadow:0 1px 2px rgba(26,122,76,.04), 0 6px 22px rgba(11,94,168,.04);
+  }
+  .panel h2{
+    font-family:var(--mono);font-weight:500;font-size:11px;color:var(--txt-faint);
+    letter-spacing:.14em;text-transform:uppercase;
+    margin-bottom:14px;display:flex;align-items:center;gap:8px;
+  }
+  .panel h2 .dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+  /* Market table */
+  .mkt{width:100%;border-collapse:collapse}
+  .mkt th{text-align:left;color:var(--txt-faint);font-weight:500;font-size:9.5px;
+    letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+  .mkt td{padding:9px 8px;border-bottom:1px solid var(--line)}
+  .mkt tr:last-child td{border-bottom:none}
+  .mkt .nm{color:var(--txt);font-weight:500}
+  .mkt .nm small{display:block;color:var(--txt-faint);font-size:10px;font-weight:400}
+  .mkt .px{font-weight:600;font-size:15px;text-align:right;font-family:var(--mono)}
+  .mkt .chg{text-align:right;font-size:12px;font-family:var(--mono)}
+  .up{color:var(--pos)}.down{color:var(--neg)}.flat{color:var(--txt-faint)}
+
+  /* News */
+  .news{border-left:3px solid var(--green);padding:2px 0 2px 14px;margin-bottom:8px}
+  .news .hl{color:var(--white);font-weight:600;margin-bottom:4px;font-size:14px}
+  .news .src{color:var(--blue);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);font-weight:500}
+  .news .ex{color:var(--txt-dim);font-size:12px;margin-top:8px;line-height:1.6;
+    border-top:1px solid var(--line);padding-top:8px}
+  .news .ex b{color:var(--green)}
+
+  /* Actions */
+  .act-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .trade-card{
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:13px;
+  }
+  .trade-card .tt{font-family:var(--disp);font-size:15px;color:var(--green);margin-bottom:3px;font-weight:500}
+  .trade-card .td{color:var(--txt-dim);font-size:10.5px;margin-bottom:11px;min-height:30px;line-height:1.5}
+  .qty-row{display:flex;align-items:center;gap:6px;margin-bottom:9px}
+  .qty-row label{color:var(--txt-dim);font-size:10px;flex:1;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em}
+  input[type=number]{
+    width:64px;background:var(--bg2);border:1px solid var(--line2);color:var(--txt);
+    font-family:var(--mono);font-size:13px;padding:5px 7px;border-radius:6px;text-align:right;
+  }
+  input[type=number]:focus{outline:none;border-color:var(--blue)}
+  .btn-row{display:flex;gap:6px}
+  button{
+    font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.03em;
+    border:1px solid var(--line2);background:var(--bg2);color:var(--txt);
+    padding:8px 10px;border-radius:7px;cursor:pointer;transition:.13s;flex:1;
+  }
+  button:hover{border-color:var(--blue);color:var(--blue)}
+  button.buy:hover{border-color:var(--green);color:var(--green);background:rgba(26,122,76,.06)}
+  button.sell:hover{border-color:var(--neg);color:var(--neg);background:rgba(192,57,43,.05)}
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .big-btn{
+    width:100%;padding:15px;font-size:14px;font-family:var(--sans);font-weight:600;
+    background:linear-gradient(135deg,var(--green),var(--blue));color:#fff;border:none;
+    letter-spacing:.02em;border-radius:10px;box-shadow:0 4px 14px rgba(11,94,168,.18);
+  }
+  .big-btn:hover{filter:brightness(1.07);color:#fff}
+
+  /* Sidebar stats */
+  .stat{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+  .stat:last-child{border-bottom:none}
+  .stat .k{color:var(--txt-dim);font-size:11px}
+  .stat .v{font-weight:600;font-family:var(--mono)}
+  .big-num{font-family:var(--disp);font-size:32px;font-weight:500;line-height:1;margin:2px 0 8px;color:var(--blue)}
+
+  /* Position rows */
+  .pos{display:flex;justify-content:space-between;align-items:center;padding:8px 0;
+    border-bottom:1px solid var(--line);font-size:12px}
+  .pos:last-child{border-bottom:none}
+  .pos .pl{color:var(--txt);display:flex;flex-direction:column;gap:2px}
+  .pos .pl small{color:var(--txt-faint);font-size:10px;font-family:var(--mono)}
+  .pos .pr{text-align:right;font-family:var(--mono)}
+  .tag{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;letter-spacing:.05em;
+    text-transform:uppercase;font-weight:600;font-family:var(--mono)}
+  .tag.long{background:rgba(26,122,76,.12);color:var(--green)}
+  .tag.short{background:rgba(192,57,43,.10);color:var(--neg)}
+
+  /* Risk meter */
+  .meter{height:7px;background:var(--line);border-radius:5px;overflow:hidden;margin:8px 0}
+  .meter span{display:block;height:100%;transition:.4s;border-radius:5px}
+
+  /* Toast / margin call */
+  .toast{
+    position:fixed;left:50%;top:20px;transform:translateX(-50%);z-index:50;
+    background:var(--bg2);border:1px solid var(--green);border-radius:10px;padding:12px 22px;
+    color:var(--txt);font-size:12px;box-shadow:0 10px 36px rgba(11,94,168,.16);max-width:90vw;
+    opacity:0;transition:.3s;pointer-events:none;font-family:var(--mono);
+  }
+  .toast.show{opacity:1;top:32px}
+  .toast.warn{border-color:var(--neg);color:var(--neg)}
+
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(26,38,34,.55);backdrop-filter:blur(4px);z-index:40;display:none;
+    align-items:center;justify-content:center;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--line);
+    border-radius:18px;padding:30px;max-width:560px;width:100%;max-height:88vh;overflow:auto;
+    box-shadow:0 20px 60px rgba(11,94,168,.22)}
+  .modal h2{font-family:var(--disp);font-size:28px;color:var(--green);font-weight:500;margin-bottom:6px}
+  .modal .score{font-family:var(--disp);font-size:52px;font-weight:500;line-height:1;margin:10px 0;color:var(--blue)}
+  .grade{display:inline-block;font-family:var(--disp);font-size:22px;font-weight:600;
+    padding:3px 16px;border-radius:10px;background:var(--green);color:#fff;margin-left:10px}
+  .debrief-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);gap:14px}
+  .debrief-row .lbl{color:var(--txt-dim)}
+  .debrief-row .rating{font-weight:600;text-align:right;font-family:var(--mono);font-size:11.5px}
+
+  .hint{color:var(--txt-faint);font-size:10.5px;margin-top:6px;line-height:1.5}
+  .hint b{color:var(--txt-dim)}
+  .tip{cursor:help;border-bottom:1px dotted var(--txt-faint)}
+  .intro-list{list-style:none;margin:10px 0}
+  .intro-list li{padding:5px 0 5px 20px;position:relative;color:var(--txt-dim);font-size:12px}
+  .intro-list li::before{content:"◆";position:absolute;left:0;color:var(--green);font-size:9px;top:7px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Sweet <span class="amp">&</span> Spread</h1>
+      <div class="sub">Sugar Trading Simulation · <span class="evolta">Evolta — learn · play · evolve</span></div>
+    </div>
+    <div class="clock">
+      <div class="month" id="monthLabel">—</div>
+      <div class="turn" id="turnLabel">Press start</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT COLUMN -->
+    <div>
+      <div class="panel" id="newsPanel">
+        <h2><span class="dot"></span>Market Wire</h2>
+        <div id="newsBox">
+          <div class="news">
+            <div class="hl">Welcome to the desk.</div>
+            <div class="src">Evolta Trading Floor</div>
+            <div class="ex">You're a sugar trader at a commodity house. Over 12 months you'll trade raw &amp; white sugar futures, lock the refining arbitrage, hedge FX and freight, and survive margin calls. Press <b>Start Season</b> to take the first news tick. Hover any <span class="tip" title="Like this — definitions appear on hover.">underlined term</span> for a definition.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Market Board</h2>
+        <table class="mkt">
+          <thead><tr><th>Instrument</th><th style="text-align:right">Price</th><th style="text-align:right">Δ mo</th></tr></thead>
+          <tbody id="mktBody"></tbody>
+        </table>
+        <div class="hint" id="arbHint"></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Trade Desk</h2>
+        <div class="act-grid" id="tradeGrid"></div>
+        <div style="margin-top:14px">
+          <button class="big-btn" id="advanceBtn" onclick="startOrAdvance()">▶ Start Season</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <div class="panel">
+        <h2><span class="dot"></span>P&amp;L</h2>
+        <div class="big-num" id="equityNum">$10.00M</div>
+        <div class="stat"><span class="k">Realised P&amp;L</span><span class="v" id="realisedPL">$0</span></div>
+        <div class="stat"><span class="k">Open P&amp;L</span><span class="v" id="openPL">$0</span></div>
+        <div class="stat"><span class="k">Cash</span><span class="v" id="cashVal">$10.00M</span></div>
+        <div class="stat"><span class="k">Margin used</span><span class="v" id="marginVal">$0</span></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Risk</h2>
+        <div class="stat"><span class="k tip" title="Net long minus short exposure across all positions, in USD notional.">Net exposure</span><span class="v" id="netExp">$0</span></div>
+        <div class="meter"><span id="riskBar" style="width:0%;background:var(--green)"></span></div>
+        <div class="hint" id="riskHint">Flat. No risk on the book.</div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Open Positions</h2>
+        <div id="posBox"><div class="hint">No open positions.</div></div>
+      </div>
+
+      <div class="panel" id="recapPanel" style="display:none">
+        <h2><span class="dot"></span>This Month's P&amp;L — Why</h2>
+        <div id="recapBox"></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Glossary</h2>
+        <div style="font-size:11px;color:var(--txt-dim);line-height:1.7">
+          <b style="color:var(--green)">No.11</b> raw sugar, world market, ¢/lb · 112,000 lb/lot<br>
+          <b style="color:var(--green)">No.5</b> white refined sugar, London, $/tonne · 50t/lot<br>
+          <b style="color:var(--green)">White premium</b> No.5 − No.11(conv). Refining margin.<br>
+          <b style="color:var(--green)">Refining toll</b> ~$70/t to process raw into white (energy, labour, loss).<br>
+          <b style="color:var(--green)">Conversion yield</b> ~92% — you need ~1.09 t raw per 1 t white.<br>
+          <b style="color:var(--green)">Ethanol parity</b> price where Brazil mills are indifferent between making sugar or ethanol.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalInner"></div>
+</div>
+
+<script>
+/* ============ CONSTANTS ============ */
+const LB_PER_LOT_11 = 112000;          // No.11 raw: 112,000 lb
+const T_PER_LOT_5   = 50;              // No.5 white: 50 tonnes
+const LB_PER_TONNE  = 2204.62;
+const START_CASH    = 10_000_000;
+const MARGIN_RATE   = 0.10;            // 10% initial margin on notional
+const MAINT_RATE    = 0.07;            // maintenance margin
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+/* Refining economics (toll-refining arb), kept close to real desk math:
+   - raw->white conversion yield ~92% (need ~1.087 t raw per 1 t white)
+   - refining toll: energy, labour, processing — separate from freight
+   - freight charged in full
+   - financing carry on the raw input while the cargo is held */
+const REFINE_TOLL_PER_T = 70;          // $/t white: energy, labour, processing loss
+const CONV_YIELD        = 0.92;        // tonnes white per tonne raw
+const FINANCE_RATE_ANN  = 0.08;        // 8%/yr cost of capital on raw input
+const ARB_MONTHS        = 2;           // cargo settles in ~2 months
+
+/* ============ STATE ============ */
+let S = null;
+
+function freshState(){
+  return {
+    started:false,
+    turn:0,                 // 0..11
+    cash:START_CASH,
+    realised:0,
+    // market
+    n11: 19.5,              // ¢/lb raw  (~$430/t)
+    n5: 600,                // $/t white (premium ~$170 → thin but live arb at start)
+    brl: 5.10,              // BRL per USD
+    freight: 38,            // $/t shipping
+    ethanolParity: 18.0,    // ¢/lb — below this mills favor ethanol (tightens sugar)
+    // positions: {key, type, name, side(+1/-1), lots, entryPx, unit}
+    pos:[],
+    physical:[],            // refining arb cargoes {tonnes, lockedMargin, monthsLeft}
+    // scoring trackers
+    directionalRight:0, directionalWrong:0,
+    arbsTaken:0, arbsMissed:0,
+    maxRiskBreach:0, marginCalls:0,
+    lastN11:19.5, lastN5:600, lastBrl:5.10, lastFreight:38, lastEth:18.0, lastPrem:170,
+    history:[],
+    pendingNews:null,
+    recap:null,
+  };
+}
+
+/* ============ NEWS / SCENARIO ENGINE ============ */
+/* Each event: headline, source, explainer, and effect fn mutating drifts */
+const NEWS_POOL = [
+  {hl:"Brazil Centre-South harvest accelerates; cane crush beats estimates",src:"Reuters Commodities",
+   ex:"More cane crushed = more raw sugar supply. Bearish for No.11 raws. Watch ethanol parity: if mills tilt toward sugar, supply grows further.",
+   eff:s=>{s.dN11-=1.4; s.dEth+=0.3;}},
+  {hl:"Indian government extends sugar export ban into next season",src:"Bloomberg",
+   ex:"India is a top-3 producer. An export ban removes supply from the world market — bullish for No.11, and tightens whites too.",
+   eff:s=>{s.dN11+=1.8; s.dN5+=22;}},
+  {hl:"Dry weather stress flagged across Thai cane belt",src:"S&P Global",
+   ex:"Thailand is a major white-sugar exporter. Drought threatens output — bullish for No.5 whites and the white premium.",
+   eff:s=>{s.dN5+=30; s.dN11+=0.6;}},
+  {hl:"Crude oil rallies 6%; Brazilian ethanol economics improve",src:"ICE Daily",
+   ex:"Higher oil lifts ethanol prices, so mills divert cane to ethanol instead of sugar. Less sugar supply = bullish raws. Ethanol parity rises.",
+   eff:s=>{s.dN11+=1.5; s.dEth+=0.9;}},
+  {hl:"BRL strengthens sharply on rate-hike surprise",src:"FX Wire",
+   ex:"A stronger Brazilian real raises the USD cost of Brazilian sugar, supporting world prices. It also hurts unhedged USD-short BRL exposure.",
+   eff:s=>{s.dBRL-=0.25; s.dN11+=1.0;}},
+  {hl:"BRL weakens as commodity-currency selloff deepens",src:"FX Wire",
+   ex:"A weaker real makes Brazilian sugar cheaper in USD terms — exporters sell aggressively, pressuring world prices lower.",
+   eff:s=>{s.dBRL+=0.30; s.dN11-=1.2;}},
+  {hl:"Panamax freight rates spike on tonnage shortage",src:"Baltic Exchange",
+   ex:"Higher freight raises delivered cost of physical sugar, squeezing physical margins and widening regional basis.",
+   eff:s=>{s.dFreight+=14;}},
+  {hl:"Freight eases as vessel availability normalises",src:"Baltic Exchange",
+   ex:"Lower freight improves physical arb economics — cheaper to move cargoes from origin to refinery.",
+   eff:s=>{s.dFreight-=10;}},
+  {hl:"Refiners report thin white premium; some idle capacity",src:"Platts",
+   ex:"A narrow white premium means refining barely covers cost. If it stays thin, refiners cut runs — eventually bullish whites.",
+   eff:s=>{s.dN5-=14;}},
+  {hl:"Strong EU demand pulls whites; refining margins fatten",src:"Platts",
+   ex:"Robust demand for refined sugar widens the white premium — the refining arbitrage becomes attractive.",
+   eff:s=>{s.dN5+=26;}},
+  {hl:"Speculative funds cut net-long position in raws",src:"CFTC COT",
+   ex:"Large spec liquidation tends to pressure No.11 lower in the short term regardless of fundamentals.",
+   eff:s=>{s.dN11-=1.3;}},
+  {hl:"Funds rebuild bullish bets as technicals turn up",src:"CFTC COT",
+   ex:"Fresh spec buying can push No.11 higher and trigger short-covering rallies.",
+   eff:s=>{s.dN11+=1.4;}},
+  {hl:"Frost risk emerges in Centre-South Brazil",src:"Weather Desk",
+   ex:"Frost can damage cane and slash yields — sharply bullish for raws if it materialises.",
+   eff:s=>{s.dN11+=2.0; s.dEth+=0.4;}},
+  {hl:"Bumper monsoon lifts Indian cane outlook",src:"Reuters",
+   ex:"A good monsoon points to a larger Indian crop next season — bearish bias for world prices.",
+   eff:s=>{s.dN11-=1.1; s.dN5-=12;}},
+];
+
+function pickNews(){
+  return NEWS_POOL[Math.floor(Math.random()*NEWS_POOL.length)];
+}
+
+/* ============ MARKET MOVE ============ */
+function applyMonth(news){
+  // drift accumulators
+  S.dN11=0; S.dN5=0; S.dBRL=0; S.dFreight=0; S.dEth=0;
+  news.eff(S);
+  // random noise
+  const noise = ()=> (Math.random()-0.5);
+  S.lastN11 = S.n11; S.lastN5 = S.n5;
+  S.lastBrl = S.brl; S.lastFreight = S.freight; S.lastEth = S.ethanolParity;
+  S.lastPrem = whitePremium();
+  S.n11 = Math.max(8, +(S.n11 + S.dN11 + noise()*1.4).toFixed(2));
+  S.n5  = Math.max(250, Math.round(S.n5 + S.dN5 + noise()*18));
+  S.brl = Math.max(3.5, +(S.brl + S.dBRL + noise()*0.12).toFixed(2));
+  S.freight = Math.max(15, Math.round(S.freight + S.dFreight + noise()*5));
+  S.ethanolParity = +(S.ethanolParity + S.dEth + noise()*0.2).toFixed(2);
+}
+
+/* convert raw ¢/lb to white-equivalent $/t for premium calc */
+function rawToTonneUSD(centsPerLb){ return (centsPerLb/100)*LB_PER_TONNE; }
+function whitePremium(){ return S.n5 - rawToTonneUSD(S.n11); }
+
+/* Net refining-arb margin, $ per tonne of WHITE produced.
+   Raw input is grossed up by the conversion yield (need >1 t raw per t white). */
+function rawInputCostPerWhiteT(){ return rawToTonneUSD(S.n11)/CONV_YIELD; }
+function financeCostPerT(){ return rawInputCostPerWhiteT()*FINANCE_RATE_ANN*(ARB_MONTHS/12); }
+function arbNetMargin(){
+  return S.n5 - rawInputCostPerWhiteT() - REFINE_TOLL_PER_T - S.freight - financeCostPerT();
+}
+
+/* ============ POSITION VALUATION ============ */
+function instrPrice(key){
+  if(key==='n11') return S.n11;
+  if(key==='n5')  return S.n5;
+  return 0;
+}
+// notional USD per lot
+function lotNotional(key){
+  if(key==='n11') return (S.n11/100)*LB_PER_LOT_11;     // ¢/lb -> $/lb * lb
+  if(key==='n5')  return S.n5*T_PER_LOT_5;
+  return 0;
+}
+function posOpenPL(p){
+  const cur = instrPrice(p.key);
+  if(p.key==='n11'){
+    // ¢/lb move * lb/lot /100
+    return p.side * (cur - p.entryPx)/100 * LB_PER_LOT_11 * p.lots;
+  }else{ // n5 $/t
+    return p.side * (cur - p.entryPx) * T_PER_LOT_5 * p.lots;
+  }
+}
+function physicalPL(c){
+  // Cargo value moves with the achievable net arb margin vs what was locked.
+  // c.tonnes = raw tonnes bought; white produced = raw * yield.
+  // A HEDGED cargo locked both futures legs, so its MTM stays ~flat until settlement.
+  if(c.hedged) return 0;
+  const curMargin = arbNetMargin();
+  const whiteT = c.tonnes * CONV_YIELD;
+  return (curMargin - c.lockedMargin) * whiteT;
+}
+function totalOpenPL(){
+  let pl=0;
+  S.pos.forEach(p=>pl+=posOpenPL(p));
+  S.physical.forEach(c=>pl+=physicalPL(c));
+  return pl;
+}
+function marginUsed(){
+  let m=0;
+  S.pos.forEach(p=> m += lotNotional(p.key)*p.lots*MARGIN_RATE );
+  S.physical.forEach(c=> m += rawToTonneUSD(S.n11)*c.tonnes*MARGIN_RATE );
+  return m;
+}
+function netExposure(){
+  let e=0;
+  S.pos.forEach(p=> e += p.side * lotNotional(p.key) * p.lots );
+  S.physical.forEach(c=> e += rawToTonneUSD(S.n11)*c.tonnes ); // long raw exposure
+  return e;
+}
+function equity(){ return S.cash + totalOpenPL(); }
+
+/* ============ TRADING ============ */
+function trade(key,name,side,lots){
+  if(!S.started){ toast("Start the season first."); return; }
+  lots=Math.max(1,Math.floor(lots||1));
+  // check margin
+  const addMargin = lotNotional(key)*lots*MARGIN_RATE;
+  if(marginUsed()+addMargin > equity()){ toast("Insufficient margin for that size.",true); return; }
+  // see if offsetting an existing opposite position -> realise
+  let p = S.pos.find(x=>x.key===key);
+  const px = instrPrice(key);
+  if(p){
+    if(p.side===side){
+      // add — average
+      const totLots=p.lots+lots;
+      p.entryPx = (p.entryPx*p.lots + px*lots)/totLots;
+      p.lots=totLots;
+    }else{
+      // reduce/close/flip
+      const closeLots=Math.min(p.lots,lots);
+      const realised = (key==='n11')
+        ? p.side*(px-p.entryPx)/100*LB_PER_LOT_11*closeLots
+        : p.side*(px-p.entryPx)*T_PER_LOT_5*closeLots;
+      S.realised+=realised; S.cash+=realised;
+      trackDirectional(realised);
+      p.lots-=closeLots;
+      const remain=lots-closeLots;
+      if(p.lots<=0){
+        S.pos=S.pos.filter(x=>x!==p);
+        if(remain>0){ S.pos.push({key,name,side,lots:remain,entryPx:px}); }
+      }
+    }
+  }else{
+    S.pos.push({key,name,side,lots,entryPx:px});
+  }
+  render();
+}
+
+function trackDirectional(realised){
+  if(realised>0.0001) S.directionalRight++;
+  else if(realised<-0.0001) S.directionalWrong++;
+}
+
+/* Refining arb: buy raw + refine + sell white, locking current net margin.
+   hedged=true also locks both futures legs, removing weekly MTM swing. */
+function lockArb(tonnes,hedged){
+  if(!S.started){ toast("Start the season first."); return; }
+  tonnes=Math.max(1000,Math.floor(tonnes||1000));
+  let netMargin = arbNetMargin();
+  // a hedge isn't free: small cost (bid/offer + carry on the paper legs)
+  const hedgeCostPerT = hedged ? 4 : 0;
+  netMargin -= hedgeCostPerT;
+  const addMargin = rawToTonneUSD(S.n11)*tonnes*MARGIN_RATE;
+  if(marginUsed()+addMargin>equity()){ toast("Insufficient margin for that cargo.",true); return; }
+  S.physical.push({tonnes,lockedMargin:netMargin,monthsLeft:ARB_MONTHS,netAtLock:netMargin,hedged:!!hedged});
+  S.arbsTaken++;
+  if(hedged) toast("Hedged cargo locked — both legs fixed, margin secured.");
+  else if(netMargin>20) toast("Unhedged cargo locked — margin floats until settlement.");
+  else if(netMargin<0) toast("You locked a NEGATIVE refining margin.",true);
+  render();
+}
+function closePhysical(c){
+  // Hedged cargo realizes the margin it locked, regardless of where the market moved.
+  const pl = c.hedged ? c.lockedMargin * c.tonnes * CONV_YIELD : physicalPL(c);
+  S.realised+=pl; S.cash+=pl;
+  trackDirectional(pl);
+  S.physical=S.physical.filter(x=>x!==c);
+  toast((pl>=0?"+":"")+fmtUSD(pl)+" on the refining cargo.");
+  render();
+}
+
+/* ============ WEEKLY RECAP ============ */
+function buildRecap(news,before){
+  const moves=[];
+  const fmtMove=(label,b,a,dp,unit)=>{
+    const d=a-b; if(Math.abs(d)<(dp===2?0.005:0.5)) return null;
+    const dir=d>0?'rose':'fell';
+    return `${label} ${dir} ${unit==='¢'?'':''}${Math.abs(d).toFixed(dp)}${unit} (${b.toFixed(dp)}${unit}→${a.toFixed(dp)}${unit})`;
+  };
+  [
+    fmtMove('Raw No.11',before.n11,S.n11,2,'¢'),
+    fmtMove('White No.5',before.n5,S.n5,0,''),
+    fmtMove('Freight',before.freight,S.freight,0,''),
+    fmtMove('BRL',before.brl,S.brl,2,''),
+  ].forEach(m=>{ if(m) moves.push(m); });
+
+  // per-position P&L attribution
+  const lines=[];
+  S.pos.forEach(p=>{
+    const nowPL=posOpenPL(p);
+    const prev=before.posPL.find(x=>x.name===p.name && x.side===p.side);
+    const delta=nowPL-(prev?prev.pl:0);
+    if(Math.abs(delta)<1) return;
+    const dir=p.side>0?'long':'short';
+    lines.push({txt:`${p.side>0?'Long':'Short'} ${p.name}: ${delta>=0?'+':''}${fmtUSD(delta)}`,delta});
+  });
+
+  // arb cargo attribution — decompose the net-margin move into drivers
+  let arbDelta=0, arbDriver='';
+  if(S.physical.some(c=>!c.hedged)){
+    const whiteT=S.physical.filter(c=>!c.hedged).reduce((s,c)=>s+c.tonnes*CONV_YIELD,0);
+    const marginNow=arbNetMargin();
+    arbDelta=(marginNow-before.margin)*whiteT;
+    // which driver moved the margin most?
+    const dRaw=-(rawToTonneUSD(S.n11)-rawToTonneUSD(before.n11))/CONV_YIELD; // raw up = margin down
+    const dWhite=S.n5-before.n5;
+    const dFreight=-(S.freight-before.freight);
+    const drivers=[['white price',dWhite],['raw cost',dRaw],['freight',dFreight]]
+      .sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+    const top=drivers[0];
+    arbDriver = `Unhedged arb: ${arbDelta>=0?'+':''}${fmtUSD(arbDelta)} — mainly ${top[1]>=0?'a favourable':'an adverse'} move in ${top[0]} (${top[1]>=0?'+':''}$${Math.abs(top[1]).toFixed(0)}/t to margin).`;
+    if(lines.length===0 && S.pos.length===0){} // arb only
+  }
+  if(S.physical.some(c=>c.hedged)){
+    arbDriver += (arbDriver?' ':'')+'Hedged cargo: MTM flat by design — margin already secured.';
+  }
+
+  const totalSwing=totalOpenPL()-before.openPL;
+
+  S.recap={
+    month:MONTHS[S.turn],
+    headline:news.hl,
+    moves,
+    lines:lines.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).map(l=>l.txt),
+    arbDriver,
+    totalSwing,
+  };
+}
+
+/* ============ TURN ADVANCE ============ */
+function startOrAdvance(){
+  if(!S.started){
+    S.started=true;
+    S.turn=0;
+    S.pendingNews=pickNews();
+    document.getElementById('advanceBtn').textContent="▶ Advance Month";
+    render();
+    return;
+  }
+  // resolve current month: apply the news that was showing
+  const news=S.pendingNews;
+  // detect missed arb BEFORE move (was a fat premium available and ignored?)
+  const fatArb = arbNetMargin() > 25;
+  if(fatArb && S.physical.length===0) S.arbsMissed++;
+
+  // --- snapshot BEFORE the move, for the weekly recap attribution ---
+  const before={
+    n11:S.n11, n5:S.n5, brl:S.brl, freight:S.freight, eth:S.ethanolParity,
+    margin:arbNetMargin(),
+    openPL:totalOpenPL(),
+    posPL:S.pos.map(p=>({name:p.name,side:p.side,pl:posOpenPL(p)})),
+  };
+
+  applyMonth(news);
+
+  // physical cargoes age
+  S.physical.forEach(c=>{ if(c.monthsLeft>0)c.monthsLeft--; });
+
+  // --- build the weekly recap (what drove the P&L swing) ---
+  buildRecap(news,before);
+
+  // margin call check
+  const eq=equity(), mm=marginUsed()*MAINT_RATE/MARGIN_RATE;
+  if(eq < mm){
+    S.marginCalls++;
+    forceLiquidate();
+    toast("⚠ MARGIN CALL — positions force-liquidated.",true);
+  }
+  // risk breach tracking (net exp > 1.5x equity)
+  const lev = Math.abs(netExposure())/Math.max(1,equity());
+  if(lev>S.maxRiskBreach) S.maxRiskBreach=lev;
+
+  S.history.push({m:MONTHS[S.turn],eq:equity()});
+  S.turn++;
+
+  if(S.turn>=12){
+    render();
+    endGame();
+    return;
+  }
+  S.pendingNews=pickNews();
+  render();
+}
+
+function forceLiquidate(){
+  // close everything at current px
+  S.pos.forEach(p=>{ S.realised+=posOpenPL(p); S.cash+=posOpenPL(p); });
+  S.physical.forEach(c=>{ const pl=physicalPL(c); S.realised+=pl; S.cash+=pl; });
+  S.pos=[]; S.physical=[];
+}
+
+/* ============ RENDER ============ */
+function fmtUSD(n){
+  const sign=n<0?"-":"";
+  const a=Math.abs(n);
+  if(a>=1e6) return sign+"$"+(a/1e6).toFixed(2)+"M";
+  if(a>=1e3) return sign+"$"+(a/1e3).toFixed(1)+"k";
+  return sign+"$"+a.toFixed(0);
+}
+function colorPL(n){return n>0?'up':n<0?'down':'flat';}
+function arrow(n){return n>0?'▲':n<0?'▼':'—';}
+
+function render(){
+  // clock
+  document.getElementById('monthLabel').textContent = S.started? MONTHS[Math.min(S.turn,11)] : "—";
+  document.getElementById('turnLabel').textContent = S.started? `Month ${S.turn+1} of 12` : "Press start";
+
+  // news
+  if(S.pendingNews){
+    const n=S.pendingNews;
+    document.getElementById('newsBox').innerHTML=
+      `<div class="news"><div class="hl">${n.hl}</div><div class="src">${n.src}</div>
+       <div class="ex"><b>Why it matters:</b> ${n.ex}</div></div>`;
+  }
+
+  // market board
+  const prem=whitePremium();
+  const n11usd=rawToTonneUSD(S.n11);
+  const dN11=S.n11-S.lastN11, dN5=S.n5-S.lastN5;
+  const dPrem=prem-(S.lastPrem??prem), dBrl=S.brl-(S.lastBrl??S.brl);
+  const dFreight=S.freight-(S.lastFreight??S.freight), dEth=S.ethanolParity-(S.lastEth??S.ethanolParity);
+  const rows=[
+    {nm:'No.11 Raw',sub:'¢/lb · world',px:S.n11.toFixed(2)+'¢ <span style="color:var(--txt-faint);font-size:11px">($'+n11usd.toFixed(0)+'/t)</span>',chg:dN11,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(2),tip:'Raw cane sugar, ICE world market, 112,000 lb per lot. Bracket shows the ¢/lb price converted to $/tonne (×22.046).'},
+    {nm:'No.5 White',sub:'$/t · London',px:'$'+S.n5,chg:dN5,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(0),tip:'Refined white sugar, London, 50 tonnes per lot'},
+    {nm:'White premium',sub:'No.5 − raw(conv)',px:'$'+prem.toFixed(0)+'/t',chg:dPrem,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(0),tip:'Headline gap: white price minus raw-equivalent price. NOT the net margin — you still pay toll, freight, financing, and lose ~8% in conversion.'},
+    {nm:'Refining toll',sub:'energy · labour · loss',px:'$'+REFINE_TOLL_PER_T+'/t',chg:0,fmt:()=>'fixed',tip:'Cost to process raw into white: energy, labour, and yield loss. Separate from freight. Fixed in this model.'},
+    {nm:'BRL/USD',sub:'real per USD',px:S.brl.toFixed(2),chg:dBrl,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(2),tip:'Brazilian real per USD. A lower number = stronger real, which tends bullish for world sugar.'},
+    {nm:'Freight',sub:'$/t · full leg',px:'$'+S.freight,chg:dFreight,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(0),tip:'Cost to ship the cargo. Charged in full to the refining arb.'},
+    {nm:'Ethanol parity',sub:'¢/lb mill flex',px:S.ethanolParity.toFixed(1)+'¢',chg:dEth,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(1),tip:'Below this, Brazilian mills favour ethanol over sugar — tightens supply'},
+  ];
+  document.getElementById('mktBody').innerHTML=rows.map(r=>{
+    const cls=r.chg>0?'up':r.chg<0?'down':'flat';
+    return `<tr><td class="nm"><span class="tip" title="${r.tip}">${r.nm}</span><small>${r.sub}</small></td>
+      <td class="px">${r.px}</td><td class="chg ${cls}">${r.fmt(r.chg)}</td></tr>`;
+  }).join('');
+
+  // arb hint — full realistic breakdown, $ per tonne of white
+  const rawIn=rawInputCostPerWhiteT(), fin=financeCostPerT(), net=arbNetMargin();
+  const ah=document.getElementById('arbHint');
+  const math=`<span style="color:var(--txt-dim)">White $${S.n5} − raw-in $${rawIn.toFixed(0)} (raw ÷ ${CONV_YIELD} yield) − toll $${REFINE_TOLL_PER_T} − freight $${S.freight} − financing $${fin.toFixed(0)} = </span>`;
+  if(net>25) ah.innerHTML=`${math}<b style="color:var(--green)">+${fmtUSD(net)}/t white</b>. Attractive — consider locking a cargo.`;
+  else if(net<0) ah.innerHTML=`${math}<b style="color:var(--neg)">${fmtUSD(net)}/t white</b>. Underwater — don't lock now.`;
+  else ah.innerHTML=`${math}<b>${fmtUSD(net)}/t white</b>. Thin margin.`;
+
+  // trade desk
+  const tg=document.getElementById('tradeGrid');
+  tg.innerHTML=`
+    ${tradeCard('n11','No.11 Raw','Directional bet on world raw sugar. 1 lot = 112,000 lb.')}
+    ${tradeCard('n5','No.5 White','Directional bet on refined whites. 1 lot = 50 t.')}
+    <div class="trade-card">
+      <div class="tt">Refining Arb</div>
+      <div class="td">Buy raw, refine, sell white. You lock today's <span class="tip" title="white price − raw input (grossed up by 92% yield) − $70 toll − full freight − financing carry">net margin</span> per tonne. Settles in ~2 months. Tonnes = raw bought.</div>
+      <div class="qty-row"><label>Tonnes</label><input type="number" id="arbQty" value="5000" min="1000" step="1000"></div>
+      <div class="btn-row">
+        <button class="buy" onclick="lockArb(+document.getElementById('arbQty').value,false)" title="Margin floats with the market until you settle — you carry spread risk">Lock — Unhedged</button>
+        <button onclick="lockArb(+document.getElementById('arbQty').value,true)" title="Locks both futures legs too. Margin secured (−$4/t cost), no weekly MTM swing.">Lock — Hedged</button>
+      </div>
+    </div>
+    <div class="trade-card">
+      <div class="tt">FX Hedge</div>
+      <div class="td">Short BRL exposure to neutralise currency risk on Brazilian-origin positions.</div>
+      <div class="qty-row"><label>Notional $M</label><input type="number" id="fxQty" value="2" min="1" step="1"></div>
+      <div class="btn-row"><button onclick="fxHedge(+document.getElementById('fxQty').value)">Hedge BRL</button></div>
+    </div>`;
+
+  // sidebar
+  const open=totalOpenPL();
+  document.getElementById('equityNum').textContent=fmtUSD(equity());
+  document.getElementById('equityNum').className='big-num '+colorPL(equity()-START_CASH);
+  document.getElementById('realisedPL').innerHTML=`<span class="${colorPL(S.realised)}">${fmtUSD(S.realised)}</span>`;
+  document.getElementById('openPL').innerHTML=`<span class="${colorPL(open)}">${fmtUSD(open)}</span>`;
+  document.getElementById('cashVal').textContent=fmtUSD(S.cash);
+  document.getElementById('marginVal').textContent=fmtUSD(marginUsed());
+
+  // risk
+  const ne=netExposure(), lev=Math.abs(ne)/Math.max(1,equity());
+  document.getElementById('netExp').innerHTML=`<span class="${ne>0?'up':ne<0?'down':'flat'}">${fmtUSD(ne)}</span>`;
+  const bar=document.getElementById('riskBar');
+  const pct=Math.min(100,lev/2*100);
+  bar.style.width=pct+'%';
+  bar.style.background=lev<0.8?'var(--green)':lev<1.5?'var(--blue)':'var(--neg)';
+  document.getElementById('riskHint').textContent=
+    lev<0.05?'Flat. No risk on the book.':
+    lev<0.8?`Leverage ${lev.toFixed(2)}x — comfortable.`:
+    lev<1.5?`Leverage ${lev.toFixed(2)}x — getting heavy.`:
+    `Leverage ${lev.toFixed(2)}x — danger zone, margin-call risk.`;
+
+  // positions
+  const pb=document.getElementById('posBox');
+  let html='';
+  S.pos.forEach((p,i)=>{
+    const pl=posOpenPL(p);
+    const unit=p.key==='n11'?p.entryPx.toFixed(2)+'¢':'$'+p.entryPx.toFixed(0);
+    html+=`<div class="pos"><div class="pl"><span><span class="tag ${p.side>0?'long':'short'}">${p.side>0?'Long':'Short'}</span> ${p.name}</span>
+      <small>${p.lots} lot${p.lots>1?'s':''} @ ${unit}</small></div>
+      <div class="pr"><span class="${colorPL(pl)}">${fmtUSD(pl)}</span><br>
+      <button style="padding:2px 6px;font-size:9px;margin-top:3px" onclick="closePos(${i})">Close</button></div></div>`;
+  });
+  S.physical.forEach((c,i)=>{
+    const pl=physicalPL(c);
+    const tag = c.hedged
+      ? `<span class="tag" style="background:rgba(11,94,168,.12);color:var(--blue)">Hedged</span>`
+      : `<span class="tag long">Unhedged</span>`;
+    html+=`<div class="pos"><div class="pl"><span>${tag} ${(c.tonnes/1000).toFixed(0)}kt arb</span>
+      <small>locked $${c.lockedMargin.toFixed(0)}/t · ${c.monthsLeft}mo left${c.hedged?' · MTM flat':''}</small></div>
+      <div class="pr"><span class="${colorPL(pl)}">${c.hedged?'flat':fmtUSD(pl)}</span><br>
+      <button style="padding:2px 6px;font-size:9px;margin-top:3px" onclick="closePhysIdx(${i})">Settle</button></div></div>`;
+  });
+  pb.innerHTML=html||'<div class="hint">No open positions.</div>';
+
+  // weekly recap
+  const rp=document.getElementById('recapPanel'), rb=document.getElementById('recapBox');
+  if(S.recap){
+    const r=S.recap;
+    const swingCls=colorPL(r.totalSwing);
+    let h=`<div style="margin-bottom:10px"><span style="font-family:var(--mono);font-size:10px;color:var(--txt-faint);text-transform:uppercase;letter-spacing:.1em">Open P&L swing</span><br>
+      <span class="big-num ${swingCls}" style="font-size:24px">${r.totalSwing>=0?'+':''}${fmtUSD(r.totalSwing)}</span></div>`;
+    if(r.moves.length){
+      h+=`<div style="font-size:11px;color:var(--txt-dim);margin-bottom:8px;line-height:1.6"><b style="color:var(--green)">Market moved:</b><br>`+
+         r.moves.map(m=>'· '+m).join('<br>')+`</div>`;
+    }
+    if(r.lines.length){
+      h+=`<div style="font-size:11.5px;border-top:1px solid var(--line);padding-top:8px;margin-bottom:6px"><b style="color:var(--green)">Position impact:</b><br>`+
+         r.lines.map(l=>{const pos=l.includes('+');return `<div style="padding:2px 0"><span class="${pos?'up':'down'}">${l}</span></div>`;}).join('')+`</div>`;
+    }
+    if(r.arbDriver){
+      h+=`<div style="font-size:11px;color:var(--txt-dim);border-top:1px solid var(--line);padding-top:8px;line-height:1.6">${r.arbDriver}</div>`;
+    }
+    if(!r.lines.length && !r.arbDriver){
+      h+=`<div class="hint">No open positions this month — nothing to attribute. The market moved but you weren't exposed.</div>`;
+    }
+    rb.innerHTML=h;
+    rp.style.display='block';
+  }else{
+    rp.style.display='none';
+  }
+}
+
+function tradeCard(key,name,desc){
+  return `<div class="trade-card">
+    <div class="tt">${name}</div>
+    <div class="td">${desc}</div>
+    <div class="qty-row"><label>Lots</label><input type="number" id="q_${key}" value="5" min="1" step="1"></div>
+    <div class="btn-row">
+      <button class="buy" onclick="trade('${key}','${name}',1,+document.getElementById('q_${key}').value)">Buy / Long</button>
+      <button class="sell" onclick="trade('${key}','${name}',-1,+document.getElementById('q_${key}').value)">Sell / Short</button>
+    </div></div>`;
+}
+function closePos(i){
+  const p=S.pos[i]; if(!p)return;
+  trade(p.key,p.name,-p.side,p.lots);
+}
+function closePhysIdx(i){ closePhysical(S.physical[i]); }
+
+/* FX hedge: simplified — reduces net exposure sensitivity, small carry cost */
+function fxHedge(mn){
+  if(!S.started){toast("Start the season first.");return;}
+  const cost=mn*1000*2; // small hedge cost
+  S.cash-=cost; S.realised-=cost;
+  toast(`Hedged $${mn}M BRL exposure (cost ${fmtUSD(cost)}).`);
+  render();
+}
+
+/* ============ TOAST ============ */
+let toastT;
+function toast(msg,warn){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(warn?' warn':'');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.className='toast'+(warn?' warn':''),2600);
+}
+
+/* ============ END / DEBRIEF ============ */
+function endGame(){
+  forceLiquidate();
+  const finalEq=S.cash;
+  const ret=(finalEq-START_CASH)/START_CASH*100;
+  // scoring
+  const dirTotal=S.directionalRight+S.directionalWrong;
+  const dirAcc=dirTotal?Math.round(S.directionalRight/dirTotal*100):0;
+  const riskScore = S.maxRiskBreach<0.8?'Disciplined':S.maxRiskBreach<1.5?'Acceptable':'Reckless';
+  const arbScore = S.arbsTaken===0?'Passive':(S.arbsMissed>S.arbsTaken?'Missed opportunities':'Opportunistic');
+
+  let pts=50;
+  pts+=Math.max(-40,Math.min(60,ret*1.2));
+  pts+=(dirAcc-50)*0.4;
+  pts-=S.marginCalls*12;
+  pts-=Math.max(0,(S.maxRiskBreach-1)*20);
+  pts+=Math.min(15,S.arbsTaken*4);
+  pts=Math.max(0,Math.min(100,Math.round(pts)));
+  const grade=pts>=85?'A':pts>=70?'B':pts>=55?'C':pts>=40?'D':'F';
+
+  const dbg=[
+    ['Final equity', fmtUSD(finalEq)+` (${ret>=0?'+':''}${ret.toFixed(1)}%)`, ret>=0?'up':'down'],
+    ['Directional accuracy', `${dirAcc}% (${S.directionalRight}W / ${S.directionalWrong}L)`, dirAcc>=55?'up':dirAcc>=45?'flat':'down'],
+    ['Refining arbs', `${arbScore} — ${S.arbsTaken} taken, ${S.arbsMissed} fat ones missed`, S.arbsTaken>0?'up':'flat'],
+    ['Risk discipline', `${riskScore} (peak ${S.maxRiskBreach.toFixed(1)}x leverage)`, S.maxRiskBreach<0.8?'up':S.maxRiskBreach<1.5?'flat':'down'],
+    ['Margin calls', S.marginCalls===0?'None — clean book':`${S.marginCalls} forced liquidation(s)`, S.marginCalls===0?'up':'down'],
+  ];
+
+  const coaching = buildCoaching(ret,dirAcc,S);
+
+  document.getElementById('modalInner').innerHTML=`
+    <h2>Season Debrief <span class="grade" style="background:${grade==='F'||grade==='D'?'var(--neg)':grade==='A'?'var(--green)':'var(--blue)'}">${grade}</span></h2>
+    <div class="score ${ret>=0?'up':'down'}">${pts}<span style="font-size:18px;color:var(--txt-dim)">/100</span></div>
+    ${dbg.map(d=>`<div class="debrief-row"><span class="lbl">${d[0]}</span><span class="rating ${d[2]}">${d[1]}</span></div>`).join('')}
+    <div style="margin-top:16px;padding:14px;background:var(--panel2);border-radius:8px;border-left:3px solid var(--blue)">
+      <div style="font-family:var(--disp);color:var(--green);font-size:14px;margin-bottom:6px">Desk notes</div>
+      <div style="color:var(--txt-dim);font-size:12px;line-height:1.65">${coaching}</div>
+    </div>
+    <button class="big-btn" style="margin-top:18px" onclick="restart()">↺ Trade Another Season</button>`;
+  document.getElementById('modalBg').classList.add('show');
+}
+
+function buildCoaching(ret,dirAcc,s){
+  const notes=[];
+  if(ret>15) notes.push("Strong P&L — you read the supply shocks well.");
+  else if(ret<0) notes.push("You finished down. Review which news events you faded incorrectly.");
+  if(dirAcc<45) notes.push("Your directional calls lost more than they won — try sizing into high-conviction news (bans, frost, ethanol shifts) and sitting out noise.");
+  if(s.arbsTaken===0) notes.push("You never locked a refining arb. When the net margin (after toll, freight, yield loss and financing) clears $25+/t, that is near-riskless carry you left on the table.");
+  if(s.arbsMissed>0) notes.push(`You skipped ${s.arbsMissed} attractive refining arb${s.arbsMissed>1?'s':''} — physical traders live on that margin.`);
+  if(s.marginCalls>0) notes.push("Margin calls wiped positions at the worst time. Keep net leverage under ~1.5x and hold cash buffer for volatility.");
+  if(s.maxRiskBreach>1.5) notes.push("You ran a very heavy book. Size discipline matters more than being right.");
+  if(notes.length===0) notes.push("Balanced, disciplined trading. Next: try pressing harder on conviction trades to lift returns without breaching risk limits.");
+  return notes.join(" ");
+}
+
+function restart(){
+  document.getElementById('modalBg').classList.remove('show');
+  S=freshState();
+  document.getElementById('advanceBtn').textContent="▶ Start Season";
+  document.getElementById('newsBox').innerHTML=
+    `<div class="news"><div class="hl">New season. Fresh book.</div><div class="src">Evolta Trading Floor</div>
+     <div class="ex">Press <b>Start Season</b> to take the first news tick.</div></div>`;
+  render();
+}
+
+/* ============ INIT ============ */
+S=freshState();
+render();
+</script>
+</body>
+</html>
