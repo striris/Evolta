@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas — Find Your City</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&family=Noto+Serif+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#faf6f1; --surface:#ffffff; --border:#ece4da; --border-strong:#d9cdbf;
+    --text-primary:#221a12; --text-secondary:#6e6357; --text-muted:#a89b8c;
+    --accent:#c2622c; --accent-deep:#a44e1f; --accent-soft:#f6e7d8;
+    --selected-bg:#c2622c; --selected-text:#fff5ec;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text-primary); min-height:100vh; display:flex; flex-direction:column; }
+  body.zh { font-family:'Noto Serif SC','DM Sans',sans-serif; }
+  body.zh .nav-logo, body.zh .intro-title, body.zh .q-text, body.zh .result-type,
+  body.zh .demo-title, body.zh .res-city-name, body.zh .modal-title { font-family:'Noto Serif SC',serif; }
+
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; background:var(--bg); border-bottom:1px solid var(--border); padding:0 2rem; height:56px; display:flex; align-items:center; justify-content:space-between; }
+  .nav-logo { font-family:'Playfair Display',serif; font-size:15px; letter-spacing:.04em; color:var(--text-primary); }
+  .nav-logo b { color:var(--accent); font-weight:500; }
+  .nav-count { font-size:12px; color:var(--text-muted); letter-spacing:.06em; }
+
+  main { flex:1; padding-top:56px; display:flex; align-items:flex-start; justify-content:center; padding-bottom:4rem; }
+  .container { width:100%; max-width:640px; padding:0 1.5rem; }
+  .screen { display:none; }
+  .screen.active { display:block; }
+
+  /* INTRO */
+  .intro-wrap { padding-top:4.5rem; animation:fadeUp .5s ease both; }
+  .lang-switcher { display:flex; gap:0; margin-bottom:2rem; }
+  .lang-btn { background:none; border:1px solid var(--border); padding:7px 18px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:400; color:var(--text-secondary); cursor:pointer; letter-spacing:.06em; transition:.15s; }
+  .lang-btn:first-child { border-right:none; }
+  .lang-btn.active { background:var(--accent); color:var(--selected-text); border-color:var(--accent); }
+  .lang-btn:hover:not(.active) { background:var(--accent-soft); }
+  .eyebrow { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:1.25rem; font-weight:500; }
+  .intro-title { font-family:'Playfair Display',serif; font-size:clamp(34px,6vw,52px); font-weight:400; line-height:1.12; margin-bottom:1.5rem; }
+  .intro-title em { font-style:italic; color:var(--accent); }
+  .intro-body { font-size:16px; color:var(--text-secondary); line-height:1.75; max-width:500px; margin-bottom:2rem; font-weight:300; }
+  .intro-divider { width:48px; height:2px; background:var(--accent); margin-bottom:2rem; }
+
+  .measure { background:var(--surface); border:1px solid var(--border); padding:1.25rem 1.5rem; margin-bottom:2rem; }
+  .measure-label { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); margin-bottom:1rem; }
+  .measure-row { display:flex; align-items:center; gap:12px; margin-bottom:11px; }
+  .measure-row:last-child { margin-bottom:0; }
+  .measure-name { font-size:12px; color:var(--text-primary); min-width:72px; font-weight:500; }
+  .measure-scale { flex:1; display:flex; align-items:center; gap:8px; }
+  .measure-lo, .measure-hi { font-size:10.5px; color:var(--text-muted); font-weight:300; white-space:nowrap; }
+  .measure-track { flex:1; height:2px; background:linear-gradient(90deg,var(--border),var(--accent)); }
+
+  .intro-meta { display:flex; gap:2rem; margin-bottom:2rem; }
+  .intro-stat { display:flex; flex-direction:column; gap:2px; }
+  .intro-stat-num { font-family:'Playfair Display',serif; font-size:22px; color:var(--accent); }
+  .intro-stat-label { font-size:11px; color:var(--text-muted); letter-spacing:.06em; text-transform:uppercase; }
+  body.zh .intro-stat-label { text-transform:none; letter-spacing:.02em; }
+
+  .btn-start { display:inline-flex; align-items:center; gap:10px; background:var(--accent); color:var(--selected-text); border:none; padding:14px 28px; font-family:inherit; font-size:14px; font-weight:400; letter-spacing:.04em; cursor:pointer; transition:opacity .2s; }
+  .btn-start:hover { opacity:.88; }
+  .btn-start .arrow { font-size:16px; transition:transform .2s; }
+  .btn-start:hover .arrow { transform:translateX(3px); }
+
+  /* PROGRESS */
+  .progress-wrap { padding:2.5rem 0 2rem; }
+  .progress-track { height:2px; background:var(--border); position:relative; margin-bottom:1rem; }
+  .progress-fill { position:absolute; top:0; left:0; height:100%; background:var(--accent); transition:width .4s ease; }
+  .progress-label { font-size:11px; color:var(--text-muted); letter-spacing:.08em; text-transform:uppercase; }
+  body.zh .progress-label { text-transform:none; }
+
+  /* QUESTION */
+  .q-wrap { animation:fadeUp .35s ease both; }
+  .q-category { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem; font-weight:500; }
+  body.zh .q-category { letter-spacing:.06em; }
+  .q-text { font-family:'Playfair Display',serif; font-size:clamp(21px,4vw,27px); font-weight:400; line-height:1.4; margin-bottom:2.25rem; }
+  .options { display:flex; flex-direction:column; gap:10px; margin-bottom:2.5rem; }
+  .opt { position:relative; background:var(--surface); border:1px solid var(--border); padding:16px 20px 16px 52px; cursor:pointer; transition:border-color .18s,background .18s,transform .12s; display:flex; align-items:flex-start; font-size:15px; color:var(--text-primary); line-height:1.55; font-weight:300; text-align:left; width:100%; }
+  .opt:hover { border-color:var(--accent); background:#fffaf4; transform:translateX(2px); }
+  .opt-letter { position:absolute; left:18px; top:16px; font-size:11px; font-weight:500; letter-spacing:.04em; color:var(--text-muted); transition:.18s; font-family:'DM Sans',sans-serif; }
+  .opt.selected { background:var(--selected-bg); border-color:var(--selected-bg); color:var(--selected-text); transform:translateX(0); }
+  .opt.selected .opt-letter { color:rgba(255,245,236,.55); }
+  .opt.selected:hover { background:var(--accent-deep); border-color:var(--accent-deep); }
+
+  .nav-btns { display:flex; justify-content:space-between; align-items:center; padding-bottom:2rem; }
+  .btn-ghost { background:none; border:1px solid var(--border); padding:10px 22px; font-family:inherit; font-size:13px; font-weight:400; color:var(--text-secondary); cursor:pointer; letter-spacing:.04em; transition:.18s; }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--text-primary); }
+  .btn-ghost:disabled { opacity:.3; cursor:default; pointer-events:none; }
+  .btn-next { background:var(--accent); border:1px solid var(--accent); padding:10px 28px; font-family:inherit; font-size:13px; font-weight:400; color:var(--selected-text); cursor:pointer; letter-spacing:.06em; transition:opacity .18s; }
+  .btn-next:hover { opacity:.85; }
+  .btn-next:disabled { opacity:.28; cursor:default; pointer-events:none; }
+
+  /* RESULT */
+  .result-wrap { padding-top:3.5rem; animation:fadeUp .5s ease both; }
+  .res-tag { display:inline-block; font-size:10px; letter-spacing:.14em; text-transform:uppercase; border:1px solid var(--accent); color:var(--accent); padding:5px 12px; margin-bottom:1.25rem; font-weight:500; }
+  .res-city-name { font-family:'Playfair Display',serif; font-size:clamp(34px,7vw,52px); font-weight:400; line-height:1.1; margin-bottom:.5rem; }
+  .res-city-name .flag { font-family:'DM Sans',sans-serif; }
+  .res-country { font-size:13px; color:var(--text-muted); letter-spacing:.04em; margin-bottom:1.5rem; }
+  .res-desc { font-size:15px; color:var(--text-secondary); line-height:1.78; font-weight:300; max-width:520px; margin-bottom:1.75rem; }
+  .traits { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:2.5rem; }
+  .trait { font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:6px 14px; border:1px solid var(--border-strong); color:var(--text-secondary); font-weight:400; }
+  body.zh .trait { letter-spacing:.04em; text-transform:none; }
+  .why-box { background:var(--accent-soft); border-left:2px solid var(--accent); padding:1.1rem 1.4rem; margin-bottom:2.5rem; }
+  .why-label { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-deep); margin-bottom:6px; font-weight:500; }
+  .why-text { font-size:14.5px; color:var(--text-primary); line-height:1.7; font-weight:300; }
+
+  .section-label { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); margin-bottom:1.25rem; }
+  body.zh .section-label { letter-spacing:.06em; }
+  .scores-section { margin-bottom:2.5rem; }
+  .score-row { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+  .score-name { font-size:13px; color:var(--text-secondary); min-width:120px; font-weight:300; }
+  .score-track { flex:1; height:3px; background:var(--border); }
+  .score-bar { height:100%; background:var(--accent); transition:width .9s cubic-bezier(.4,0,.2,1); }
+  .score-pct { font-size:12px; color:var(--text-muted); min-width:34px; text-align:right; }
+  .section-divider { height:1px; background:var(--border); margin:2.5rem 0; }
+
+  .wildcard { display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); padding:1rem 1.25rem; margin-bottom:2.5rem; }
+  .wildcard .wc-flag { font-size:26px; }
+  .wildcard .wc-text { font-size:13.5px; color:var(--text-secondary); font-weight:300; line-height:1.55; }
+  .wildcard .wc-text b { color:var(--text-primary); font-weight:500; }
+
+  .result-actions { display:flex; gap:12px; flex-wrap:wrap; padding-bottom:4rem; }
+  .btn-outline { background:none; border:1px solid var(--border-strong); padding:11px 22px; font-family:inherit; font-size:13px; font-weight:400; color:var(--text-primary); cursor:pointer; letter-spacing:.04em; transition:background .18s; }
+  .btn-outline:hover { background:var(--accent-soft); }
+  .btn-dark { background:var(--accent); border:1px solid var(--accent); padding:11px 22px; font-family:inherit; font-size:13px; font-weight:400; color:var(--selected-text); cursor:pointer; letter-spacing:.06em; transition:opacity .18s; }
+  .btn-dark:hover { opacity:.85; }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(34,26,18,.5); z-index:200; align-items:center; justify-content:center; padding:1.5rem; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--bg); max-width:600px; width:100%; max-height:85vh; overflow-y:auto; padding:2rem; animation:fadeUp .3s ease both; }
+  .modal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; }
+  .modal-title { font-family:'Playfair Display',serif; font-size:22px; font-weight:400; }
+  .modal-close { background:none; border:none; font-size:22px; cursor:pointer; color:var(--text-muted); padding:0; line-height:1; }
+  .modal-close:hover { color:var(--text-primary); }
+  .city-item { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .city-item:last-child { border-bottom:none; }
+  .city-item-header { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+  .city-item-flag { font-size:16px; }
+  .city-item-name { font-size:15px; font-weight:500; color:var(--text-primary); }
+  .city-item-country { font-size:11px; color:var(--text-muted); margin-left:auto; }
+  .city-item-desc { font-size:13px; color:var(--text-secondary); line-height:1.6; font-weight:300; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @media (max-width:480px) {
+    nav { padding:0 1.25rem; } main { padding-bottom:2rem; }
+    .container { padding:0 1.25rem; }
+    .opt { padding:14px 16px 14px 44px; font-size:14px; } .opt-letter { left:14px; }
+    .intro-meta { gap:1.5rem; } .score-name { min-width:92px; }
+    .measure-lo, .measure-hi { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo"><b>Atlas</b> · <span id="nav-sub">find your city</span></span>
+  <span class="nav-count" id="nav-count"></span>
+</nav>
+
+<main>
+  <div class="container">
+
+    <!-- INTRO -->
+    <div class="screen active" id="intro-screen">
+      <div class="intro-wrap">
+        <div class="lang-switcher">
+          <button class="lang-btn active" id="lang-en" onclick="setLang('en')">English</button>
+          <button class="lang-btn" id="lang-zh" onclick="setLang('zh')">中文</button>
+        </div>
+        <p class="eyebrow" id="t-eyebrow"></p>
+        <h1 class="intro-title" id="t-title"></h1>
+        <p class="intro-body" id="t-body"></p>
+        <div class="intro-divider"></div>
+
+        <div class="measure">
+          <div class="measure-label" id="t-measure-label"></div>
+          <div id="measure-rows"></div>
+        </div>
+
+        <div class="intro-meta">
+          <div class="intro-stat"><span class="intro-stat-num">16</span><span class="intro-stat-label" id="t-m-cities"></span></div>
+          <div class="intro-stat"><span class="intro-stat-num">10</span><span class="intro-stat-label" id="t-m-questions"></span></div>
+          <div class="intro-stat"><span class="intro-stat-num">6</span><span class="intro-stat-label" id="t-m-dims"></span></div>
+        </div>
+        <button class="btn-start" onclick="startQuiz()"><span id="t-begin"></span> <span class="arrow">→</span></button>
+      </div>
+    </div>
+
+    <!-- QUESTION -->
+    <div class="screen" id="question-screen">
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <span class="progress-label" id="progress-label"></span>
+      </div>
+      <div class="q-wrap" id="q-wrap">
+        <p class="q-category" id="q-category"></p>
+        <h2 class="q-text" id="q-text"></h2>
+        <div class="options" id="options"></div>
+        <div class="nav-btns">
+          <button class="btn-ghost" id="back-btn" onclick="goBack()"></button>
+          <button class="btn-next" id="next-btn" onclick="goNext()" disabled></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="screen" id="result-screen">
+      <div class="result-wrap">
+        <div class="res-tag" id="res-tag"></div>
+        <h1 class="res-city-name" id="res-city"></h1>
+        <p class="res-country" id="res-country"></p>
+        <p class="res-desc" id="res-desc"></p>
+        <div class="traits" id="res-traits"></div>
+        <div class="why-box">
+          <div class="why-label" id="t-why-label"></div>
+          <div class="why-text" id="res-why"></div>
+        </div>
+        <div class="scores-section">
+          <p class="section-label" id="t-profile-label"></p>
+          <div id="profile-bars"></div>
+        </div>
+        <div class="section-divider"></div>
+        <p class="section-label" id="t-matches-label"></p>
+        <div id="match-bars" style="margin-bottom:2.5rem"></div>
+        <div class="wildcard" id="wildcard"></div>
+        <div class="result-actions">
+          <button class="btn-outline" onclick="restartQuiz()" id="t-retake"></button>
+          <button class="btn-outline" onclick="openCitiesModal()" id="t-explore"></button>
+          <button class="btn-dark" id="map-btn"></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="modal-overlay" id="cities-modal" onclick="closeCitiesOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="t-modal-title"></h2>
+      <button class="modal-close" onclick="closeCitiesModal()">&#x2715;</button>
+    </div>
+    <div id="cities-list"></div>
+  </div>
+</div>
+
+<script>
+/* ============ LANGUAGE STATE ============ */
+let lang = 'en';
+function L(o){ return (o && o[lang]!==undefined) ? o[lang] : (o ? o.en : ''); }
+
+/* ============ UI STRINGS ============ */
+const T = {
+  navSub:{en:'find your city', zh:'找到你的城市'},
+  eyebrow:{en:'City match quiz', zh:'城市匹配测验'},
+  title:{en:'Where in the world<br>do you <em>belong</em>?', zh:'世界这么大，<br>哪座城市<em>属于你</em>？'},
+  body:{en:'Ten quick questions about how you want to live — climate, pace, budget, scene. We map your answers across six dimensions and match you to one of sixteen great global cities.',
+        zh:'十道关于你想如何生活的小问题——气候、节奏、预算、氛围。我们将你的答案投射到六个维度上，为你匹配全球十六座城市中最契合的一座。'},
+  measureLabel:{en:'What we measure', zh:'我们衡量什么'},
+  mCities:{en:'Cities', zh:'城市'},
+  mQuestions:{en:'Questions', zh:'问题'},
+  mDims:{en:'Dimensions', zh:'维度'},
+  begin:{en:'Find my city', zh:'找到我的城市'},
+  back:{en:'← Back', zh:'← 返回'},
+  cont:{en:'Continue →', zh:'继续 →'},
+  see:{en:'See result →', zh:'查看结果 →'},
+  qof:{en:(a,b)=>`Question ${a} of ${b}`, zh:(a,b)=>`第 ${a} 题 / 共 ${b} 题`},
+  resTag:{en:m=>`Your match · ${m}%`, zh:m=>`契合度 · ${m}%`},
+  whyLabel:{en:'Why this fits you', zh:'为什么契合你'},
+  profileLabel:{en:'Your travel profile', zh:'你的生活画像'},
+  matchesLabel:{en:'Your top matches', zh:'最契合的城市'},
+  wildcard:{en:(c)=>`Least like you: <b>${c}</b>. Go here to be pushed out of your comfort zone.`,
+            zh:(c)=>`与你反差最大：<b>${c}</b>。想跳出舒适圈，就去这里。`},
+  retake:{en:'Retake', zh:'重新测试'},
+  explore:{en:'Explore all cities →', zh:'浏览所有城市 →'},
+  map:{en:'See it on a map →', zh:'在地图上查看 →'},
+  modalTitle:{en:'All sixteen cities', zh:'全部十六座城市'},
+  whyTpl:{en:(a,b,c)=>`Your answers lean toward ${a} and ${b}. ${c} delivers exactly that — which is why it came out on top.`,
+          zh:(a,b,c)=>`你的答案偏向${a}与${b}。${c}恰好满足这一切——这正是它脱颖而出的原因。`}
+};
+
+/* ============ DIMENSIONS ============ */
+const DIMS = [
+  {key:'warm',   name:{en:'Climate', zh:'气候'}, lo:{en:'Cold',   zh:'寒冷'}, hi:{en:'Hot',     zh:'炎热'}},
+  {key:'tempo',  name:{en:'Pace',    zh:'节奏'}, lo:{en:'Relaxed',zh:'悠闲'}, hi:{en:'Fast',    zh:'快速'}},
+  {key:'scale',  name:{en:'Scale',   zh:'规模'}, lo:{en:'Small',  zh:'小镇'}, hi:{en:'Mega',    zh:'巨型'}},
+  {key:'budget', name:{en:'Budget',  zh:'预算'}, lo:{en:'Frugal', zh:'节俭'}, hi:{en:'Splurge', zh:'随性'}},
+  {key:'era',    name:{en:'Vibe',    zh:'气质'}, lo:{en:'Heritage',zh:'古典'},hi:{en:'Modern',  zh:'现代'}},
+  {key:'scene',  name:{en:'Scene',   zh:'氛围'}, lo:{en:'Quiet',  zh:'安静'}, hi:{en:'Social',  zh:'热闹'}},
+];
+/* phrasing for the dynamic "why" — high & low side of each axis */
+const AX = {
+  warm:{hi:{en:'sun and heat', zh:'阳光与温暖'}, lo:{en:'cool, crisp air', zh:'清凉的空气'}},
+  tempo:{hi:{en:'a fast, ambitious pace', zh:'快节奏与企图心'}, lo:{en:'a calm, unhurried rhythm', zh:'从容不迫的节奏'}},
+  scale:{hi:{en:'the energy of a huge city', zh:'大都会的能量'}, lo:{en:'a human scale close to nature', zh:'亲近自然的小尺度'}},
+  budget:{hi:{en:'comfort and quality over price', zh:'重品质胜于价格'}, lo:{en:'value that stretches your money', zh:'高性价比的生活'}},
+  era:{hi:{en:'sleek, modern living', zh:'现代而前卫'}, lo:{en:'history and old-world character', zh:'历史与古典韵味'}},
+  scene:{hi:{en:'a vibrant social scene', zh:'热闹的社交与夜生活'}, lo:{en:'quiet and the outdoors', zh:'安静与户外'}},
+};
+
+/* ============ QUESTIONS ============ */
+const QUESTIONS = [
+  { cat:{en:'Climate', zh:'气候'}, q:{en:'A perfect day outside — the weather is…', zh:'一个完美的户外日，天气是……'}, opts:[
+    {t:{en:'Crisp and cold — sweater weather, maybe snow', zh:'清冷——毛衣天，甚至飘雪'}, v:{warm:8}},
+    {t:{en:'Cool and fresh — mild, a light jacket', zh:'凉爽清新——温和，一件薄外套'}, v:{warm:32}},
+    {t:{en:'Warm and sunny — t-shirt and blue skies', zh:'温暖晴朗——短袖与蓝天'}, v:{warm:72}},
+    {t:{en:'Hot and tropical — beach heat, humidity and all', zh:'炎热湿润——海滩般的暑气'}, v:{warm:96}},
+  ]},
+  { cat:{en:'Saturday', zh:'周末'}, q:{en:'Your ideal day off looks like…', zh:'你理想的休息日是……'}, opts:[
+    {t:{en:'A slow morning, a long coffee, nowhere to be', zh:'慵懒的清晨，一杯长咖啡，无处可去'}, v:{tempo:15, scene:25}},
+    {t:{en:'A trail or a bike ride somewhere green', zh:'去绿意之中徒步或骑行'}, v:{tempo:30, scale:30}},
+    {t:{en:'Museums, markets, wandering the city for hours', zh:'逛博物馆、市集，在城里游荡数小时'}, v:{tempo:55, scene:60}},
+    {t:{en:'Brunch → shopping → rooftop bar → out till late', zh:'早午餐 → 购物 → 屋顶酒吧 → 玩到深夜'}, v:{tempo:82, scene:95}},
+  ]},
+  { cat:{en:'Home base', zh:'居所'}, q:{en:'Ideally, you live in…', zh:'理想中，你住在……'}, opts:[
+    {t:{en:'A small town close to nature', zh:'靠近自然的小镇'}, v:{scale:8}},
+    {t:{en:'A mid-size city you can cross in 20 minutes', zh:'二十分钟可穿城的中型城市'}, v:{scale:35}},
+    {t:{en:'A big, lively city with a real downtown', zh:'有真正市中心的繁华大城'}, v:{scale:72}},
+    {t:{en:'A massive metropolis that never sleeps', zh:'永不入睡的巨型都会'}, v:{scale:98, tempo:80}},
+  ]},
+  { cat:{en:'Money', zh:'金钱'}, q:{en:'On lifestyle and spending, you\'re…', zh:'谈到生活方式与花费，你是……'}, opts:[
+    {t:{en:'Frugal by choice — I want my money to stretch', zh:'主动节俭——希望钱花得长久'}, v:{budget:8}},
+    {t:{en:'Balanced — comfortable, not extravagant', zh:'平衡——舒适但不奢侈'}, v:{budget:42}},
+    {t:{en:'Happy to pay up for quality and convenience', zh:'乐意为品质与便利多付'}, v:{budget:75}},
+    {t:{en:'If it\'s world-class, price isn\'t the point', zh:'只要是顶级的，价格不是问题'}, v:{budget:96}},
+  ]},
+  { cat:{en:'Character', zh:'气质'}, q:{en:'A place wins your heart when it\'s…', zh:'一个地方打动你，是因为它……'}, opts:[
+    {t:{en:'Steeped in history — old streets, deep roots', zh:'底蕴深厚——老街区、深根脉'}, v:{era:8}},
+    {t:{en:'Charming and a little bohemian', zh:'迷人而带点波西米亚气息'}, v:{era:30, scene:65}},
+    {t:{en:'Sleek and modern — design and efficiency', zh:'光鲜现代——设计与效率'}, v:{era:80}},
+    {t:{en:'Futuristic — the cutting edge of everything', zh:'未来感——一切的最前沿'}, v:{era:98}},
+  ]},
+  { cat:{en:'Social battery', zh:'社交电量'}, q:{en:'You\'re happiest…', zh:'你最快乐的时候是……'}, opts:[
+    {t:{en:'Recharged by quiet — small circles, calm evenings', zh:'在安静中充电——小圈子、宁静夜晚'}, v:{scene:10}},
+    {t:{en:'One-on-one or in small groups', zh:'一对一或小群体之中'}, v:{scene:35}},
+    {t:{en:'In the buzz — events, friends, going out', zh:'置身热闹——活动、朋友、外出'}, v:{scene:72}},
+    {t:{en:'In the thick of nightlife and crowds', zh:'在夜生活与人群的中心'}, v:{scene:96}},
+  ]},
+  { cat:{en:'Food', zh:'美食'}, q:{en:'What you crave most is…', zh:'你最向往的是……'}, opts:[
+    {t:{en:'Incredible street food, cheap and authentic', zh:'地道又便宜的街头美食'}, v:{budget:18, scene:65}},
+    {t:{en:'A deep café and bakery culture', zh:'深厚的咖啡与烘焙文化'}, v:{era:25, tempo:30}},
+    {t:{en:'Every cuisine in the world, all at once', zh:'世界各国料理，应有尽有'}, v:{scale:80, era:75}},
+    {t:{en:'A serious fine-dining scene', zh:'认真讲究的高级餐饮'}, v:{budget:92}},
+  ]},
+  { cat:{en:'Getting around', zh:'出行'}, q:{en:'Day to day, you\'d rather…', zh:'日常出行，你更愿意……'}, opts:[
+    {t:{en:'Walk — everything close, on foot', zh:'步行——一切都在脚程之内'}, v:{scale:50, era:30}},
+    {t:{en:'Bike — flat, green, cycle lanes everywhere', zh:'骑车——平坦、绿意、处处自行车道'}, v:{scale:50, scene:65}},
+    {t:{en:'A fast, 24/7 metro', zh:'快速、全天候的地铁'}, v:{scale:82, tempo:80, era:80}},
+    {t:{en:'A car and the open road', zh:'一辆车与开阔的道路'}, v:{scale:18}},
+  ]},
+  { cat:{en:'Ambition', zh:'抱负'}, q:{en:'Career-wise, the city should offer…', zh:'在事业上，这座城市应当提供……'}, opts:[
+    {t:{en:'Room to slow down — life first, work second', zh:'放慢的空间——生活第一，工作其次'}, v:{tempo:12}},
+    {t:{en:'Steady opportunity without the grind', zh:'稳定的机会，不必拼命'}, v:{tempo:45}},
+    {t:{en:'A competitive scene where ambition pays off', zh:'竞争激烈、野心有回报的环境'}, v:{tempo:82, budget:70}},
+    {t:{en:'The global center of my industry', zh:'我所在行业的全球中心'}, v:{tempo:98, scale:95}},
+  ]},
+  { cat:{en:'Escape', zh:'远行'}, q:{en:'You\'d love to be a short trip from…', zh:'你希望距离不远处就有……'}, opts:[
+    {t:{en:'Mountains and trails', zh:'群山与山径'}, v:{scale:25, warm:30}},
+    {t:{en:'Beaches and the ocean', zh:'海滩与大海'}, v:{warm:82, scene:60}},
+    {t:{en:'Other great cities for weekend hops', zh:'周末可轻松到达的其他大城市'}, v:{scale:82, era:78}},
+    {t:{en:'Nothing — the city itself is enough', zh:'什么都不需要——城市本身就够了'}, v:{scale:80, scene:80}},
+  ]},
+];
+
+/* ============ CITIES (6-axis vectors) ============ */
+const CITIES = [
+  { name:{en:'Tokyo', zh:'东京'}, flag:'🇯🇵', country:{en:'Japan', zh:'日本'}, vec:{warm:45,tempo:90,scale:100,budget:70,era:85,scene:70},
+    blurb:{en:'Hyper-modern yet deeply traditional, Tokyo runs on precision and quiet intensity. Endless neighborhoods, the world\'s best transit, and food from $4 ramen to three-Michelin-star — all immaculately done.',
+           zh:'既极致现代又深植传统，东京以精准与内敛的活力运转。无尽的街区、全球最佳的轨道交通，以及从四美元拉面到米其林三星、皆一丝不苟的美食。'},
+    traits:{en:['Big-city','Modern','Foodie'], zh:['大都会','现代','美食']},
+    one:{en:'Precision, scale, and the world\'s best transit.', zh:'精准、规模，与全球最佳的交通。'} },
+  { name:{en:'Lisbon', zh:'里斯本'}, flag:'🇵🇹', country:{en:'Portugal', zh:'葡萄牙'}, vec:{warm:70,tempo:35,scale:50,budget:40,era:30,scene:60},
+    blurb:{en:'Sun-washed, hilly and refreshingly unhurried. Lisbon pairs old-world tiles and trams with a low cost of living and the Atlantic at its doorstep — a favorite of those who want warmth without the rush.',
+           zh:'阳光洒满山丘，节奏舒缓宜人。里斯本将古典花砖与有轨电车，与低廉的生活成本和大西洋海岸结合——想要温暖却不愿忙乱者的心头好。'},
+    traits:{en:['Sunny','Relaxed','Affordable'], zh:['阳光','悠闲','高性价比']},
+    one:{en:'Warm, walkable and gloriously laid-back.', zh:'温暖、宜步行，悠然自得。'} },
+  { name:{en:'Berlin', zh:'柏林'}, flag:'🇩🇪', country:{en:'Germany', zh:'德国'}, vec:{warm:30,tempo:50,scale:70,budget:40,era:70,scene:85},
+    blurb:{en:'Gritty, creative and famously free-spirited. Berlin is cheap for a major capital, endlessly artistic and legendary after dark — a magnet for makers, night owls and anyone who bristles at convention.',
+           zh:'粗粝、富创造力，以自由不羁闻名。作为大国首都，柏林物价亲民、艺术气息浓厚、夜生活传奇——创作者、夜猫子与一切厌倦循规蹈矩之人的聚集地。'},
+    traits:{en:['Creative','Nightlife','Affordable'], zh:['创意','夜生活','高性价比']},
+    one:{en:'Cheap, artistic and alive after midnight.', zh:'亲民、艺术，午夜后依旧鲜活。'} },
+  { name:{en:'Singapore', zh:'新加坡'}, flag:'🇸🇬', country:{en:'Singapore', zh:'新加坡'}, vec:{warm:95,tempo:85,scale:80,budget:85,era:95,scene:60},
+    blurb:{en:'Hot, hyper-organized and gleamingly modern. Singapore offers safety, world-class infrastructure and a global crossroads of cultures and cuisines — for a price, in a tropical garden city that simply works.',
+           zh:'炎热、高度有序、光鲜现代。新加坡提供安全、世界级的基础设施，以及多元文化与美食的全球交汇——代价不菲，却是一座运转无碍的热带花园城市。'},
+    traits:{en:['Tropical','Modern','Safe'], zh:['热带','现代','安全']},
+    one:{en:'A spotless tropical metropolis that works.', zh:'一尘不染、运转无碍的热带大都会。'} },
+  { name:{en:'New York', zh:'纽约'}, flag:'🇺🇸', country:{en:'United States', zh:'美国'}, vec:{warm:50,tempo:100,scale:100,budget:90,era:75,scene:90},
+    blurb:{en:'The definition of fast, dense and ambitious. New York is expensive and relentless, but nowhere else packs this many cultures, careers and 3am options into one electric grid. The world\'s deep end.',
+           zh:'快、密、野心勃勃的代名词。纽约昂贵而不知疲倦，却没有任何地方能把这么多文化、事业与凌晨三点的选择塞进同一张通电的网格。世界的深水区。'},
+    traits:{en:['Fast-paced','Iconic','Ambitious'], zh:['快节奏','标志性','野心']},
+    one:{en:'Relentless, expensive and utterly alive.', zh:'永不停歇、昂贵，却无比鲜活。'} },
+  { name:{en:'Bangkok', zh:'曼谷'}, flag:'🇹🇭', country:{en:'Thailand', zh:'泰国'}, vec:{warm:95,tempo:75,scale:90,budget:25,era:55,scene:85},
+    blurb:{en:'Hot, chaotic and wonderfully cheap. Bangkok is street-food heaven, buzzing till dawn, and a global hub for those who want big-city energy on a small budget. Intense, friendly, never boring.',
+           zh:'炎热、喧闹，物价低得惊人。曼谷是街头美食的天堂，喧腾至天明，也是想用小预算享受大城市能量者的全球枢纽。热烈、友善，永不无聊。'},
+    traits:{en:['Tropical','Street food','Cheap'], zh:['热带','街头美食','便宜']},
+    one:{en:'Big-city buzz on a tiny budget.', zh:'用极小预算，享大城热闹。'} },
+  { name:{en:'Copenhagen', zh:'哥本哈根'}, flag:'🇩🇰', country:{en:'Denmark', zh:'丹麦'}, vec:{warm:25,tempo:40,scale:50,budget:85,era:80,scene:45},
+    blurb:{en:'Cool, calm and impeccably designed. Copenhagen runs on bikes, trust and good taste — expensive, but green, safe and quietly happy. The home of hygge and work-life balance done right.',
+           zh:'清凉、从容，设计无可挑剔。哥本哈根靠单车、信任与好品味运转——昂贵，却绿色、安全、悄然幸福。这里是 hygge 与理想工作生活平衡的所在。'},
+    traits:{en:['Cool','Design','Balanced'], zh:['清凉','设计','平衡']},
+    one:{en:'Bikes, trust and quiet good design.', zh:'单车、信任，与静好的设计。'} },
+  { name:{en:'Mexico City', zh:'墨西哥城'}, flag:'🇲🇽', country:{en:'Mexico', zh:'墨西哥'}, vec:{warm:65,tempo:75,scale:95,budget:30,era:45,scene:80},
+    blurb:{en:'Vast, vibrant and surprisingly temperate. CDMX blends grand history with a roaring creative and food scene, all at a forgiving cost. Huge, soulful, and increasingly a home for remote workers.',
+           zh:'辽阔、热烈，气候出乎意料地温和。墨西哥城将宏大的历史与蓬勃的创意、美食场景融为一体，且成本宽容。庞大而有灵魂，正日益成为远程工作者的家。'},
+    traits:{en:['Vibrant','Historic','Affordable'], zh:['热烈','历史','高性价比']},
+    one:{en:'Huge, soulful and easy on the wallet.', zh:'庞大、有灵魂，钱包友好。'} },
+  { name:{en:'Cape Town', zh:'开普敦'}, flag:'🇿🇦', country:{en:'South Africa', zh:'南非'}, vec:{warm:70,tempo:35,scale:55,budget:45,era:50,scene:55},
+    blurb:{en:'Where a mountain meets the sea. Cape Town is relaxed, scenic and outdoorsy, with wine country, beaches and trails at hand. Mild, value-for-money living for those who put nature first.',
+           zh:'山海相拥之地。开普敦悠闲、风景如画、热爱户外，酒乡、海滩与山径近在咫尺。把自然放在第一位的人，可在此享受温和而高性价比的生活。'},
+    traits:{en:['Scenic','Outdoorsy','Relaxed'], zh:['风景','户外','悠闲']},
+    one:{en:'Mountains, beaches and an easy pace.', zh:'群山、海滩，与从容的步调。'} },
+  { name:{en:'Dubai', zh:'迪拜'}, flag:'🇦🇪', country:{en:'UAE', zh:'阿联酋'}, vec:{warm:100,tempo:80,scale:85,budget:95,era:100,scene:75},
+    blurb:{en:'Hot, futuristic and unapologetically luxurious. Dubai is tax-free, ultra-safe and built at maximum scale — a gleaming desert metropolis for those chasing ambition, sunshine and the new.',
+           zh:'炎热、未来感十足、毫不掩饰的奢华。迪拜免税、极度安全、以最大尺度建成——一座闪耀的沙漠大都会，献给追逐野心、阳光与新事物的人。'},
+    traits:{en:['Luxury','Futuristic','Sunny'], zh:['奢华','未来感','阳光']},
+    one:{en:'Tax-free, sun-soaked, built to impress.', zh:'免税、阳光普照，为惊艳而生。'} },
+  { name:{en:'Amsterdam', zh:'阿姆斯特丹'}, flag:'🇳🇱', country:{en:'Netherlands', zh:'荷兰'}, vec:{warm:35,tempo:42,scale:52,budget:68,era:45,scene:68},
+    blurb:{en:'Cool, compact and effortlessly liveable. Amsterdam runs on bikes and canals, mixing centuries-old charm with an open, international ease. Pricey but humane, and beautifully walkable.',
+           zh:'清凉、紧凑，宜居得毫不费力。阿姆斯特丹靠单车与运河运转，将数百年的魅力与开放国际的从容融合。价格不低却人性化，且极宜步行。'},
+    traits:{en:['Bikeable','Charming','Liberal'], zh:['单车友好','迷人','开放']},
+    one:{en:'Canals, bikes and open-minded charm.', zh:'运河、单车，与开放的魅力。'} },
+  { name:{en:'Barcelona', zh:'巴塞罗那'}, flag:'🇪🇸', country:{en:'Spain', zh:'西班牙'}, vec:{warm:75,tempo:50,scale:65,budget:50,era:38,scene:82},
+    blurb:{en:'Sunny, design-rich and made for the street. Barcelona pairs beaches with Gaudí, late dinners and a famous nightlife — a warm, social, mid-priced Mediterranean classic.',
+           zh:'阳光、设计感丰富，为街头而生。巴塞罗那将海滩与高迪、深夜晚餐与著名的夜生活相结合——一座温暖、社交、价格适中的地中海经典之城。'},
+    traits:{en:['Sunny','Social','Seaside'], zh:['阳光','社交','海滨']},
+    one:{en:'Beaches, Gaudí and late-night energy.', zh:'海滩、高迪，与深夜的活力。'} },
+  { name:{en:'Seoul', zh:'首尔'}, flag:'🇰🇷', country:{en:'South Korea', zh:'韩国'}, vec:{warm:45,tempo:95,scale:100,budget:60,era:90,scene:80},
+    blurb:{en:'Fast, futuristic and open all night. Seoul is a hyper-connected megacity of 24-hour everything, cutting-edge culture and ferocious energy — modern living turned up to eleven.',
+           zh:'快速、未来感、彻夜不眠。首尔是一座高度互联的巨型城市，万物 24 小时运转、文化前卫、能量惊人——把现代生活调到了极限。'},
+    traits:{en:['Hi-tech','24/7','Energetic'], zh:['高科技','全天候','活力']},
+    one:{en:'A 24/7, hyper-modern megacity.', zh:'全天候、超现代的巨型城市。'} },
+  { name:{en:'Vancouver', zh:'温哥华'}, flag:'🇨🇦', country:{en:'Canada', zh:'加拿大'}, vec:{warm:40,tempo:38,scale:58,budget:80,era:68,scene:42},
+    blurb:{en:'Mild, green and outdoors-obsessed. Vancouver wedges a calm, modern city between ocean and mountains — pricey and rainy, but clean, safe and a dream for nature lovers.',
+           zh:'温和、绿意盎然、痴迷户外。温哥华将一座从容的现代城市嵌于海洋与群山之间——价高多雨，却干净、安全，是自然爱好者的梦想之地。'},
+    traits:{en:['Outdoorsy','Mild','Clean'], zh:['户外','温和','洁净']},
+    one:{en:'A calm modern city between sea and peaks.', zh:'海与山之间，一座从容的现代城。'} },
+  { name:{en:'Buenos Aires', zh:'布宜诺斯艾利斯'}, flag:'🇦🇷', country:{en:'Argentina', zh:'阿根廷'}, vec:{warm:60,tempo:55,scale:82,budget:32,era:35,scene:82},
+    blurb:{en:'Passionate, late-night and full of old-world grandeur. Buenos Aires offers European elegance at South American prices, with tango, steak and a nightlife that starts past midnight.',
+           zh:'热情、夜深方酣，满是旧世界的恢宏。布宜诺斯艾利斯以南美的价格提供欧式优雅，有探戈、牛排，以及午夜后才开始的夜生活。'},
+    traits:{en:['Passionate','Nightlife','Affordable'], zh:['热情','夜生活','高性价比']},
+    one:{en:'European elegance, South American prices.', zh:'欧式优雅，南美价格。'} },
+  { name:{en:'Melbourne', zh:'墨尔本'}, flag:'🇦🇺', country:{en:'Australia', zh:'澳大利亚'}, vec:{warm:55,tempo:50,scale:70,budget:70,era:62,scene:64},
+    blurb:{en:'Cultured, liveable and coffee-obsessed. Melbourne blends laneway art, great food and a relaxed-but-modern vibe, consistently rated among the world\'s most liveable cities.',
+           zh:'有文化、宜居、痴迷咖啡。墨尔本融合了巷弄艺术、美食与从容而现代的氛围，常年位居全球最宜居城市之列。'},
+    traits:{en:['Cultured','Liveable','Coffee'], zh:['文化','宜居','咖啡']},
+    one:{en:'Laneways, coffee and easy liveability.', zh:'巷弄、咖啡，与轻松的宜居。'} },
+];
+
+/* ============ STATE ============ */
+let current = 0, answers = [];
+const DIM_KEYS = DIMS.map(d=>d.key);
+const MAXDIST = Math.sqrt(DIM_KEYS.length*100*100);
+
+/* ============ LANGUAGE ============ */
+function setLang(l){
+  lang = l;
+  document.body.classList.toggle('zh', l==='zh');
+  document.getElementById('lang-en').classList.toggle('active', l==='en');
+  document.getElementById('lang-zh').classList.toggle('active', l==='zh');
+  document.documentElement.lang = l==='zh'?'zh':'en';
+  renderIntroText();
+  if(document.getElementById('question-screen').classList.contains('active')) renderQ();
+  if(document.getElementById('result-screen').classList.contains('active')) renderResult();
+  if(document.getElementById('cities-modal').classList.contains('open')) renderCitiesList();
+}
+
+function renderIntroText(){
+  document.getElementById('nav-sub').textContent = L(T.navSub);
+  document.getElementById('t-eyebrow').textContent = L(T.eyebrow);
+  document.getElementById('t-title').innerHTML = L(T.title);
+  document.getElementById('t-body').textContent = L(T.body);
+  document.getElementById('t-measure-label').textContent = L(T.measureLabel);
+  document.getElementById('t-m-cities').textContent = L(T.mCities);
+  document.getElementById('t-m-questions').textContent = L(T.mQuestions);
+  document.getElementById('t-m-dims').textContent = L(T.mDims);
+  document.getElementById('t-begin').textContent = L(T.begin);
+  document.getElementById('measure-rows').innerHTML = DIMS.map(d=>`
+    <div class="measure-row">
+      <span class="measure-name">${L(d.name)}</span>
+      <span class="measure-scale"><span class="measure-lo">${L(d.lo)}</span><span class="measure-track"></span><span class="measure-hi">${L(d.hi)}</span></span>
+    </div>`).join('');
+}
+
+/* ============ FLOW ============ */
+function startQuiz(){
+  current = 0; answers = [];
+  document.getElementById('intro-screen').classList.remove('active');
+  document.getElementById('question-screen').classList.add('active');
+  renderQ();
+}
+
+function renderQ(){
+  const q = QUESTIONS[current];
+  const pct = (current/QUESTIONS.length)*100;
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('progress-label').textContent = T.qof[lang](current+1, QUESTIONS.length);
+  document.getElementById('nav-count').textContent = `${current+1} / ${QUESTIONS.length}`;
+  document.getElementById('q-category').textContent = L(q.cat);
+  document.getElementById('q-text').textContent = L(q.q);
+  document.getElementById('back-btn').textContent = L(T.back);
+  document.getElementById('back-btn').disabled = current===0;
+  const nb = document.getElementById('next-btn');
+  nb.textContent = current===QUESTIONS.length-1 ? L(T.see) : L(T.cont);
+  nb.disabled = answers[current]===undefined;
+  const wrap = document.getElementById('q-wrap');
+  wrap.style.animation='none'; void wrap.offsetWidth; wrap.style.animation='fadeUp .35s ease both';
+  const letters=['A','B','C','D'];
+  const opts = document.getElementById('options'); opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt'+(answers[current]===i?' selected':'');
+    btn.innerHTML=`<span class="opt-letter">${letters[i]}</span>${L(o.t)}`;
+    btn.onclick=()=>select(i);
+    opts.appendChild(btn);
+  });
+}
+function select(i){
+  answers[current]=i;
+  document.querySelectorAll('.opt').forEach((b,idx)=>b.classList.toggle('selected', idx===i));
+  document.getElementById('next-btn').disabled=false;
+}
+function goBack(){ if(current>0){current--;renderQ();} }
+function goNext(){
+  if(answers[current]===undefined) return;
+  if(current<QUESTIONS.length-1){ current++; renderQ(); }
+  else showResult();
+}
+
+/* ============ MATCHING ============ */
+function computeProfile(){
+  const sums={}, counts={};
+  DIM_KEYS.forEach(k=>{sums[k]=0;counts[k]=0;});
+  answers.forEach((ans,qi)=>{
+    const v=QUESTIONS[qi].opts[ans].v;
+    Object.entries(v).forEach(([k,val])=>{ sums[k]+=val; counts[k]++; });
+  });
+  const p={};
+  DIM_KEYS.forEach(k=>{ p[k]=counts[k]?Math.round(sums[k]/counts[k]):50; });
+  return p;
+}
+function rankCities(profile){
+  return CITIES.map(c=>{
+    let d=0; DIM_KEYS.forEach(k=>{ const diff=profile[k]-c.vec[k]; d+=diff*diff; });
+    const dist=Math.sqrt(d);
+    const sim=Math.max(0,Math.min(100, Math.round(100*(1-dist/MAXDIST)*1.18)));
+    return {city:c, dist, sim};
+  }).sort((a,b)=>a.dist-b.dist);
+}
+
+let lastResult=null;
+function showResult(){
+  const profile=computeProfile();
+  const ranked=rankCities(profile);
+  lastResult={profile, ranked};
+  document.getElementById('question-screen').classList.remove('active');
+  document.getElementById('result-screen').classList.add('active');
+  document.getElementById('nav-count').textContent='';
+  renderResult();
+}
+
+function renderResult(){
+  if(!lastResult) return;
+  const {profile, ranked}=lastResult;
+  const top=ranked[0], city=top.city;
+  document.getElementById('res-tag').textContent = T.resTag[lang](top.sim);
+  document.getElementById('res-city').innerHTML = `${L(city.name)} <span class="flag">${city.flag}</span>`;
+  document.getElementById('res-country').textContent = L(city.country);
+  document.getElementById('res-desc').textContent = L(city.blurb);
+  document.getElementById('res-traits').innerHTML = city.traits[lang].map(t=>`<span class="trait">${t}</span>`).join('');
+
+  // dynamic "why": user's two most extreme axes
+  const extremes = DIM_KEYS.map(k=>({k, dev:Math.abs(profile[k]-50), hi:profile[k]>=50}))
+    .sort((a,b)=>b.dev-a.dev).slice(0,2);
+  const phrase = e => L(AX[e.k][e.hi?'hi':'lo']);
+  document.getElementById('t-why-label').textContent = L(T.whyLabel);
+  document.getElementById('res-why').textContent = T.whyTpl[lang](phrase(extremes[0]), phrase(extremes[1]), L(city.name));
+
+  // profile bars
+  document.getElementById('t-profile-label').textContent = L(T.profileLabel);
+  document.getElementById('profile-bars').innerHTML = DIMS.map(d=>{
+    const val=profile[d.key];
+    const sideLabel = val>=50?L(d.hi):L(d.lo);
+    return `<div class="score-row"><span class="score-name">${L(d.name)}</span>
+      <div class="score-track"><div class="score-bar" style="width:0" data-w="${val}%"></div></div>
+      <span class="score-pct">${sideLabel}</span></div>`;
+  }).join('');
+
+  // top matches (next 4 after #1, but include #1 too)
+  document.getElementById('t-matches-label').textContent = L(T.matchesLabel);
+  document.getElementById('match-bars').innerHTML = ranked.slice(0,5).map(r=>`
+    <div class="score-row"><span class="score-name">${r.city.flag} ${L(r.city.name)}</span>
+      <div class="score-track"><div class="score-bar" style="width:0" data-w="${r.sim}%"></div></div>
+      <span class="score-pct">${r.sim}%</span></div>`).join('');
+
+  // wildcard = least similar
+  const wc=ranked[ranked.length-1].city;
+  document.getElementById('wildcard').innerHTML =
+    `<span class="wc-flag">${wc.flag}</span><span class="wc-text">${T.wildcard[lang](L(wc.name))}</span>`;
+
+  // buttons
+  document.getElementById('t-retake').textContent = L(T.retake);
+  document.getElementById('t-explore').textContent = L(T.explore);
+  document.getElementById('map-btn').textContent = L(T.map);
+  document.getElementById('map-btn').onclick = ()=> window.open('https://www.google.com/maps/search/'+encodeURIComponent(city.name.en),'_blank');
+
+  setTimeout(()=>{ document.querySelectorAll('.score-bar').forEach(el=>{ el.style.width=el.dataset.w; }); }, 120);
+}
+
+function restartQuiz(){
+  current=0; answers=[]; lastResult=null;
+  document.getElementById('result-screen').classList.remove('active');
+  document.getElementById('intro-screen').classList.add('active');
+  document.getElementById('nav-count').textContent='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ============ CITIES MODAL ============ */
+function renderCitiesList(){
+  document.getElementById('t-modal-title').textContent = L(T.modalTitle);
+  document.getElementById('cities-list').innerHTML = CITIES.map(c=>`
+    <div class="city-item">
+      <div class="city-item-header">
+        <span class="city-item-flag">${c.flag}</span>
+        <span class="city-item-name">${L(c.name)}</span>
+        <span class="city-item-country">${L(c.country)}</span>
+      </div>
+      <p class="city-item-desc">${L(c.one)}</p>
+    </div>`).join('');
+}
+function openCitiesModal(){ renderCitiesList(); document.getElementById('cities-modal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeCitiesModal(){ document.getElementById('cities-modal').classList.remove('open'); document.body.style.overflow=''; }
+function closeCitiesOutside(e){ if(e.target===document.getElementById('cities-modal')) closeCitiesModal(); }
+
+/* ============ INIT ============ */
+renderIntroText();
+</script>
+</body>
+</html>
