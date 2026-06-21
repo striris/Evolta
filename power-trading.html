@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peak &amp; Dispatch — Power Trading, From Scratch | Evolta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7f5;
+    --bg2:#ffffff;
+    --panel:#ffffff;
+    --panel2:#f0f5f2;
+    --line:#e2e9e4;
+    --line2:#d6e0da;
+    --green:#1a7a4c;
+    --green-lt:#2e9d68;
+    --blue:#0b5ea8;
+    --blue-lt:#3a86c8;
+    --amber:#d98a1f;       /* energy / spike accent */
+    --amber-lt:#f0a83a;
+    --accent:#1a7a4c;
+    --pos:#1a7a4c;
+    --neg:#c0392b;
+    --white:#1a2622;
+    --txt:#243530;
+    --txt-dim:#5e7068;
+    --txt-faint:#94a59d;
+    --mono:'IBM Plex Mono',monospace;
+    --sans:'Inter',-apple-system,sans-serif;
+    --disp:'Fraunces',serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:
+      radial-gradient(ellipse at 12% -5%, #e6f1ea 0%, transparent 45%),
+      radial-gradient(ellipse at 95% 5%, #e7f0f8 0%, transparent 42%),
+      var(--bg);
+    color:var(--txt);
+    font-family:var(--sans);
+    font-size:13px;
+    line-height:1.5;
+    min-height:100vh;
+    padding:0 0 60px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px;position:relative;z-index:2}
+
+  /* Header */
+  header{
+    border-bottom:1px solid var(--line);
+    padding:30px 0 20px;
+    margin-bottom:24px;
+    display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  }
+  .brand h1{
+    font-family:var(--disp);font-weight:500;font-size:40px;line-height:.95;
+    letter-spacing:-.02em;color:var(--green);
+  }
+  .brand h1 .amp{color:var(--blue);font-style:italic}
+  .brand h1 .bolt{color:var(--amber);font-style:normal}
+  .brand .sub{color:var(--txt-dim);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin-top:8px;font-family:var(--mono)}
+  .brand .evolta{color:var(--blue);font-weight:600}
+  .clock{text-align:right}
+  .clock .month{font-family:var(--disp);font-size:28px;color:var(--blue);font-weight:500}
+  .clock .turn{color:var(--txt-faint);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-family:var(--mono)}
+
+  /* Layout */
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 20px;
+    margin-bottom:18px;
+    box-shadow:0 1px 2px rgba(26,122,76,.04), 0 6px 22px rgba(11,94,168,.04);
+  }
+  .panel h2{
+    font-family:var(--mono);font-weight:500;font-size:11px;color:var(--txt-faint);
+    letter-spacing:.14em;text-transform:uppercase;
+    margin-bottom:14px;display:flex;align-items:center;gap:8px;
+  }
+  .panel h2 .dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+  /* Market table */
+  .mkt{width:100%;border-collapse:collapse}
+  .mkt th{text-align:left;color:var(--txt-faint);font-weight:500;font-size:9.5px;
+    letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+  .mkt td{padding:9px 8px;border-bottom:1px solid var(--line)}
+  .mkt tr:last-child td{border-bottom:none}
+  .mkt .nm{color:var(--txt);font-weight:500}
+  .mkt .nm small{display:block;color:var(--txt-faint);font-size:10px;font-weight:400}
+  .mkt .px{font-weight:600;font-size:15px;text-align:right;font-family:var(--mono)}
+  .mkt .chg{text-align:right;font-size:12px;font-family:var(--mono)}
+  .up{color:var(--pos)}.down{color:var(--neg)}.flat{color:var(--txt-faint)}
+
+  /* News */
+  .news{border-left:3px solid var(--green);padding:2px 0 2px 14px;margin-bottom:8px}
+  .news .hl{color:var(--white);font-weight:600;margin-bottom:4px;font-size:14px}
+  .news .src{color:var(--blue);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);font-weight:500}
+  .news .ex{color:var(--txt-dim);font-size:12px;margin-top:8px;line-height:1.6;
+    border-top:1px solid var(--line);padding-top:8px}
+  .news .ex b{color:var(--green)}
+
+  /* Actions */
+  .act-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .trade-card{
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:13px;
+  }
+  .trade-card .tt{font-family:var(--disp);font-size:15px;color:var(--green);margin-bottom:3px;font-weight:500}
+  .trade-card .td{color:var(--txt-dim);font-size:10.5px;margin-bottom:11px;min-height:30px;line-height:1.5}
+  .qty-row{display:flex;align-items:center;gap:6px;margin-bottom:9px}
+  .qty-row label{color:var(--txt-dim);font-size:10px;flex:1;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em}
+  input[type=number]{
+    width:74px;background:var(--bg2);border:1px solid var(--line2);color:var(--txt);
+    font-family:var(--mono);font-size:13px;padding:5px 7px;border-radius:6px;text-align:right;
+  }
+  input[type=number]:focus{outline:none;border-color:var(--blue)}
+  input[type=range]{accent-color:var(--blue);width:100%}
+  .btn-row{display:flex;gap:6px}
+  button{
+    font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.03em;
+    border:1px solid var(--line2);background:var(--bg2);color:var(--txt);
+    padding:8px 10px;border-radius:7px;cursor:pointer;transition:.13s;flex:1;
+  }
+  button:hover{border-color:var(--blue);color:var(--blue)}
+  button.buy:hover{border-color:var(--green);color:var(--green);background:rgba(26,122,76,.06)}
+  button.sell:hover{border-color:var(--neg);color:var(--neg);background:rgba(192,57,43,.05)}
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .big-btn{
+    width:100%;padding:15px;font-size:14px;font-family:var(--sans);font-weight:600;
+    background:linear-gradient(135deg,var(--green),var(--blue));color:#fff;border:none;
+    letter-spacing:.02em;border-radius:10px;box-shadow:0 4px 14px rgba(11,94,168,.18);
+  }
+  .big-btn:hover{filter:brightness(1.07);color:#fff}
+  .ghost-btn{background:transparent;border:1px solid var(--line2);color:var(--txt-dim);
+    padding:10px 16px;border-radius:9px;font-family:var(--mono);font-size:11px}
+  .ghost-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+  /* Sidebar stats */
+  .stat{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+  .stat:last-child{border-bottom:none}
+  .stat .k{color:var(--txt-dim);font-size:11px}
+  .stat .v{font-weight:600;font-family:var(--mono)}
+  .big-num{font-family:var(--disp);font-size:32px;font-weight:500;line-height:1;margin:2px 0 8px;color:var(--blue)}
+
+  /* Position rows */
+  .pos{display:flex;justify-content:space-between;align-items:center;padding:8px 0;
+    border-bottom:1px solid var(--line);font-size:12px}
+  .pos:last-child{border-bottom:none}
+  .pos .pl{color:var(--txt);display:flex;flex-direction:column;gap:2px}
+  .pos .pl small{color:var(--txt-faint);font-size:10px;font-family:var(--mono)}
+  .pos .pr{text-align:right;font-family:var(--mono)}
+  .tag{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;letter-spacing:.05em;
+    text-transform:uppercase;font-weight:600;font-family:var(--mono)}
+  .tag.long{background:rgba(26,122,76,.12);color:var(--green)}
+  .tag.short{background:rgba(192,57,43,.10);color:var(--neg)}
+
+  /* Risk meter */
+  .meter{height:7px;background:var(--line);border-radius:5px;overflow:hidden;margin:8px 0}
+  .meter span{display:block;height:100%;transition:.4s;border-radius:5px}
+
+  /* Toast / margin call */
+  .toast{
+    position:fixed;left:50%;top:20px;transform:translateX(-50%);z-index:50;
+    background:var(--bg2);border:1px solid var(--green);border-radius:10px;padding:12px 22px;
+    color:var(--txt);font-size:12px;box-shadow:0 10px 36px rgba(11,94,168,.16);max-width:90vw;
+    opacity:0;transition:.3s;pointer-events:none;font-family:var(--mono);
+  }
+  .toast.show{opacity:1;top:32px}
+  .toast.warn{border-color:var(--neg);color:var(--neg)}
+
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(26,38,34,.55);backdrop-filter:blur(4px);z-index:40;display:none;
+    align-items:center;justify-content:center;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--line);
+    border-radius:18px;padding:30px;max-width:560px;width:100%;max-height:88vh;overflow:auto;
+    box-shadow:0 20px 60px rgba(11,94,168,.22)}
+  .modal h2{font-family:var(--disp);font-size:28px;color:var(--green);font-weight:500;margin-bottom:6px}
+  .modal .score{font-family:var(--disp);font-size:52px;font-weight:500;line-height:1;margin:10px 0;color:var(--blue)}
+  .grade{display:inline-block;font-family:var(--disp);font-size:22px;font-weight:600;
+    padding:3px 16px;border-radius:10px;background:var(--green);color:#fff;margin-left:10px}
+  .debrief-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);gap:14px}
+  .debrief-row .lbl{color:var(--txt-dim)}
+  .debrief-row .rating{font-weight:600;text-align:right;font-family:var(--mono);font-size:11.5px}
+
+  .hint{color:var(--txt-faint);font-size:10.5px;margin-top:6px;line-height:1.5}
+  .hint b{color:var(--txt-dim)}
+  .tip{cursor:help;border-bottom:1px dotted var(--txt-faint)}
+  .intro-list{list-style:none;margin:10px 0}
+  .intro-list li{padding:5px 0 5px 20px;position:relative;color:var(--txt-dim);font-size:12px}
+  .intro-list li::before{content:"◆";position:absolute;left:0;color:var(--green);font-size:9px;top:7px}
+
+  /* ============ ACADEMY ============ */
+  #academy{max-width:920px;margin:0 auto}
+  .acad-panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:28px 32px;box-shadow:0 1px 2px rgba(26,122,76,.04),0 10px 36px rgba(11,94,168,.06);
+  }
+  .acad-steps{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+  .acad-steps .s{flex:1;min-width:80px;height:5px;border-radius:4px;background:var(--line);transition:.3s}
+  .acad-steps .s.done{background:var(--green)}
+  .acad-steps .s.cur{background:linear-gradient(90deg,var(--green),var(--blue))}
+  .lesson-kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);font-weight:500;margin-bottom:8px}
+  .lesson-title{font-family:var(--disp);font-size:30px;font-weight:500;color:var(--green);line-height:1.05;margin-bottom:10px;letter-spacing:-.01em}
+  .lesson-lede{color:var(--txt-dim);font-size:14px;line-height:1.65;margin-bottom:6px;max-width:62ch}
+  .lesson-lede b{color:var(--green)}
+  .lesson-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin:22px 0 8px}
+  @media(max-width:760px){.lesson-body{grid-template-columns:1fr}}
+  .viz-box{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:18px;min-height:300px}
+  .viz-controls{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+  .ctrl-row{display:flex;align-items:center;gap:10px}
+  .ctrl-row label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-dim);min-width:110px}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font-family:var(--mono);font-size:10.5px;padding:7px 12px;border-radius:20px;border:1px solid var(--line2);background:var(--bg2);color:var(--txt-dim);cursor:pointer;transition:.13s;flex:none}
+  .chip:hover{border-color:var(--amber);color:var(--amber)}
+  .chip.amber{border-color:var(--amber)}
+  .takeaway{background:rgba(217,138,31,.07);border:1px solid rgba(217,138,31,.25);border-radius:10px;padding:13px 15px;margin-top:6px}
+  .takeaway .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:5px}
+  .takeaway .txt{color:var(--txt);font-size:12.5px;line-height:1.6}
+  .takeaway .txt b{color:var(--green)}
+  .lesson-points{list-style:none;margin:14px 0}
+  .lesson-points li{padding:7px 0 7px 26px;position:relative;color:var(--txt-dim);font-size:13px;line-height:1.55}
+  .lesson-points li::before{content:"";position:absolute;left:0;top:9px;width:13px;height:13px;border-radius:50%;border:2px solid var(--green)}
+  .lesson-points li b{color:var(--txt)}
+  .acad-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}
+  .acad-nav .right{display:flex;gap:10px}
+  .read-out{font-family:var(--mono);font-size:12px;color:var(--txt-dim)}
+  .read-out b{font-size:15px;color:var(--blue)}
+  .big-read{font-family:var(--disp);font-size:26px;color:var(--blue);font-weight:500}
+  .live-badge{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);border:1px solid var(--green);border-radius:5px;padding:2px 7px;margin-left:8px}
+  .blink{animation:blink 1.1s steps(2,start) infinite}
+  @keyframes blink{to{visibility:hidden}}
+  svg text{font-family:var(--mono)}
+  .frq-needle{transition:transform .5s cubic-bezier(.2,.8,.25,1)}
+  .bar-anim{transition:height .5s cubic-bezier(.2,.8,.25,1),y .5s cubic-bezier(.2,.8,.25,1),fill .3s}
+  .line-anim{transition:y1 .5s cubic-bezier(.2,.8,.25,1),y2 .5s cubic-bezier(.2,.8,.25,1),x1 .5s,x2 .5s}
+  .price-anim{transition:.5s cubic-bezier(.2,.8,.25,1)}
+  .glossary-grid{font-size:11px;color:var(--txt-dim);line-height:1.7}
+  .glossary-grid b{color:var(--green)}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Peak <span class="amp">&amp;</span> Dispatch <span class="bolt">⚡</span></h1>
+      <div class="sub">Power Trading — from scratch · <span class="evolta">Evolta — learn · play · evolve</span></div>
+    </div>
+    <div class="clock" id="clock" style="display:none">
+      <div class="month" id="monthLabel">—</div>
+      <div class="turn" id="turnLabel">Press start</div>
+    </div>
+  </header>
+
+  <!-- ===================== ACADEMY ===================== -->
+  <div id="academy">
+    <div class="acad-panel">
+      <div class="acad-steps" id="acadSteps"></div>
+      <div id="lessonContent"></div>
+      <div class="acad-nav">
+        <button class="ghost-btn" id="backBtn" onclick="acadBack()" style="flex:none">‹ Back</button>
+        <div class="right">
+          <button class="ghost-btn" id="skipBtn" onclick="skipToGame()" style="flex:none">Skip to trading ›</button>
+          <button class="big-btn" id="nextBtn" onclick="acadNext()" style="width:auto;flex:none;padding:11px 26px">Next ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== GAME ===================== -->
+  <div id="game" class="grid hidden">
+    <!-- LEFT COLUMN -->
+    <div>
+      <div class="panel" id="newsPanel">
+        <h2><span class="dot"></span>Control Room Wire</h2>
+        <div id="newsBox">
+          <div class="news">
+            <div class="hl">You're on the power desk.</div>
+            <div class="src">Evolta Trading Floor</div>
+            <div class="ex">Over 12 months you'll trade power forwards, bet on gas, and lock the <b>spark spread</b> — the margin a gas plant earns turning gas into electricity. Press <b>Start Season</b> to take the first news tick. Hover any <span class="tip" title="Like this — definitions appear on hover.">underlined term</span> for a definition.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Market Board</h2>
+        <table class="mkt">
+          <thead><tr><th>Instrument</th><th style="text-align:right">Price</th><th style="text-align:right">Δ mo</th></tr></thead>
+          <tbody id="mktBody"></tbody>
+        </table>
+        <div class="hint" id="sparkHint"></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Trade Desk</h2>
+        <div class="act-grid" id="tradeGrid"></div>
+        <div style="margin-top:14px">
+          <button class="big-btn" id="advanceBtn" onclick="startOrAdvance()">▶ Start Season</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <div class="panel">
+        <h2><span class="dot"></span>P&amp;L</h2>
+        <div class="big-num" id="equityNum">$5.00M</div>
+        <div class="stat"><span class="k">Realised P&amp;L</span><span class="v" id="realisedPL">$0</span></div>
+        <div class="stat"><span class="k">Open P&amp;L</span><span class="v" id="openPL">$0</span></div>
+        <div class="stat"><span class="k">Cash</span><span class="v" id="cashVal">$5.00M</span></div>
+        <div class="stat"><span class="k">Margin used</span><span class="v" id="marginVal">$0</span></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Risk</h2>
+        <div class="stat"><span class="k tip" title="Net long minus short exposure across all positions, in USD notional.">Net exposure</span><span class="v" id="netExp">$0</span></div>
+        <div class="meter"><span id="riskBar" style="width:0%;background:var(--green)"></span></div>
+        <div class="hint" id="riskHint">Flat. No risk on the book.</div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Open Positions</h2>
+        <div id="posBox"><div class="hint">No open positions.</div></div>
+      </div>
+
+      <div class="panel" id="recapPanel" style="display:none">
+        <h2><span class="dot"></span>This Month's P&amp;L — Why</h2>
+        <div id="recapBox"></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot"></span>Glossary</h2>
+        <div class="glossary-grid">
+          <b>Power (baseload)</b> round-the-clock electricity, $/MWh<br>
+          <b>MWh</b> megawatt-hour — 1 MW running for 1 hour<br>
+          <b>Gas (Henry Hub)</b> natural gas fuel, $/MMBtu<br>
+          <b>Heat rate</b> MMBtu of gas to make 1 MWh. Lower = more efficient. Here 7.5.<br>
+          <b>Spark spread</b> Power − (heat rate × gas) − running cost. A gas plant's margin.<br>
+          <b>Peak premium</b> how much more daytime power costs vs the 24h average.<br>
+          <b>Capacity payment</b> a fee for keeping a plant <i>available</i>, even if it rarely runs.
+        </div>
+        <div style="margin-top:12px">
+          <button class="ghost-btn" onclick="openAcademy()" style="width:100%">↺ Replay the Academy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalInner"></div>
+</div>
+
+<script>
+/* =====================================================================
+   PART 1 — THE ACADEMY (teach a total beginner, interactively)
+   ===================================================================== */
+
+/* The merit order: the heart of power markets. Plants ranked cheapest-first.
+   The price everyone gets paid = the running cost of the LAST plant needed
+   to meet demand (the "marginal" plant). */
+const STACK = [
+  {name:'Solar',     cost:0,   cap:14, color:'#f0a83a'},
+  {name:'Wind',      cost:0,   cap:16, color:'#3a86c8'},
+  {name:'Nuclear',   cost:12,  cap:18, color:'#7a5cc8'},
+  {name:'Coal',      cost:34,  cap:20, color:'#5e7068'},
+  {name:'Gas (CCGT)',cost:58,  cap:22, color:'#1a7a4c'},
+  {name:'Gas peaker',cost:130, cap:14, color:'#c0392b'},
+  {name:'Emergency', cost:500, cap:10, color:'#7a1f17'},
+];
+
+let acadStep = 0;
+const ACAD_LESSONS = [
+  renderL0_intro,
+  renderL1_balance,
+  renderL2_meritorder,
+  renderL3_spikes,
+  renderL4_spark,
+  renderL5_ready,
+];
+
+function renderSteps(){
+  const el = document.getElementById('acadSteps');
+  el.innerHTML = ACAD_LESSONS.map((_,i)=>{
+    const c = i<acadStep?'done':i===acadStep?'cur':'';
+    return `<div class="s ${c}"></div>`;
+  }).join('');
+}
+
+function renderAcademy(){
+  renderSteps();
+  ACAD_LESSONS[acadStep]();
+  document.getElementById('backBtn').style.visibility = acadStep===0?'hidden':'visible';
+  const next = document.getElementById('nextBtn');
+  next.textContent = acadStep===ACAD_LESSONS.length-1 ? 'Enter the trading floor ⚡' : 'Next ›';
+  document.getElementById('skipBtn').style.display = acadStep===ACAD_LESSONS.length-1?'none':'inline-block';
+}
+function acadNext(){
+  if(acadStep>=ACAD_LESSONS.length-1){ startGame(); return; }
+  acadStep++; renderAcademy(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function acadBack(){ if(acadStep>0){ acadStep--; renderAcademy(); window.scrollTo({top:0,behavior:'smooth'}); } }
+function skipToGame(){ startGame(); }
+function openAcademy(){
+  document.getElementById('game').classList.add('hidden');
+  document.getElementById('clock').style.display='none';
+  document.getElementById('academy').classList.remove('hidden');
+  acadStep=0; renderAcademy(); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- LESSON 0 : What is power trading? ---------- */
+function renderL0_intro(){
+  document.getElementById('lessonContent').innerHTML = `
+    <div class="lesson-kicker">Academy · Lesson 1 of 5</div>
+    <div class="lesson-title">Electricity is a product you can't put in a warehouse</div>
+    <p class="lesson-lede">Most things traders buy and sell can be stored — oil in tanks, sugar in sheds, gold in vaults. <b>Electricity is different.</b> It has to be made at the exact instant it's used. That single fact is why power is the most volatile market on earth, and why traders are needed at all.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 300" width="100%">
+          <!-- factory / generation -->
+          <rect x="20" y="120" width="70" height="60" rx="6" fill="#1a7a4c" opacity="0.12"/>
+          <text x="55" y="110" text-anchor="middle" font-size="10" fill="#5e7068">GENERATION</text>
+          <text x="55" y="155" text-anchor="middle" font-size="22">🏭</text>
+          <!-- city / demand -->
+          <rect x="270" y="120" width="70" height="60" rx="6" fill="#0b5ea8" opacity="0.12"/>
+          <text x="305" y="110" text-anchor="middle" font-size="10" fill="#5e7068">DEMAND</text>
+          <text x="305" y="155" text-anchor="middle" font-size="22">🏙️</text>
+          <!-- wire with moving electrons -->
+          <line x1="92" y1="150" x2="268" y2="150" stroke="#d6e0da" stroke-width="3"/>
+          <circle r="4" fill="#d98a1f"><animate attributeName="cx" from="92" to="268" dur="1.3s" repeatCount="indefinite"/><animate attributeName="cy" values="150;150" dur="1.3s" repeatCount="indefinite"/></circle>
+          <circle r="4" fill="#f0a83a"><animate attributeName="cx" from="92" to="268" dur="1.3s" begin="0.45s" repeatCount="indefinite"/><animate attributeName="cy" values="150;150" dur="1.3s" begin="0.45s" repeatCount="indefinite"/></circle>
+          <circle r="4" fill="#d98a1f"><animate attributeName="cx" from="92" to="268" dur="1.3s" begin="0.9s" repeatCount="indefinite"/><animate attributeName="cy" values="150;150" dur="1.3s" begin="0.9s" repeatCount="indefinite"/></circle>
+          <text x="180" y="140" text-anchor="middle" font-size="9" fill="#94a59d">flows at the speed of light</text>
+          <text x="180" y="210" text-anchor="middle" font-size="11" fill="#243530">made and used in the same instant</text>
+          <text x="180" y="232" text-anchor="middle" font-size="9" fill="#c0392b">no battery big enough to store a country's power</text>
+        </svg>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>You are a trader at a merchant power firm.</b> You don't build plants — you buy and sell electricity and the fuel that makes it, to profit from price moves and to manage risk.</li>
+          <li><b>Three things you'll trade:</b> power itself, natural gas (the fuel), and the <i>spread</i> between them.</li>
+          <li><b>Why it's hard:</b> because power can't be stored, a cold morning or a broken plant can send the price up 10× for a few hours — then back down.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">The one idea to hold onto</div>
+          <div class="txt">Supply must equal demand <b>every single second</b>. When that balance is tight, prices explode. The next lesson lets you feel it.</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ---------- LESSON 1 : The balance / can't store it ---------- */
+let balSupply = 50;
+function renderL1_balance(){
+  document.getElementById('lessonContent').innerHTML = `
+    <div class="lesson-kicker">Academy · Lesson 2 of 5</div>
+    <div class="lesson-title">The grid is a balancing act, live, 24/7</div>
+    <p class="lesson-lede">Grid operators keep supply and demand matched to hold the system at <b>50 Hz</b> (its heartbeat). Too little supply and frequency drops toward a blackout; too much and it climbs. Drag the supply dial and watch what happens.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 250" width="100%">
+          <!-- gauge arc -->
+          <path d="M60 200 A120 120 0 0 1 300 200" fill="none" stroke="#e2e9e4" stroke-width="14" stroke-linecap="round"/>
+          <path d="M150 134 A120 120 0 0 1 210 134" fill="none" stroke="#1a7a4c" stroke-width="14" stroke-linecap="round" opacity="0.5"/>
+          <g id="needleG" class="frq-needle" style="transform-origin:180px 200px">
+            <line x1="180" y1="200" x2="180" y2="100" stroke="#0b5ea8" stroke-width="3"/>
+            <circle cx="180" cy="200" r="7" fill="#0b5ea8"/>
+          </g>
+          <text x="180" y="170" text-anchor="middle" id="hzNum" class="big-read" style="font-size:30px">50.0</text>
+          <text x="180" y="190" text-anchor="middle" font-size="10" fill="#94a59d">HERTZ</text>
+          <text x="60" y="225" font-size="9" fill="#c0392b">blackout</text>
+          <text x="270" y="225" font-size="9" fill="#c0392b">overload</text>
+          <text x="180" y="240" text-anchor="middle" font-size="10" id="gridState" fill="#1a7a4c">● balanced</text>
+        </svg>
+        <div class="viz-controls">
+          <div class="ctrl-row">
+            <label>Supply</label>
+            <input type="range" min="20" max="80" value="50" id="balSlider" oninput="updateBalance(this.value)">
+          </div>
+          <div class="read-out" id="balRead">Supply <b>50</b> GW · Demand <b>50</b> GW · matched</div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Demand is fixed by us</b> — when millions of people switch on kettles and air-con, demand just <i>is</i> what it is. The grid can't ask them to wait.</li>
+          <li><b>So supply must chase demand</b> in real time. Operators turn plants up and down second by second.</li>
+          <li><b>Price is the lever.</b> When supply is scarce, the price is bid up to coax every last plant to run. When there's a glut, price can even go <i>negative</i> — generators pay to keep running.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">Try this</div>
+          <div class="txt">Push supply well below demand. See the frequency crash toward blackout — that's the moment a trader who is <b>long power</b> makes a fortune, because the price spikes to keep the lights on.</div>
+        </div>
+      </div>
+    </div>`;
+  balSupply = 50;
+  updateBalance(50);
+}
+function updateBalance(v){
+  balSupply = +v;
+  const demand = 50;
+  const gap = balSupply - demand;                 // +surplus / -deficit
+  const hz = (50 + gap*0.08).toFixed(1);
+  const ang = Math.max(-78,Math.min(78, gap*2.4)); // needle rotation
+  const ng = document.getElementById('needleG');
+  if(ng) ng.style.transform = `rotate(${ang}deg)`;
+  document.getElementById('hzNum').textContent = hz;
+  const st = document.getElementById('gridState');
+  const rd = document.getElementById('balRead');
+  let label, col;
+  if(Math.abs(gap)<=3){ label='● balanced — lights stay on'; col='#1a7a4c'; }
+  else if(gap<-12){ label='⚠ severe shortfall — BLACKOUT risk, price spiking'; col='#c0392b'; }
+  else if(gap<0){ label='▼ short of supply — price rising'; col='#d98a1f'; }
+  else if(gap>12){ label='▲ big glut — price can go NEGATIVE'; col='#0b5ea8'; }
+  else { label='▲ surplus — price falling'; col='#0b5ea8'; }
+  st.textContent = label; st.setAttribute('fill',col);
+  document.getElementById('hzNum').setAttribute('fill', Math.abs(gap)<=3?'#0b5ea8':col);
+  rd.innerHTML = `Supply <b>${balSupply}</b> GW · Demand <b>${demand}</b> GW · ${gap===0?'matched':gap>0?('+'+gap+' surplus'):(gap+' short')}`;
+}
+
+/* ---------- LESSON 2 : The merit order (THE big one) ---------- */
+let moDemand = 60;
+function renderL2_meritorder(){
+  document.getElementById('lessonContent').innerHTML = `
+    <div class="lesson-kicker">Academy · Lesson 3 of 5 · the most important idea</div>
+    <div class="lesson-title">The "merit order": cheapest plants run first</div>
+    <p class="lesson-lede">Every plant has a running cost. The grid switches them on <b>cheapest first</b> — free solar &amp; wind, then nuclear, coal, gas, and finally expensive peakers. It stacks them up until supply meets demand. Here's the magic: <b>everyone gets paid the cost of the LAST plant needed</b> — the "marginal" plant. Drag demand and watch the price.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 380 280" width="100%" id="moSvg">
+          <!-- axes -->
+          <line x1="44" y1="20" x2="44" y2="232" stroke="#d6e0da" stroke-width="1.5"/>
+          <line x1="44" y1="232" x2="366" y2="232" stroke="#d6e0da" stroke-width="1.5"/>
+          <text x="10" y="26" font-size="9" fill="#94a59d">$/MWh</text>
+          <text x="320" y="248" font-size="9" fill="#94a59d">supply →</text>
+          <g id="moBars"></g>
+          <line id="moDemandLine" class="line-anim" x1="200" y1="20" x2="200" y2="232" stroke="#0b5ea8" stroke-width="2" stroke-dasharray="4 3"/>
+          <text id="moDemandLbl" x="200" y="16" text-anchor="middle" font-size="9" fill="#0b5ea8">demand</text>
+          <line id="moPriceLine" class="line-anim" x1="44" y1="120" x2="366" y2="120" stroke="#d98a1f" stroke-width="2" stroke-dasharray="2 2"/>
+          <text id="moPriceLbl" x="360" y="116" text-anchor="end" font-size="10" fill="#d98a1f" font-weight="600">$58</text>
+        </svg>
+        <div class="viz-controls">
+          <div class="ctrl-row">
+            <label>Demand</label>
+            <input type="range" min="20" max="118" value="60" id="moSlider" oninput="updateMerit(+this.value)">
+          </div>
+          <div class="read-out">Clearing price: <b id="moPrice">$58</b>/MWh · set by <b id="moMarginal">Gas (CCGT)</b></div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Low demand</b> (night, mild weather): only cheap plants run. Price is low — maybe $0–35.</li>
+          <li><b>High demand</b> (cold evening): the grid is forced into expensive peakers. The clearing price jumps to <i>their</i> cost, and <b>every</b> plant — even free solar — gets paid that high price.</li>
+          <li>That's why a small rise in demand can cause a <b>huge</b> jump in price: the supply stack is steep at the top.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">Why traders care</div>
+          <div class="txt">If you can guess when demand will climb into the steep, expensive part of the stack, you buy power cheap today and sell it dear later. <b>Reading the stack is the job.</b></div>
+        </div>
+      </div>
+    </div>`;
+  moDemand = 60;
+  updateMerit(60);
+}
+function meritGeometry(){
+  // x: 44..366 maps cumulative capacity 0..130 GW; y: 232(=$0)..20(=$ max, log-ish)
+  const x0=44,x1=366,y0=232,yTop=20;
+  const capMax=130;
+  const xOf = c => x0 + (c/capMax)*(x1-x0);
+  // price scale: 0..520 but compress high end so peakers fit
+  const yOf = cost => {
+    const frac = Math.sqrt(Math.min(cost,520)/520); // sqrt compression
+    return y0 - frac*(y0-yTop);
+  };
+  return {xOf,yOf};
+}
+function updateMerit(d){
+  moDemand=d;
+  const {xOf,yOf}=meritGeometry();
+  // build bars
+  let cum=0, marginal=STACK[STACK.length-1], price=STACK[STACK.length-1].cost;
+  let found=false;
+  const bars = STACK.map(p=>{
+    const x=xOf(cum), w=xOf(cum+p.cap)-xOf(cum), yTopB=yOf(p.cost), h=232-yTopB;
+    const dim = cum>=d; // beyond demand = not dispatched
+    if(!found && cum+p.cap>=d){ marginal=p; price=p.cost; found=true; }
+    cum+=p.cap;
+    return {x,w,yTopB,h,color:p.color,name:p.name,dim};
+  });
+  document.getElementById('moBars').innerHTML = bars.map(b=>`
+    <rect class="bar-anim" x="${b.x}" y="${b.yTopB}" width="${Math.max(0,b.w-1.5)}" height="${b.h}"
+      fill="${b.color}" opacity="${b.dim?0.18:0.85}" rx="1"/>
+    <text x="${b.x+b.w/2}" y="${b.yTopB-3}" text-anchor="middle" font-size="7.5" fill="${b.dim?'#b9c6bf':'#5e7068'}" style="transition:.3s">${b.w>26?b.name:''}</text>
+  `).join('');
+  const dx = xOf(d);
+  const dl=document.getElementById('moDemandLine');
+  dl.setAttribute('x1',dx); dl.setAttribute('x2',dx);
+  document.getElementById('moDemandLbl').setAttribute('x',dx);
+  const py=yOf(price);
+  const pl=document.getElementById('moPriceLine');
+  pl.setAttribute('y1',py); pl.setAttribute('y2',py);
+  const plbl=document.getElementById('moPriceLbl');
+  plbl.setAttribute('y',py-4); plbl.textContent='$'+price;
+  document.getElementById('moPrice').textContent='$'+price;
+  document.getElementById('moMarginal').textContent=marginal.name;
+  // color the price readout by severity
+  const col = price>=130?'#c0392b':price>=58?'#d98a1f':'#1a7a4c';
+  plbl.setAttribute('fill',col);
+  document.getElementById('moPrice').style.color=col;
+}
+
+/* ---------- LESSON 3 : Why prices spike ---------- */
+let spikeBase = {demand:62, wind:16, nukeOut:false};
+let priceHist = [];
+function renderL3_spikes(){
+  document.getElementById('lessonContent').innerHTML = `
+    <div class="lesson-kicker">Academy · Lesson 4 of 5</div>
+    <div class="lesson-title">Where the violent price spikes come from</div>
+    <p class="lesson-lede">Now combine the two ideas. A <b>supply shock</b> (the wind drops, a plant breaks) or a <b>demand shock</b> (a cold snap) shoves the grid up the steep end of the stack. Hit the buttons and watch the price history react in real time.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 380 200" width="100%">
+          <line x1="40" y1="14" x2="40" y2="166" stroke="#d6e0da" stroke-width="1.5"/>
+          <line x1="40" y1="166" x2="368" y2="166" stroke="#d6e0da" stroke-width="1.5"/>
+          <text x="6" y="20" font-size="9" fill="#94a59d">$/MWh</text>
+          <text x="320" y="182" font-size="9" fill="#94a59d">hours →</text>
+          <polyline id="spikeLine" class="price-anim" fill="none" stroke="#d98a1f" stroke-width="2" points=""/>
+          <polygon id="spikeFill" class="price-anim" fill="#d98a1f" opacity="0.08" points=""/>
+          <text id="spikeNow" x="360" y="30" text-anchor="end" font-size="16" fill="#d98a1f" font-weight="600">$58</text>
+        </svg>
+        <div class="chip-row" style="margin-top:6px">
+          <div class="chip" onclick="spikeEvent('cold')">❄ Cold snap (demand ↑)</div>
+          <div class="chip" onclick="spikeEvent('wind')">🍃 Wind drops</div>
+          <div class="chip" onclick="spikeEvent('nuke')">⚙ Plant breaks</div>
+          <div class="chip" onclick="spikeEvent('calm')">☀ Mild &amp; windy (reset)</div>
+        </div>
+        <div class="read-out" id="spikeRead" style="margin-top:10px">A normal evening. Price set by gas.</div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Cold snap:</b> heaters everywhere push demand up the stack into peakers. Price can go from $50 to $300+ in an hour.</li>
+          <li><b>Wind drops:</b> free wind vanishes from the bottom of the stack, so <i>more expensive</i> plants must fill the gap — the whole stack shifts and price rises.</li>
+          <li><b>Plant breaks:</b> sudden loss of cheap supply, same effect — scarcity.</li>
+          <li><b>Mild &amp; windy:</b> tons of free renewable supply, weak demand → price collapses, sometimes below zero.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">The trader's edge</div>
+          <div class="txt">You can't predict the weather perfectly — but you can read forecasts, plant outages and fuel costs to lean the right way <b>before</b> the spike. That's what the next 12 months will test.</div>
+        </div>
+      </div>
+    </div>`;
+  spikeBase={demand:62, wind:16, nukeOut:false};
+  priceHist=Array(28).fill(computeSpikePrice());
+  drawSpike();
+}
+function computeSpikePrice(){
+  // rebuild stack with current wind/nuke, find clearing price at demand
+  let stack = STACK.map(p=>({...p}));
+  stack[1].cap = spikeBase.wind;                 // wind capacity
+  if(spikeBase.nukeOut) stack[2].cap = 4;        // nuclear partly out
+  let cum=0, price=stack[stack.length-1].cost;
+  for(const p of stack){ if(cum+p.cap>=spikeBase.demand){ price=p.cost; break; } cum+=p.cap; }
+  return price;
+}
+function spikeEvent(kind){
+  if(kind==='cold'){ spikeBase.demand=Math.min(120,spikeBase.demand+22); }
+  else if(kind==='wind'){ spikeBase.wind=Math.max(2,spikeBase.wind-12); }
+  else if(kind==='nuke'){ spikeBase.nukeOut=true; }
+  else { spikeBase={demand:48, wind:24, nukeOut:false}; }
+  const p=computeSpikePrice();
+  priceHist.push(p); priceHist.push(p); if(priceHist.length>28) priceHist=priceHist.slice(-28);
+  drawSpike();
+  const rd=document.getElementById('spikeRead');
+  const msg = kind==='cold'?'❄ Cold snap — demand surges into peakers.':
+              kind==='wind'?'🍃 Wind drops — cheap supply gone, costlier plants fill in.':
+              kind==='nuke'?'⚙ Plant trips offline — sudden scarcity.':
+              '☀ Mild &amp; windy — free renewables flood in, price collapses.';
+  rd.innerHTML = `${msg} &nbsp;Now <b>$${p}/MWh</b>.`;
+}
+function drawSpike(){
+  const x0=40,x1=368,y0=166,yTop=14;
+  const n=priceHist.length;
+  const yOf = v => { const f=Math.sqrt(Math.min(v,520)/520); return y0-f*(y0-yTop); };
+  const pts = priceHist.map((v,i)=>`${(x0+(i/(n-1))*(x1-x0)).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
+  document.getElementById('spikeLine').setAttribute('points',pts);
+  document.getElementById('spikeFill').setAttribute('points',`${x0},${y0} ${pts} ${x1},${y0}`);
+  const cur=priceHist[priceHist.length-1];
+  const now=document.getElementById('spikeNow');
+  now.textContent='$'+cur;
+  now.setAttribute('y', Math.max(20,yOf(cur)-6));
+  now.setAttribute('fill', cur>=130?'#c0392b':cur>=58?'#d98a1f':'#1a7a4c');
+  document.getElementById('spikeLine').setAttribute('stroke', cur>=130?'#c0392b':'#d98a1f');
+}
+
+/* ---------- LESSON 4 : The spark spread ---------- */
+let sparkGas=4.0, sparkPower=58;
+function renderL4_spark(){
+  document.getElementById('lessonContent').innerHTML = `
+    <div class="lesson-kicker">Academy · Lesson 5 of 5 · the trade you'll live on</div>
+    <div class="lesson-title">The spark spread — how a gas plant prints money</div>
+    <p class="lesson-lede">A gas plant buys gas and sells electricity. Its profit per MWh is the <b>spark spread</b>: the power price, minus the cost of the gas it burns, minus a small running cost. The "<b>heat rate</b>" (here <b>7.5</b>) is how many units of gas it takes to make one MWh. Slide the prices and watch the margin.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 250" width="100%">
+          <text x="60"  y="20" text-anchor="middle" font-size="10" fill="#5e7068">Power sold</text>
+          <text x="180" y="20" text-anchor="middle" font-size="10" fill="#5e7068">Gas burned</text>
+          <text x="300" y="20" text-anchor="middle" font-size="10" fill="#5e7068">Spark spread</text>
+          <line x1="20" y1="210" x2="340" y2="210" stroke="#d6e0da" stroke-width="1.5"/>
+          <rect id="barPower" class="bar-anim" x="32" y="60" width="56" height="150" fill="#0b5ea8" opacity="0.8" rx="3"/>
+          <rect id="barGas"   class="bar-anim" x="152" y="120" width="56" height="90" fill="#c0392b" opacity="0.7" rx="3"/>
+          <rect id="barSpark" class="bar-anim" x="272" y="120" width="56" height="90" fill="#1a7a4c" opacity="0.85" rx="3"/>
+          <text id="lblPower" x="60"  y="55"  text-anchor="middle" font-size="11" fill="#0b5ea8" font-weight="600">$58</text>
+          <text id="lblGas"   x="180" y="115" text-anchor="middle" font-size="11" fill="#c0392b" font-weight="600">$30</text>
+          <text id="lblSpark" x="300" y="115" text-anchor="middle" font-size="13" fill="#1a7a4c" font-weight="600">$24</text>
+          <text x="180" y="228" text-anchor="middle" font-size="9" fill="#94a59d">7.5 × gas + $4 running cost</text>
+        </svg>
+        <div class="viz-controls">
+          <div class="ctrl-row">
+            <label>Power $/MWh</label>
+            <input type="range" min="20" max="200" value="58" id="spPower" oninput="updateSpark()">
+            <span class="read-out" id="spPowerV">$58</span>
+          </div>
+          <div class="ctrl-row">
+            <label>Gas $/MMBtu</label>
+            <input type="range" min="1.5" max="12" step="0.1" value="4" id="spGas" oninput="updateSpark()">
+            <span class="read-out" id="spGasV">$4.0</span>
+          </div>
+          <div class="read-out" id="spReadout"></div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Spark spread = Power − (7.5 × Gas) − $4.</b> If it's positive, the plant earns money by running; if negative, it's cheaper to stay off.</li>
+          <li><b>Two ways to widen:</b> power price rises, or gas price falls. A power trader who is "long the spark" wins from either.</li>
+          <li><b>It's a cleaner bet than outright power</b> — you're insulated from gas-price swings that move power and gas together.</li>
+          <li>In the game you'll <b>lock</b> a spark spread: secure today's margin on a block of generation that settles in ~2 months.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">Try this</div>
+          <div class="txt">Drag gas up to $9 while power stays at $58 — the spread goes <b>negative</b>. That gas plant would now <i>lose</i> money running. Real plants shut down here; smart traders saw it coming.</div>
+        </div>
+      </div>
+    </div>`;
+  updateSpark();
+}
+function updateSpark(){
+  const HR=7.5, VOM=4;
+  sparkPower=+document.getElementById('spPower').value;
+  sparkGas=+document.getElementById('spGas').value;
+  const gasCost=HR*sparkGas;
+  const spark=sparkPower-gasCost-VOM;
+  document.getElementById('spPowerV').textContent='$'+sparkPower;
+  document.getElementById('spGasV').textContent='$'+sparkGas.toFixed(1);
+  const y0=210, scale=1.0; // $ -> px (cap at ~200)
+  const pxOf = v => Math.max(2, Math.min(190, v*scale));
+  const bp=pxOf(sparkPower), bg=pxOf(gasCost), bs=pxOf(Math.abs(spark));
+  const setBar=(id,h,neg)=>{const r=document.getElementById(id);r.setAttribute('height',h);r.setAttribute('y',y0-h);if(id==='barSpark')r.setAttribute('fill',neg?'#c0392b':'#1a7a4c');};
+  setBar('barPower',bp); setBar('barGas',bg); setBar('barSpark',bs,spark<0);
+  document.getElementById('lblPower').textContent='$'+sparkPower; document.getElementById('lblPower').setAttribute('y',y0-bp-6);
+  document.getElementById('lblGas').textContent='$'+gasCost.toFixed(0); document.getElementById('lblGas').setAttribute('y',y0-bg-6);
+  const ls=document.getElementById('lblSpark');
+  ls.textContent=(spark<0?'-$':'$')+Math.abs(spark).toFixed(0); ls.setAttribute('y',y0-bs-6);
+  ls.setAttribute('fill',spark<0?'#c0392b':'#1a7a4c');
+  const rd=document.getElementById('spReadout');
+  rd.innerHTML = spark>=0
+    ? `Spark spread = <b style="color:var(--green)">+$${spark.toFixed(1)}/MWh</b> — the plant earns money running.`
+    : `Spark spread = <b style="color:var(--neg)">-$${Math.abs(spark).toFixed(1)}/MWh</b> — running would lose money; the plant idles.`;
+}
+
+/* ---------- LESSON 5 : Ready ---------- */
+function renderL5_ready(){
+  document.getElementById('lessonContent').innerHTML = `
+    <div class="lesson-kicker">Academy complete</div>
+    <div class="lesson-title">You're ready for the desk</div>
+    <p class="lesson-lede">You now know the four ideas that drive every decision you'll make over the next 12 months:</p>
+    <ul class="lesson-points" style="max-width:64ch">
+      <li><b>Power can't be stored</b> — supply must match demand every second, so prices are wild.</li>
+      <li><b>The merit order sets the price</b> — the cost of the last plant needed sets what everyone is paid.</li>
+      <li><b>Shocks cause spikes</b> — cold snaps, wind droughts and plant outages push the grid up the steep, expensive end of the stack.</li>
+      <li><b>The spark spread</b> — Power − 7.5×Gas − $4 — is a gas plant's margin, and your cleanest trade.</li>
+    </ul>
+    <div class="takeaway" style="max-width:64ch">
+      <div class="lab">Your job for 12 months</div>
+      <div class="txt">Start with <b>$5M</b>. Read each news headline, decide whether it's bullish or bearish for power, gas, or the spark, and size your trades. Watch your <b>risk</b> — too much leverage and a spike can margin-call you. A full <b>debrief</b> grades you at the end. You can replay this Academy any time from the Glossary panel.</div>
+    </div>
+    <p class="hint" style="font-size:12px;margin-top:14px">Tip: hover any underlined term on the trading floor for a quick definition. There's a live spark-spread calculator on the desk, just like Lesson 5.</p>`;
+}
+
+/* =====================================================================
+   PART 2 — THE TRADING GAME
+   ===================================================================== */
+const HEAT_RATE = 7.5;          // MMBtu of gas per MWh
+const VOM = 4;                  // $/MWh variable running cost
+const MWH_PER_LOT_PWR = 1000;   // power forward: 1 lot = 1,000 MWh (baseload block)
+const MMBTU_PER_LOT_GAS = 10000;// gas: 1 lot = 10,000 MMBtu
+const START_CASH = 5_000_000;
+const MARGIN_RATE = 0.10;
+const MAINT_RATE = 0.07;
+const SPARK_MONTHS = 2;         // generation block settles in ~2 months
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+let S=null;
+function freshState(){
+  return {
+    started:false, turn:0, cash:START_CASH, realised:0,
+    power:58,           // $/MWh baseload
+    gas:4.0,            // $/MMBtu
+    carbon:75,          // $/t CO2
+    wind:55,            // % renewable output (affects power)
+    peakPrem:34,        // $/MWh peak premium (info / colour)
+    pos:[],             // {key,name,side,lots,entryPx}
+    sparks:[],          // generation blocks {mwh, lockedSpark, monthsLeft, hedged}
+    directionalRight:0, directionalWrong:0,
+    sparksTaken:0, sparksMissed:0,
+    maxRiskBreach:0, marginCalls:0, capacityEarned:0,
+    lastPower:58, lastGas:4.0, lastCarbon:75, lastWind:55, lastSpark:0,
+    history:[], pendingNews:null, recap:null,
+  };
+}
+
+/* ---- news engine ---- */
+const NEWS_POOL=[
+  {hl:"Arctic blast to grip the region; heating demand to surge",src:"Weather Desk",
+   ex:"A cold snap pushes electricity demand up the supply stack into expensive peakers. Strongly bullish power; mildly bullish gas (more gas burned for heat &amp; power).",
+   eff:s=>{s.dPower+=14; s.dGas+=0.5;}},
+  {hl:"Mild, breezy week ahead; wind output to hit record",src:"Grid Operator",
+   ex:"Abundant free wind floods the bottom of the stack and weak demand sits low on it — power prices fall, sometimes below zero. Bearish power.",
+   eff:s=>{s.dPower-=12; s.dWind+=18;}},
+  {hl:"Major gas pipeline outage cuts supply to the region",src:"Platts",
+   ex:"Less gas raises the fuel cost for the marginal gas plants — bullish gas AND power (power is set by gas-plant costs). Squeezes the spark spread.",
+   eff:s=>{s.dGas+=1.2; s.dPower+=9;}},
+  {hl:"LNG export terminal ramps up; gas pulled offshore",src:"Bloomberg",
+   ex:"Export demand tightens domestic gas — bullish gas. Power follows gas up, but the spark spread narrows as fuel gets dearer.",
+   eff:s=>{s.dGas+=0.9; s.dPower+=5;}},
+  {hl:"Large nuclear unit trips offline unexpectedly",src:"Reuters",
+   ex:"Sudden loss of cheap baseload forces costlier plants to fill the gap — bullish power. Doesn't touch gas directly.",
+   eff:s=>{s.dPower+=11;}},
+  {hl:"New offshore wind farm enters commercial service",src:"S&P Global",
+   ex:"More cheap supply at the bottom of the stack pushes the marginal plant down — bearish power over time.",
+   eff:s=>{s.dPower-=8; s.dWind+=10;}},
+  {hl:"Carbon allowance price jumps on tighter EU cap",src:"ICE Carbon",
+   ex:"Higher carbon cost hits dirty coal hardest, nudging gas up the merit order — bullish power, and helps the spark spread vs coal.",
+   eff:s=>{s.dCarbon+=14; s.dPower+=6;}},
+  {hl:"Carbon market sells off on industrial slowdown",src:"ICE Carbon",
+   ex:"Cheaper carbon lowers the cost of fossil generation — bearish power.",
+   eff:s=>{s.dCarbon-=12; s.dPower-=5;}},
+  {hl:"Heatwave forecast; air-conditioning load to spike",src:"Weather Desk",
+   ex:"Peak afternoon demand climbs into peakers — bullish power, especially the peak premium. Gas demand for generation rises too.",
+   eff:s=>{s.dPower+=12; s.dGas+=0.4;}},
+  {hl:"Mild shoulder season; demand soft across the board",src:"Grid Operator",
+   ex:"Low demand sits on the cheap part of the stack — bearish power. Gas demand for power eases.",
+   eff:s=>{s.dPower-=7; s.dGas-=0.3;}},
+  {hl:"Gas storage refill beats expectations; glut building",src:"EIA",
+   ex:"Plentiful gas in store is bearish gas, which drags power down a touch but WIDENS the spark spread (cheaper fuel).",
+   eff:s=>{s.dGas-=0.8; s.dPower-=3;}},
+  {hl:"Drought slashes hydro output across the basin",src:"Reuters",
+   ex:"Lost cheap hydro must be replaced by gas plants — bullish power and bullish gas demand.",
+   eff:s=>{s.dPower+=8; s.dGas+=0.3;}},
+  {hl:"Coal plant retirements accelerate under new rules",src:"Bloomberg",
+   ex:"Fewer cheap-ish coal plants leaves gas as the marginal price-setter more often — structurally bullish power and the spark spread.",
+   eff:s=>{s.dPower+=7; s.dCarbon+=3;}},
+  {hl:"Speculators trim long power positions into expiry",src:"Exchange Data",
+   ex:"Spec liquidation can pressure power lower short-term regardless of fundamentals.",
+   eff:s=>{s.dPower-=6;}},
+];
+function pickNews(){ return NEWS_POOL[Math.floor(Math.random()*NEWS_POOL.length)]; }
+
+function applyMonth(news){
+  S.dPower=0;S.dGas=0;S.dCarbon=0;S.dWind=0;
+  news.eff(S);
+  const noise=()=> (Math.random()-0.5);
+  S.lastPower=S.power; S.lastGas=S.gas; S.lastCarbon=S.carbon; S.lastWind=S.wind; S.lastSpark=sparkSpread();
+  S.power = Math.max(-20, Math.round(S.power + S.dPower + noise()*9));
+  S.gas   = Math.max(1.0, +(S.gas + S.dGas + noise()*0.5).toFixed(2));
+  S.carbon= Math.max(20, Math.round(S.carbon + S.dCarbon + noise()*5));
+  S.wind  = Math.max(8, Math.min(98, Math.round(S.wind + S.dWind + noise()*8)));
+  S.peakPrem = Math.max(8, Math.round(S.power*0.55 + noise()*6));
+}
+
+/* ---- valuation ---- */
+function sparkSpread(){ return S.power - HEAT_RATE*S.gas - VOM; }   // $/MWh
+function instrPrice(k){ return k==='power'?S.power : k==='gas'?S.gas : 0; }
+function lotNotional(k){
+  if(k==='power') return S.power*MWH_PER_LOT_PWR;
+  if(k==='gas')   return S.gas*MMBTU_PER_LOT_GAS;
+  return 0;
+}
+function posOpenPL(p){
+  const cur=instrPrice(p.key);
+  if(p.key==='power') return p.side*(cur-p.entryPx)*MWH_PER_LOT_PWR*p.lots;
+  return p.side*(cur-p.entryPx)*MMBTU_PER_LOT_GAS*p.lots;
+}
+function sparkPL(b){
+  if(b.hedged) return 0;
+  return (sparkSpread()-b.lockedSpark)*b.mwh;
+}
+function totalOpenPL(){
+  let pl=0; S.pos.forEach(p=>pl+=posOpenPL(p)); S.sparks.forEach(b=>pl+=sparkPL(b)); return pl;
+}
+function marginUsed(){
+  let m=0;
+  S.pos.forEach(p=> m+=lotNotional(p.key)*p.lots*MARGIN_RATE);
+  S.sparks.forEach(b=> m+= S.power*b.mwh*MARGIN_RATE*0.4); // generation block margin (lighter)
+  return m;
+}
+function netExposure(){
+  let e=0;
+  S.pos.forEach(p=> e+=p.side*lotNotional(p.key)*p.lots);
+  S.sparks.forEach(b=> e+= S.power*b.mwh*0.3); // partial long-power exposure
+  return e;
+}
+function equity(){ return S.cash + totalOpenPL(); }
+
+/* ---- trading ---- */
+function trade(key,name,side,lots){
+  if(!S.started){ toast("Start the season first."); return; }
+  lots=Math.max(1,Math.floor(lots||1));
+  const addMargin=lotNotional(key)*lots*MARGIN_RATE;
+  if(marginUsed()+addMargin>equity()){ toast("Insufficient margin for that size.",true); return; }
+  let p=S.pos.find(x=>x.key===key);
+  const px=instrPrice(key);
+  if(p){
+    if(p.side===side){
+      const tot=p.lots+lots; p.entryPx=(p.entryPx*p.lots+px*lots)/tot; p.lots=tot;
+    }else{
+      const closeLots=Math.min(p.lots,lots);
+      const realised = (key==='power')
+        ? p.side*(px-p.entryPx)*MWH_PER_LOT_PWR*closeLots
+        : p.side*(px-p.entryPx)*MMBTU_PER_LOT_GAS*closeLots;
+      S.realised+=realised; S.cash+=realised; trackDir(realised);
+      p.lots-=closeLots;
+      const remain=lots-closeLots;
+      if(p.lots<=0){ S.pos=S.pos.filter(x=>x!==p); if(remain>0) S.pos.push({key,name,side,lots:remain,entryPx:px}); }
+    }
+  }else{ S.pos.push({key,name,side,lots,entryPx:px}); }
+  render();
+}
+function trackDir(r){ if(r>0.0001)S.directionalRight++; else if(r<-0.0001)S.directionalWrong++; }
+
+function lockSpark(mwh,hedged){
+  if(!S.started){ toast("Start the season first."); return; }
+  mwh=Math.max(5000,Math.floor(mwh||5000));
+  let sp=sparkSpread();
+  const hedgeCost = hedged?2:0;   // $/MWh to lock both legs
+  sp-=hedgeCost;
+  const addMargin=S.power*mwh*MARGIN_RATE*0.4;
+  if(marginUsed()+addMargin>equity()){ toast("Insufficient margin for that block.",true); return; }
+  S.sparks.push({mwh,lockedSpark:sp,monthsLeft:SPARK_MONTHS,hedged:!!hedged});
+  S.sparksTaken++;
+  if(hedged) toast("Hedged block — spark margin locked, no monthly swing.");
+  else if(sp>0) toast("Block locked — margin floats until you settle.");
+  else toast("You locked a NEGATIVE spark spread.",true);
+  render();
+}
+function closeSpark(b){
+  const pl = b.hedged ? b.lockedSpark*b.mwh : sparkPL(b);
+  S.realised+=pl; S.cash+=pl; trackDir(pl);
+  S.sparks=S.sparks.filter(x=>x!==b);
+  toast((pl>=0?"+":"")+fmtUSD(pl)+" on the generation block.");
+  render();
+}
+/* Capacity: passive availability fee, low-risk income */
+function sellCapacity(mw){
+  if(!S.started){ toast("Start the season first."); return; }
+  mw=Math.max(10,Math.floor(mw||50));
+  const fee=mw*1400; // $/MW for the month
+  S.cash+=fee; S.realised+=fee; S.capacityEarned+=fee;
+  toast(`+${fmtUSD(fee)} capacity payment for keeping ${mw} MW available.`);
+  render();
+}
+
+/* ---- recap ---- */
+function buildRecap(news,before){
+  const moves=[];
+  const fm=(label,b,a,dp,unit,pre)=>{
+    const d=a-b; if(Math.abs(d)<(dp===2?0.005:0.5)) return null;
+    const dir=d>0?'rose':'fell';
+    return `${label} ${dir} ${(pre||'')}${Math.abs(d).toFixed(dp)}${unit} (${pre||''}${b.toFixed(dp)}→${pre||''}${a.toFixed(dp)}${unit})`;
+  };
+  [ fm('Power',before.power,S.power,0,'/MWh','$'),
+    fm('Gas',before.gas,S.gas,2,'','$'),
+    fm('Carbon',before.carbon,S.carbon,0,'/t','$'),
+    fm('Wind output',before.wind,S.wind,0,'%','') ].forEach(m=>{ if(m)moves.push(m); });
+
+  const lines=[];
+  S.pos.forEach(p=>{
+    const nowPL=posOpenPL(p);
+    const prev=before.posPL.find(x=>x.name===p.name&&x.side===p.side);
+    const delta=nowPL-(prev?prev.pl:0);
+    if(Math.abs(delta)<1) return;
+    lines.push({txt:`${p.side>0?'Long':'Short'} ${p.name}: ${delta>=0?'+':''}${fmtUSD(delta)}`,delta});
+  });
+
+  let arbDriver='';
+  if(S.sparks.some(b=>!b.hedged)){
+    const mwh=S.sparks.filter(b=>!b.hedged).reduce((s,b)=>s+b.mwh,0);
+    const d=(sparkSpread()-before.spark)*mwh;
+    const dPower=S.power-before.power, dGasCost=-(HEAT_RATE*(S.gas-before.gas));
+    const drivers=[['power price',dPower],['fuel cost',dGasCost]].sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+    const top=drivers[0];
+    arbDriver=`Unhedged block: ${d>=0?'+':''}${fmtUSD(d)} — mainly ${top[1]>=0?'a favourable':'an adverse'} move in ${top[0]} (${top[1]>=0?'+':''}$${Math.abs(top[1]).toFixed(0)}/MWh to the spark).`;
+  }
+  if(S.sparks.some(b=>b.hedged)) arbDriver+=(arbDriver?' ':'')+'Hedged block: flat by design — margin already secured.';
+
+  S.recap={ month:MONTHS[S.turn], headline:news.hl, moves,
+    lines:lines.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).map(l=>l.txt),
+    arbDriver, totalSwing:totalOpenPL()-before.openPL };
+}
+
+/* ---- turn advance ---- */
+function startOrAdvance(){
+  if(!S.started){
+    S.started=true; S.turn=0; S.pendingNews=pickNews();
+    document.getElementById('advanceBtn').textContent="▶ Advance Month";
+    render(); return;
+  }
+  const news=S.pendingNews;
+  const fatSpark = sparkSpread()>22;
+  if(fatSpark && S.sparks.length===0) S.sparksMissed++;
+
+  const before={ power:S.power,gas:S.gas,carbon:S.carbon,wind:S.wind, spark:sparkSpread(),
+    openPL:totalOpenPL(), posPL:S.pos.map(p=>({name:p.name,side:p.side,pl:posOpenPL(p)})) };
+
+  applyMonth(news);
+  S.sparks.forEach(b=>{ if(b.monthsLeft>0)b.monthsLeft--; });
+  buildRecap(news,before);
+
+  const eq=equity(), mm=marginUsed()*MAINT_RATE/MARGIN_RATE;
+  if(eq<mm){ S.marginCalls++; forceLiquidate(); toast("⚠ MARGIN CALL — positions force-liquidated.",true); }
+  const lev=Math.abs(netExposure())/Math.max(1,equity());
+  if(lev>S.maxRiskBreach)S.maxRiskBreach=lev;
+
+  S.history.push({m:MONTHS[S.turn],eq:equity()});
+  S.turn++;
+  if(S.turn>=12){ render(); endGame(); return; }
+  S.pendingNews=pickNews(); render();
+}
+function forceLiquidate(){
+  S.pos.forEach(p=>{ S.realised+=posOpenPL(p); S.cash+=posOpenPL(p); });
+  S.sparks.forEach(b=>{ const pl=sparkPL(b); S.realised+=pl; S.cash+=pl; });
+  S.pos=[]; S.sparks=[];
+}
+
+/* ---- render ---- */
+function fmtUSD(n){
+  const sign=n<0?"-":""; const a=Math.abs(n);
+  if(a>=1e6) return sign+"$"+(a/1e6).toFixed(2)+"M";
+  if(a>=1e3) return sign+"$"+(a/1e3).toFixed(1)+"k";
+  return sign+"$"+a.toFixed(0);
+}
+function colorPL(n){return n>0?'up':n<0?'down':'flat';}
+function arrow(n){return n>0?'▲':n<0?'▼':'—';}
+
+function render(){
+  document.getElementById('monthLabel').textContent = S.started?MONTHS[Math.min(S.turn,11)]:"—";
+  document.getElementById('turnLabel').textContent = S.started?`Month ${S.turn+1} of 12`:"Press start";
+
+  if(S.pendingNews){
+    const n=S.pendingNews;
+    document.getElementById('newsBox').innerHTML=
+      `<div class="news"><div class="hl">${n.hl}</div><div class="src">${n.src}</div>
+       <div class="ex"><b>Why it matters:</b> ${n.ex}</div></div>`;
+  }
+
+  const spark=sparkSpread();
+  const dP=S.power-S.lastPower, dG=S.gas-S.lastGas, dC=S.carbon-S.lastCarbon, dW=S.wind-S.lastWind, dS=spark-(S.lastSpark??spark);
+  const rows=[
+    {nm:'Power · baseload',sub:'$/MWh · round-the-clock',px:'$'+S.power,chg:dP,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(0),tip:'Wholesale electricity for 24h delivery. 1 lot = 1,000 MWh. The headline price you bet on.'},
+    {nm:'Peak premium',sub:'$/MWh · daytime extra',px:'$'+S.peakPrem,chg:0,fmt:()=>'info',tip:'How much more daytime (peak) power costs than the 24h average — driven by air-con and evening demand.'},
+    {nm:'Natural gas',sub:'$/MMBtu · the fuel',px:'$'+S.gas.toFixed(2),chg:dG,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(2),tip:'Henry Hub gas, the fuel for the marginal power plants. 1 lot = 10,000 MMBtu.'},
+    {nm:'Spark spread',sub:'$/MWh · plant margin',px:'$'+spark.toFixed(0),chg:dS,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(0),tip:'Power − 7.5×Gas − $4. The margin a gas plant earns generating. Your cleanest trade.'},
+    {nm:'Carbon',sub:'$/t CO₂',px:'$'+S.carbon,chg:dC,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(0),tip:'Cost to emit CO₂. Higher carbon hurts coal most and lifts power prices.'},
+    {nm:'Wind output',sub:'% of capacity',px:S.wind+'%',chg:dW,fmt:v=>arrow(v)+' '+Math.abs(v).toFixed(0),tip:'How hard the wind is blowing. High wind = lots of free supply = lower power prices.'},
+  ];
+  document.getElementById('mktBody').innerHTML=rows.map(r=>{
+    const cls=r.chg>0?'up':r.chg<0?'down':'flat';
+    return `<tr><td class="nm"><span class="tip" title="${r.tip}">${r.nm}</span><small>${r.sub}</small></td>
+      <td class="px">${r.px}</td><td class="chg ${cls}">${r.fmt(r.chg)}</td></tr>`;
+  }).join('');
+
+  const sh=document.getElementById('sparkHint');
+  const gasCost=HEAT_RATE*S.gas;
+  const math=`<span style="color:var(--txt-dim)">Power $${S.power} − fuel $${gasCost.toFixed(0)} (7.5×$${S.gas.toFixed(2)}) − $${VOM} run = </span>`;
+  if(spark>22) sh.innerHTML=`${math}<b style="color:var(--green)">+$${spark.toFixed(0)}/MWh</b>. Fat margin — consider locking a generation block.`;
+  else if(spark<0) sh.innerHTML=`${math}<b style="color:var(--neg)">-$${Math.abs(spark).toFixed(0)}/MWh</b>. Underwater — a gas plant would idle here.`;
+  else sh.innerHTML=`${math}<b>$${spark.toFixed(0)}/MWh</b>. Thin margin.`;
+
+  const tg=document.getElementById('tradeGrid');
+  tg.innerHTML=`
+    ${tradeCard('power','Power Forward','Directional bet on electricity. 1 lot = 1,000 MWh.')}
+    ${tradeCard('gas','Natural Gas','Directional bet on the fuel. 1 lot = 10,000 MMBtu.')}
+    <div class="trade-card">
+      <div class="tt">Spark Spread</div>
+      <div class="td">Run a gas plant: buy gas, sell power, lock today's <span class="tip" title="Power − 7.5×gas − $4 running cost, per MWh">spark margin</span>. Settles in ~2 months. MWh = generation.</div>
+      <div class="qty-row"><label>MWh</label><input type="number" id="sparkQty" value="20000" min="5000" step="5000"></div>
+      <div class="btn-row">
+        <button class="buy" onclick="lockSpark(+document.getElementById('sparkQty').value,false)" title="Margin floats with power & gas until you settle.">Lock — Unhedged</button>
+        <button onclick="lockSpark(+document.getElementById('sparkQty').value,true)" title="Locks both legs (−$2/MWh). Margin secured, no monthly swing.">Lock — Hedged</button>
+      </div>
+    </div>
+    <div class="trade-card">
+      <div class="tt">Capacity Sale</div>
+      <div class="td">Get paid a fee for keeping generation <span class="tip" title="A payment for being available to generate when needed, even if you rarely run. Low risk, steady income.">available</span>. Low-risk income, paid now.</div>
+      <div class="qty-row"><label>MW offered</label><input type="number" id="capQty" value="50" min="10" step="10"></div>
+      <div class="btn-row"><button onclick="sellCapacity(+document.getElementById('capQty').value)">Sell Capacity</button></div>
+    </div>`;
+
+  const open=totalOpenPL();
+  document.getElementById('equityNum').textContent=fmtUSD(equity());
+  document.getElementById('equityNum').className='big-num '+colorPL(equity()-START_CASH);
+  document.getElementById('realisedPL').innerHTML=`<span class="${colorPL(S.realised)}">${fmtUSD(S.realised)}</span>`;
+  document.getElementById('openPL').innerHTML=`<span class="${colorPL(open)}">${fmtUSD(open)}</span>`;
+  document.getElementById('cashVal').textContent=fmtUSD(S.cash);
+  document.getElementById('marginVal').textContent=fmtUSD(marginUsed());
+
+  const ne=netExposure(), lev=Math.abs(ne)/Math.max(1,equity());
+  document.getElementById('netExp').innerHTML=`<span class="${ne>0?'up':ne<0?'down':'flat'}">${fmtUSD(ne)}</span>`;
+  const bar=document.getElementById('riskBar');
+  bar.style.width=Math.min(100,lev/2*100)+'%';
+  bar.style.background=lev<0.8?'var(--green)':lev<1.5?'var(--blue)':'var(--neg)';
+  document.getElementById('riskHint').textContent=
+    lev<0.05?'Flat. No risk on the book.':
+    lev<0.8?`Leverage ${lev.toFixed(2)}x — comfortable.`:
+    lev<1.5?`Leverage ${lev.toFixed(2)}x — getting heavy.`:
+    `Leverage ${lev.toFixed(2)}x — danger zone, margin-call risk.`;
+
+  const pb=document.getElementById('posBox'); let html='';
+  S.pos.forEach((p,i)=>{
+    const pl=posOpenPL(p);
+    const unit=p.key==='power'?'$'+p.entryPx.toFixed(0)+'/MWh':'$'+p.entryPx.toFixed(2);
+    html+=`<div class="pos"><div class="pl"><span><span class="tag ${p.side>0?'long':'short'}">${p.side>0?'Long':'Short'}</span> ${p.name}</span>
+      <small>${p.lots} lot${p.lots>1?'s':''} @ ${unit}</small></div>
+      <div class="pr"><span class="${colorPL(pl)}">${fmtUSD(pl)}</span><br>
+      <button style="padding:2px 6px;font-size:9px;margin-top:3px" onclick="closePos(${i})">Close</button></div></div>`;
+  });
+  S.sparks.forEach((b,i)=>{
+    const pl=sparkPL(b);
+    const tag=b.hedged?`<span class="tag" style="background:rgba(11,94,168,.12);color:var(--blue)">Hedged</span>`:`<span class="tag long">Unhedged</span>`;
+    html+=`<div class="pos"><div class="pl"><span>${tag} ${(b.mwh/1000).toFixed(0)}k MWh spark</span>
+      <small>locked $${b.lockedSpark.toFixed(0)}/MWh · ${b.monthsLeft}mo left${b.hedged?' · flat':''}</small></div>
+      <div class="pr"><span class="${colorPL(pl)}">${b.hedged?'flat':fmtUSD(pl)}</span><br>
+      <button style="padding:2px 6px;font-size:9px;margin-top:3px" onclick="closeSparkIdx(${i})">Settle</button></div></div>`;
+  });
+  pb.innerHTML=html||'<div class="hint">No open positions.</div>';
+
+  const rp=document.getElementById('recapPanel'), rb=document.getElementById('recapBox');
+  if(S.recap){
+    const r=S.recap; const swingCls=colorPL(r.totalSwing);
+    let h=`<div style="margin-bottom:10px"><span style="font-family:var(--mono);font-size:10px;color:var(--txt-faint);text-transform:uppercase;letter-spacing:.1em">Open P&L swing</span><br>
+      <span class="big-num ${swingCls}" style="font-size:24px">${r.totalSwing>=0?'+':''}${fmtUSD(r.totalSwing)}</span></div>`;
+    if(r.moves.length) h+=`<div style="font-size:11px;color:var(--txt-dim);margin-bottom:8px;line-height:1.6"><b style="color:var(--green)">Market moved:</b><br>`+r.moves.map(m=>'· '+m).join('<br>')+`</div>`;
+    if(r.lines.length) h+=`<div style="font-size:11.5px;border-top:1px solid var(--line);padding-top:8px;margin-bottom:6px"><b style="color:var(--green)">Position impact:</b><br>`+r.lines.map(l=>{const pos=l.includes('+');return `<div style="padding:2px 0"><span class="${pos?'up':'down'}">${l}</span></div>`;}).join('')+`</div>`;
+    if(r.arbDriver) h+=`<div style="font-size:11px;color:var(--txt-dim);border-top:1px solid var(--line);padding-top:8px;line-height:1.6">${r.arbDriver}</div>`;
+    if(!r.lines.length && !r.arbDriver) h+=`<div class="hint">No open positions this month — the market moved but you weren't exposed.</div>`;
+    rb.innerHTML=h; rp.style.display='block';
+  }else rp.style.display='none';
+}
+function tradeCard(key,name,desc){
+  return `<div class="trade-card">
+    <div class="tt">${name}</div>
+    <div class="td">${desc}</div>
+    <div class="qty-row"><label>Lots</label><input type="number" id="q_${key}" value="10" min="1" step="1"></div>
+    <div class="btn-row">
+      <button class="buy" onclick="trade('${key}','${name}',1,+document.getElementById('q_${key}').value)">Buy / Long</button>
+      <button class="sell" onclick="trade('${key}','${name}',-1,+document.getElementById('q_${key}').value)">Sell / Short</button>
+    </div></div>`;
+}
+function closePos(i){ const p=S.pos[i]; if(!p)return; trade(p.key,p.name,-p.side,p.lots); }
+function closeSparkIdx(i){ closeSpark(S.sparks[i]); }
+
+/* ---- toast ---- */
+let toastT;
+function toast(msg,warn){
+  const t=document.getElementById('toast');
+  t.innerHTML=msg; t.className='toast show'+(warn?' warn':'');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.className='toast'+(warn?' warn':''),2600);
+}
+
+/* ---- end / debrief ---- */
+function endGame(){
+  forceLiquidate();
+  const finalEq=S.cash, ret=(finalEq-START_CASH)/START_CASH*100;
+  const dirTotal=S.directionalRight+S.directionalWrong;
+  const dirAcc=dirTotal?Math.round(S.directionalRight/dirTotal*100):0;
+  const riskScore=S.maxRiskBreach<0.8?'Disciplined':S.maxRiskBreach<1.5?'Acceptable':'Reckless';
+  const sparkScore=S.sparksTaken===0?'Passive':(S.sparksMissed>S.sparksTaken?'Missed opportunities':'Opportunistic');
+
+  let pts=50;
+  pts+=Math.max(-40,Math.min(60,ret*1.2));
+  pts+=(dirAcc-50)*0.4;
+  pts-=S.marginCalls*12;
+  pts-=Math.max(0,(S.maxRiskBreach-1)*20);
+  pts+=Math.min(15,S.sparksTaken*4);
+  pts=Math.max(0,Math.min(100,Math.round(pts)));
+  const grade=pts>=85?'A':pts>=70?'B':pts>=55?'C':pts>=40?'D':'F';
+
+  const dbg=[
+    ['Final equity', fmtUSD(finalEq)+` (${ret>=0?'+':''}${ret.toFixed(1)}%)`, ret>=0?'up':'down'],
+    ['Directional accuracy', `${dirAcc}% (${S.directionalRight}W / ${S.directionalWrong}L)`, dirAcc>=55?'up':dirAcc>=45?'flat':'down'],
+    ['Spark spreads', `${sparkScore} — ${S.sparksTaken} locked, ${S.sparksMissed} fat ones missed`, S.sparksTaken>0?'up':'flat'],
+    ['Capacity income', S.capacityEarned>0?fmtUSD(S.capacityEarned)+' banked':'None sold', S.capacityEarned>0?'up':'flat'],
+    ['Risk discipline', `${riskScore} (peak ${S.maxRiskBreach.toFixed(1)}x leverage)`, S.maxRiskBreach<0.8?'up':S.maxRiskBreach<1.5?'flat':'down'],
+    ['Margin calls', S.marginCalls===0?'None — clean book':`${S.marginCalls} forced liquidation(s)`, S.marginCalls===0?'up':'down'],
+  ];
+  const coaching=buildCoaching(ret,dirAcc,S);
+  document.getElementById('modalInner').innerHTML=`
+    <h2>Season Debrief <span class="grade" style="background:${grade==='F'||grade==='D'?'var(--neg)':grade==='A'?'var(--green)':'var(--blue)'}">${grade}</span></h2>
+    <div class="score ${ret>=0?'up':'down'}">${pts}<span style="font-size:18px;color:var(--txt-dim)">/100</span></div>
+    ${dbg.map(d=>`<div class="debrief-row"><span class="lbl">${d[0]}</span><span class="rating ${d[2]}">${d[1]}</span></div>`).join('')}
+    <div style="margin-top:16px;padding:14px;background:var(--panel2);border-radius:8px;border-left:3px solid var(--blue)">
+      <div style="font-family:var(--disp);color:var(--green);font-size:14px;margin-bottom:6px">Desk notes</div>
+      <div style="color:var(--txt-dim);font-size:12px;line-height:1.65">${coaching}</div>
+    </div>
+    <button class="big-btn" style="margin-top:18px" onclick="restart()">↺ Trade Another Season</button>`;
+  document.getElementById('modalBg').classList.add('show');
+}
+function buildCoaching(ret,dirAcc,s){
+  const notes=[];
+  if(ret>15) notes.push("Strong P&L — you read the supply &amp; demand shocks well.");
+  else if(ret<0) notes.push("You finished down. Review which headlines you leaned the wrong way on.");
+  if(dirAcc<45) notes.push("Your directional calls lost more than they won — size into high-conviction news (cold snaps, outages, wind) and sit out the noise.");
+  if(s.sparksTaken===0) notes.push("You never locked a spark spread. When it clears $20+/MWh that is a clean, fundamentals-driven margin you left on the table.");
+  if(s.sparksMissed>0) notes.push(`You skipped ${s.sparksMissed} fat spark spread${s.sparksMissed>1?'s':''} — generation traders live on that margin.`);
+  if(s.capacityEarned===0) notes.push("You never sold capacity — it's low-risk income that cushions a bad month.");
+  if(s.marginCalls>0) notes.push("Margin calls wiped positions at the worst time. Keep net leverage under ~1.5x and hold a cash buffer for spikes.");
+  if(s.maxRiskBreach>1.5) notes.push("You ran a very heavy book. In power, a single spike against an oversized position is fatal — size discipline beats being right.");
+  if(notes.length===0) notes.push("Balanced, disciplined trading. Next: press harder on conviction trades to lift returns without breaching risk limits.");
+  return notes.join(" ");
+}
+function restart(){
+  document.getElementById('modalBg').classList.remove('show');
+  S=freshState();
+  document.getElementById('advanceBtn').textContent="▶ Start Season";
+  document.getElementById('newsBox').innerHTML=
+    `<div class="news"><div class="hl">New season. Fresh book.</div><div class="src">Evolta Trading Floor</div>
+     <div class="ex">Press <b>Start Season</b> to take the first news tick.</div></div>`;
+  render();
+}
+
+/* ---- mode switch ---- */
+function startGame(){
+  document.getElementById('academy').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+  document.getElementById('clock').style.display='block';
+  S=freshState(); render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---- init ---- */
+renderAcademy();
+</script>
+</body>
+</html>

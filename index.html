@@ -324,8 +324,27 @@
             background: #f8f9fa;
             border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 8px;
-            padding: 8px 12px;
+            padding: 0;
             line-height: 1.3;
+            transition: all 0.2s ease;
+        }
+
+        .contributor-projects li a {
+            display: block;
+            padding: 8px 12px;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .contributor-projects li.linked:hover {
+            background: #1a1a1a;
+            border-color: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .contributor-projects li.linked:hover a {
+            color: #fff;
         }
 
         .contact-content {
@@ -708,10 +727,12 @@
                     <p class="contributor-role">Founder</p>
                     <p class="contributor-projects-title">Project</p>
                     <ul class="contributor-projects">
-                        <li>Portfolio Hedging Game</li>
-                        <li>Market Making Game</li>
-                        <li>Quick Math Game</li>
-                        <li>Aporia Psycology Test</li>
+                        <li class="linked"><a href="power-trading.html" target="_blank" rel="noopener noreferrer">Power Trading Game</a></li>
+                        <li class="linked"><a href="sweet-spread.html" target="_blank" rel="noopener noreferrer">Sweet Spread Game</a></li>
+                        <li class="linked"><a href="HedgingGame.html" target="_blank" rel="noopener noreferrer">Portfolio Hedging Game</a></li>
+                        <li class="linked"><a href="MarketMaking.html" target="_blank" rel="noopener noreferrer">Market Making Game</a></li>
+                        <li class="linked"><a href="MathLab.html" target="_blank" rel="noopener noreferrer">Quick Math Game</a></li>
+                        <li class="linked"><a href="Aporia.html" target="_blank" rel="noopener noreferrer">Aporia Psycology Test</a></li>
                     </ul>
                 </article>
 
