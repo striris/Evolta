@@ -214,6 +214,8 @@
   .chip-row{display:flex;gap:8px;flex-wrap:wrap}
   .chip{font-family:var(--mono);font-size:10.5px;padding:7px 12px;border-radius:20px;border:1px solid var(--line2);background:var(--bg2);color:var(--txt-dim);cursor:pointer;transition:.13s;flex:none}
   .chip:hover{border-color:var(--blue);color:var(--blue)}
+  .chip.amber{border-color:var(--green);color:var(--green);background:rgba(194,24,91,.07)}
+  .ctrl-row input[type=range]{accent-color:var(--green);flex:1}
   .takeaway{background:rgba(142,59,143,.07);border:1px solid rgba(142,59,143,.24);border-radius:10px;padding:13px 15px;margin-top:6px}
   .takeaway .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:5px}
   .takeaway .txt{color:var(--txt);font-size:12.5px;line-height:1.6}
@@ -966,7 +968,7 @@ const A_YIELD=0.92, A_TOLL=70, A_FINRATE=0.08, A_MONTHS=2;
 function rawTonne(c){ return (c/100)*LB_T; }
 
 let acadStep=0;
-const ACAD=[sweetL0,sweetL1,sweetL2];
+const ACAD=[sweetL0,sweetDir,sweetL1,sweetMargin,sweetL2];
 function renderSteps(){
   document.getElementById('acadSteps').innerHTML=ACAD.map((_,i)=>{
     const c=i<acadStep?'done':i===acadStep?'cur':''; return `<div class="s ${c}"></div>`;}).join('');
@@ -988,7 +990,7 @@ function openAcademy(){
 
 function sweetL0(){
   document.getElementById('lessonContent').innerHTML=`
-    <div class="lesson-kicker">Academy · Lesson 1 of 2</div>
+    <div class="lesson-kicker">Academy · Lesson 1 of 4</div>
     <div class="lesson-title">Two sugars, one spread</div>
     <p class="lesson-lede">The world trades two kinds of sugar. <b>Raw</b> (ICE "No.11", quoted in ¢/lb) is the unrefined cane sugar. <b>White</b> (London "No.5", quoted in $/tonne) is the refined product on your table. To compare them you convert raw into $/tonne — and the gap between white and raw is the <b>white premium</b>. Drag the white price and watch it.</p>
     <div class="lesson-body">
@@ -1035,9 +1037,72 @@ function updatePremium(w){
   document.getElementById('premRead0').innerHTML=`White $${w} − raw $${rawT.toFixed(0)} (19.5¢ converted) = <b>$${prem.toFixed(0)}/t</b> white premium. ${prem<120?'Thin — refining barely pays.':prem>200?'Fat — refiners run hard.':'Healthy refining margin.'}`;
 }
 
+let dirPos='long';
+function sweetDir(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 2 of 4 · how you bet</div>
+    <div class="lesson-title">Going long, going short</div>
+    <p class="lesson-lede">You don't only make money when prices rise. <b>Long</b> means you buy now and profit if the price goes <b>up</b>. <b>Short</b> means you sell first (borrowing the sugar) and profit if the price goes <b>down</b>, buying it back cheaper later. Pick a side, then drag the price and watch your P&amp;L flip.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 240" width="100%">
+          <line x1="40" y1="120" x2="320" y2="120" stroke="#d6cdd2" stroke-width="1.5"/>
+          <text x="46" y="116" font-size="9" fill="#94a59d">entry</text>
+          <line x1="180" y1="30" x2="180" y2="210" stroke="#e7dde2" stroke-width="1" stroke-dasharray="3 3"/>
+          <rect id="dirBar" class="bar-anim" x="150" y="120" width="60" height="0" rx="3" fill="#1a7a4c" opacity="0.85"/>
+          <text id="dirPnl" x="180" y="120" text-anchor="middle" font-size="15" font-weight="700" fill="#5e7068">$0</text>
+          <text id="dirNote" x="180" y="228" text-anchor="middle" font-size="10" fill="#5e7068"></text>
+        </svg>
+        <div class="viz-controls">
+          <div class="chip-row">
+            <div class="chip" id="chipLong" onclick="setDir('long')">▲ Go Long (buy)</div>
+            <div class="chip" id="chipShort" onclick="setDir('short')">▼ Go Short (sell)</div>
+          </div>
+          <div class="ctrl-row"><label>Price move</label><input type="range" min="-20" max="20" value="0" id="dirMove" oninput="updateDir()"></div>
+          <div class="read-out" id="dirRead"></div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Long = bullish.</b> Buy a No.11 raw or No.5 white future; if it rises, you sell higher and pocket the gain.</li>
+          <li><b>Short = bearish.</b> Sell first without owning it; if the price falls, you buy it back cheaper and keep the difference.</li>
+          <li><b>Either direction can profit — or lose.</b> Get the call wrong and a long loses as prices fall, a short loses as they rise.</li>
+          <li><b>You can combine them.</b> Long raw + short white is a bet that the white premium will <i>narrow</i> — a spread trade, not a pure direction.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">Why shorting matters</div>
+          <div class="txt">When the news is clearly bearish — a bumper harvest, an export glut — a trader who can only buy is stuck watching. <b>Shorting lets you profit from falling prices too</b>, so every headline is an opportunity.</div>
+        </div>
+      </div>
+    </div>`;
+  dirPos='long'; document.getElementById('dirMove').value=0; setDir('long');
+}
+function setDir(p){
+  dirPos=p;
+  document.getElementById('chipLong').classList.toggle('amber',p==='long');
+  document.getElementById('chipShort').classList.toggle('amber',p==='short');
+  updateDir();
+}
+function updateDir(){
+  const mv=+document.getElementById('dirMove').value;
+  const pnlPct = dirPos==='long' ? mv : -mv;          // % return on the position
+  const dollars = Math.round(pnlPct/100 * 200000);    // on a ~$200k position
+  const base=120, h=Math.min(86,Math.abs(pnlPct)*4.2);
+  const bar=document.getElementById('dirBar');
+  if(pnlPct>=0){ bar.setAttribute('y',base-h); bar.setAttribute('fill','#1a7a4c'); }
+  else { bar.setAttribute('y',base); bar.setAttribute('fill','#c0392b'); }
+  bar.setAttribute('height',h);
+  const pe=document.getElementById('dirPnl');
+  pe.textContent=(dollars>=0?'+$':'-$')+Math.abs(dollars).toLocaleString();
+  pe.setAttribute('y', pnlPct>=0?base-h-6:base+h+18);
+  pe.setAttribute('fill', pnlPct>0?'#1a7a4c':pnlPct<0?'#c0392b':'#5e7068');
+  document.getElementById('dirNote').textContent = mv===0?'Price unchanged — flat P&L':`Price ${mv>0?'rose':'fell'} ${Math.abs(mv)}%`;
+  document.getElementById('dirRead').innerHTML=`You're <b>${dirPos==='long'?'long (bought)':'short (sold)'}</b>. Price ${mv>0?'up':mv<0?'down':'flat'} ${Math.abs(mv)}% → <b style="color:${pnlPct>0?'var(--pos)':pnlPct<0?'var(--neg)':'var(--txt-dim)'}">${pnlPct>=0?'+':''}${pnlPct}%</b>. ${ (dirPos==='short'&&mv<0)||(dirPos==='long'&&mv>0) ? 'Your call paid off.' : mv===0?'':'The move went against you.'}`;
+}
+
 function sweetL1(){
   document.getElementById('lessonContent').innerHTML=`
-    <div class="lesson-kicker">Academy · Lesson 2 of 2 · the money machine</div>
+    <div class="lesson-kicker">Academy · Lesson 3 of 4 · the money machine</div>
     <div class="lesson-title">The refining arbitrage</div>
     <p class="lesson-lede">Here's the trade physical sugar desks live on: <b>buy raw, refine it into white, sell the white</b>, and lock the margin today. But the white premium isn't free profit — you pay a <b>refining toll</b>, <b>freight</b>, <b>financing</b>, and you lose ~8% in conversion. What's left is the <b>net margin</b>. Drag the prices and watch it.</p>
     <div class="lesson-body">
@@ -1094,6 +1159,74 @@ function updateArb(){
   document.getElementById('arbRead').innerHTML= net>=0
     ? `Net margin = <b style="color:var(--pos)">+$${net.toFixed(0)}/t</b> — ${net>25?'fat, worth locking.':'thin but positive.'}`
     : `Net margin = <b style="color:var(--neg)">-$${Math.abs(net).toFixed(0)}/t</b> — refining loses money here.`;
+}
+
+let mcLev=5;
+function sweetMargin(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 4 of 4 · the thing that ends seasons</div>
+    <div class="lesson-title">Leverage &amp; the margin call</div>
+    <p class="lesson-lede">Futures let you control a big position while posting only a small deposit — your <b>margin</b>. That's <b>leverage</b>, and it cuts both ways. If the market moves against you and your losses eat through your deposit, the exchange issues a <b>margin call</b> and force-closes your positions at the worst possible moment. Pick a leverage, then drag the adverse move.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 230" width="100%">
+          <line x1="20" y1="195" x2="340" y2="195" stroke="#d6cdd2" stroke-width="1.5"/>
+          <text x="60" y="22" text-anchor="middle" font-size="10" fill="#5e7068">Your equity</text>
+          <rect x="40" y="45" width="80" height="150" rx="3" fill="#e7dde2"/>
+          <rect id="eqBar" class="bar-anim" x="40" y="45" width="80" height="150" rx="3" fill="#1a7a4c" opacity="0.82"/>
+          <line id="mcLine" x1="36" y1="150" x2="124" y2="150" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <text x="128" y="153" font-size="8.5" fill="#c0392b">maintenance</text>
+          <text id="eqLbl" x="80" y="38" text-anchor="middle" font-size="12" font-weight="600" fill="#1a7a4c">$10.0M</text>
+          <text id="mcFlag" x="240" y="120" text-anchor="middle" font-size="14" font-weight="700" fill="#c0392b" style="opacity:0">⚠ MARGIN CALL</text>
+          <text id="mcSub" x="240" y="140" text-anchor="middle" font-size="9.5" fill="#8e7a82"></text>
+        </svg>
+        <div class="viz-controls">
+          <div class="chip-row">
+            <div class="chip" id="lev2" onclick="setLev(2)">2× leverage</div>
+            <div class="chip" id="lev5" onclick="setLev(5)">5×</div>
+            <div class="chip" id="lev10" onclick="setLev(10)">10×</div>
+          </div>
+          <div class="ctrl-row"><label>Market vs you</label><input type="range" min="0" max="14" step="0.5" value="0" id="mcMove" oninput="updateMargin()"></div>
+          <div class="read-out" id="mcRead"></div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Higher leverage = thinner cushion.</b> At 10×, a move of just a few percent against you can wipe out your whole deposit.</li>
+          <li><b>The maintenance line is the danger zone.</b> Fall below it and you're force-liquidated — your positions sold at the bottom, locking in the loss.</li>
+          <li><b>Margin calls hit at the worst time</b> — during a spike, when prices are most extreme and you'd most want to hold on.</li>
+          <li><b>Defence:</b> keep a cash buffer, size positions sensibly, and don't run the book at maximum leverage.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">Try this</div>
+          <div class="txt">Set <b>10×</b> and drag the adverse move — equity collapses past the maintenance line almost immediately. Now try <b>2×</b>: the same move barely dents you. <b>Leverage is the difference between a rough month and a blown account.</b></div>
+        </div>
+      </div>
+    </div>`;
+  mcLev=5; document.getElementById('mcMove').value=0; setLev(5);
+}
+function setLev(l){
+  mcLev=l;
+  [2,5,10].forEach(x=>document.getElementById('lev'+x).classList.toggle('amber',x===l));
+  updateMargin();
+}
+function updateMargin(){
+  const mv=+document.getElementById('mcMove').value;       // adverse market move %
+  const startEq=10;                                        // $10M
+  const lossFrac=Math.min(1, mcLev*mv/100);                // leveraged loss as fraction of equity
+  const eq=startEq*(1-lossFrac);
+  const full=150, h=Math.max(0,full*(eq/startEq));
+  const base=45, bottom=195;
+  const bar=document.getElementById('eqBar');
+  bar.setAttribute('y',bottom-h); bar.setAttribute('height',h);
+  const maintFrac=0.30;                                    // maintenance at 30% of start
+  bar.setAttribute('fill', eq/startEq<=maintFrac?'#c0392b':eq/startEq<0.55?'#d98a1f':'#1a7a4c');
+  const lbl=document.getElementById('eqLbl'); lbl.textContent='$'+eq.toFixed(1)+'M'; lbl.setAttribute('y',bottom-h-7); lbl.setAttribute('fill',eq/startEq<=maintFrac?'#c0392b':'#1a7a4c');
+  const breached=eq/startEq<=maintFrac;
+  document.getElementById('mcFlag').style.opacity=breached?'1':'0';
+  document.getElementById('mcSub').textContent=breached?'positions force-liquidated':'';
+  document.getElementById('mcSub').setAttribute('opacity',breached?'1':'0');
+  document.getElementById('mcRead').innerHTML=`At <b>${mcLev}×</b>, a <b>${mv}%</b> adverse move ${breached?'<b style="color:var(--neg)">triggers a margin call</b> — equity below maintenance.':`leaves equity at <b>$${eq.toFixed(1)}M</b> (${(eq/startEq*100).toFixed(0)}% of capital).`}`;
 }
 
 function sweetL2(){
