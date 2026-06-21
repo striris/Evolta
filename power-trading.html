@@ -15,13 +15,13 @@
     --panel2:#f0f5f2;
     --line:#e2e9e4;
     --line2:#d6e0da;
-    --green:#1a7a4c;
-    --green-lt:#2e9d68;
-    --blue:#0b5ea8;
+    --green:#1577c9;       /* primary azure (blue theme) */
+    --green-lt:#4a9fd8;
+    --blue:#0b5ea8;        /* secondary blue */
     --blue-lt:#3a86c8;
     --amber:#d98a1f;       /* energy / spike accent */
     --amber-lt:#f0a83a;
-    --accent:#1a7a4c;
+    --accent:#1577c9;
     --pos:#1a7a4c;
     --neg:#c0392b;
     --white:#1a2622;
@@ -35,7 +35,7 @@
   *{margin:0;padding:0;box-sizing:border-box}
   body{
     background:
-      radial-gradient(ellipse at 12% -5%, #e6f1ea 0%, transparent 45%),
+      radial-gradient(ellipse at 12% -5%, #e3eefa 0%, transparent 45%),
       radial-gradient(ellipse at 95% 5%, #e7f0f8 0%, transparent 42%),
       var(--bg);
     color:var(--txt);
@@ -63,6 +63,9 @@
   .brand h1 .bolt{color:var(--amber);font-style:normal}
   .brand .sub{color:var(--txt-dim);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin-top:8px;font-family:var(--mono)}
   .brand .evolta{color:var(--blue);font-weight:600}
+  .topbar{display:flex;align-items:center;gap:14px}
+  .back-btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--txt-dim);text-decoration:none;border:1px solid var(--line2);border-radius:8px;padding:8px 13px;transition:.15s;white-space:nowrap}
+  .back-btn:hover{border-color:var(--green);color:var(--green)}
   .clock{text-align:right}
   .clock .month{font-family:var(--disp);font-size:28px;color:var(--blue);font-weight:500}
   .clock .turn{color:var(--txt-faint);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-family:var(--mono)}
@@ -254,9 +257,12 @@
       <h1>Peak <span class="amp">&amp;</span> Dispatch <span class="bolt">⚡</span></h1>
       <div class="sub">Power Trading — from scratch · <span class="evolta">Evolta — learn · play · evolve</span></div>
     </div>
-    <div class="clock" id="clock" style="display:none">
-      <div class="month" id="monthLabel">—</div>
-      <div class="turn" id="turnLabel">Press start</div>
+    <div class="topbar">
+      <div class="clock" id="clock" style="display:none">
+        <div class="month" id="monthLabel">—</div>
+        <div class="turn" id="turnLabel">Press start</div>
+      </div>
+      <a class="back-btn" href="TradingGamePortal.html">‹ All games</a>
     </div>
   </header>
 

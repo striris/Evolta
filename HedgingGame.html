@@ -1,603 +1,890 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio Hedging Game</title>
-    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-    <!-- Pinned to 7.x: Babel 8's React preset defaults to the automatic JSX runtime,
-         which injects an ES `import` that breaks this non-module script (blank page). -->
-    <script src="https://unpkg.com/@babel/standalone@7.27.0/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safe Harbor — Portfolio Hedging, From Scratch | Evolta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf7ee;
+    --bg2:#ffffff;
+    --panel:#ffffff;
+    --panel2:#f7f2e6;
+    --line:#ece4d2;
+    --line2:#e0d5bd;
+    /* Yellow / gold theme */
+    --gold:#b8860b;        /* primary brand gold */
+    --gold-lt:#d4a017;
+    --slate:#5a4a1f;       /* deep warm ink as secondary */
+    --slate-lt:#8a7430;
+    --amber:#e0902a;       /* accent */
+    --accent:#b8860b;
+    --pos:#1a7a4c;         /* up — stays green for P&L meaning */
+    --neg:#c0392b;         /* down */
+    --white:#2a230f;
+    --txt:#352c14;
+    --txt-dim:#6e6038;
+    --txt-faint:#a89868;
+    --mono:'IBM Plex Mono',monospace;
+    --sans:'Inter',-apple-system,sans-serif;
+    --disp:'Fraunces',serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:
+      radial-gradient(ellipse at 12% -5%, #f6eccf 0%, transparent 45%),
+      radial-gradient(ellipse at 95% 5%, #f3e9d2 0%, transparent 42%),
+      var(--bg);
+    color:var(--txt);font-family:var(--sans);font-size:13px;line-height:1.5;
+    min-height:100vh;padding:0 0 60px;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px;position:relative;z-index:2}
+  header{border-bottom:1px solid var(--line);padding:24px 0 20px;margin-bottom:24px;
+    display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .brand h1{font-family:var(--disp);font-weight:500;font-size:38px;line-height:.95;letter-spacing:-.02em;color:var(--gold)}
+  .brand h1 .amp{color:var(--slate);font-style:italic}
+  .brand h1 .bolt{color:var(--amber);font-style:normal}
+  .brand .sub{color:var(--txt-dim);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin-top:8px;font-family:var(--mono)}
+  .brand .evolta{color:var(--slate);font-weight:600}
+  .topbar{display:flex;align-items:center;gap:14px}
+  .back-btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--txt-dim);
+    text-decoration:none;border:1px solid var(--line2);border-radius:8px;padding:8px 13px;transition:.15s;white-space:nowrap}
+  .back-btn:hover{border-color:var(--gold);color:var(--gold)}
+  .clock{text-align:right}
+  .clock .month{font-family:var(--disp);font-size:26px;color:var(--slate);font-weight:500}
+  .clock .turn{color:var(--txt-faint);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-family:var(--mono)}
+
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:18px;
+    box-shadow:0 1px 2px rgba(184,134,11,.05),0 6px 22px rgba(90,74,31,.05)}
+  .panel h2{font-family:var(--mono);font-weight:500;font-size:11px;color:var(--txt-faint);letter-spacing:.14em;
+    text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .panel h2 .dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
+
+  .mkt{width:100%;border-collapse:collapse}
+  .mkt th{text-align:left;color:var(--txt-faint);font-weight:500;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    padding:4px 8px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+  .mkt td{padding:9px 8px;border-bottom:1px solid var(--line)}
+  .mkt tr:last-child td{border-bottom:none}
+  .mkt .nm{color:var(--txt);font-weight:500}
+  .mkt .nm small{display:block;color:var(--txt-faint);font-size:10px;font-weight:400}
+  .mkt .px{font-weight:600;font-size:15px;text-align:right;font-family:var(--mono)}
+  .mkt .chg{text-align:right;font-size:12px;font-family:var(--mono)}
+  .up{color:var(--pos)}.down{color:var(--neg)}.flat{color:var(--txt-faint)}
+
+  .news{border-left:3px solid var(--gold);padding:2px 0 2px 14px;margin-bottom:8px}
+  .news .hl{color:var(--white);font-weight:600;margin-bottom:4px;font-size:14px}
+  .news .src{color:var(--slate);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);font-weight:500}
+  .news .ex{color:var(--txt-dim);font-size:12px;margin-top:8px;line-height:1.6;border-top:1px solid var(--line);padding-top:8px}
+  .news .ex b{color:var(--gold)}
+
+  .act-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .trade-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:13px}
+  .trade-card .tt{font-family:var(--disp);font-size:15px;color:var(--gold);margin-bottom:3px;font-weight:500}
+  .trade-card .td{color:var(--txt-dim);font-size:10.5px;margin-bottom:11px;min-height:30px;line-height:1.5}
+  .qty-row{display:flex;align-items:center;gap:6px;margin-bottom:9px}
+  .qty-row label{color:var(--txt-dim);font-size:10px;flex:1;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em}
+  select,input[type=number]{background:var(--bg2);border:1px solid var(--line2);color:var(--txt);
+    font-family:var(--mono);font-size:12px;padding:5px 7px;border-radius:6px}
+  select{flex:1}
+  input[type=number]{width:74px;text-align:right}
+  input:focus,select:focus{outline:none;border-color:var(--gold)}
+  input[type=range]{accent-color:var(--gold);width:100%}
+  .btn-row{display:flex;gap:6px}
+  button{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.03em;border:1px solid var(--line2);
+    background:var(--bg2);color:var(--txt);padding:8px 10px;border-radius:7px;cursor:pointer;transition:.13s;flex:1}
+  button:hover{border-color:var(--gold);color:var(--gold)}
+  button.buy:hover{border-color:var(--pos);color:var(--pos);background:rgba(26,122,76,.06)}
+  button.sell:hover{border-color:var(--neg);color:var(--neg);background:rgba(192,57,43,.05)}
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .big-btn{width:100%;padding:15px;font-size:14px;font-family:var(--sans);font-weight:600;
+    background:linear-gradient(135deg,var(--gold),var(--amber));color:#fff;border:none;letter-spacing:.02em;
+    border-radius:10px;box-shadow:0 4px 14px rgba(184,134,11,.22)}
+  .big-btn:hover{filter:brightness(1.06);color:#fff}
+  .ghost-btn{background:transparent;border:1px solid var(--line2);color:var(--txt-dim);padding:10px 16px;border-radius:9px;font-family:var(--mono);font-size:11px}
+  .ghost-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+  .stat{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+  .stat:last-child{border-bottom:none}
+  .stat .k{color:var(--txt-dim);font-size:11px}
+  .stat .v{font-weight:600;font-family:var(--mono)}
+  .big-num{font-family:var(--disp);font-size:32px;font-weight:500;line-height:1;margin:2px 0 8px;color:var(--slate)}
+
+  .pos{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .pos:last-child{border-bottom:none}
+  .pos .pl{color:var(--txt);display:flex;flex-direction:column;gap:2px}
+  .pos .pl small{color:var(--txt-faint);font-size:10px;font-family:var(--mono)}
+  .pos .pr{text-align:right;font-family:var(--mono)}
+  .tag{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;font-family:var(--mono)}
+  .tag.long{background:rgba(184,134,11,.14);color:var(--gold)}
+  .tag.hedge{background:rgba(26,122,76,.12);color:var(--pos)}
+
+  .meter{height:7px;background:var(--line);border-radius:5px;overflow:hidden;margin:8px 0}
+  .meter span{display:block;height:100%;transition:.4s;border-radius:5px}
+
+  .toast{position:fixed;left:50%;top:20px;transform:translateX(-50%);z-index:50;background:var(--bg2);border:1px solid var(--gold);
+    border-radius:10px;padding:12px 22px;color:var(--txt);font-size:12px;box-shadow:0 10px 36px rgba(90,74,31,.16);max-width:90vw;
+    opacity:0;transition:.3s;pointer-events:none;font-family:var(--mono)}
+  .toast.show{opacity:1;top:32px}
+  .toast.warn{border-color:var(--neg);color:var(--neg)}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(42,35,15,.5);backdrop-filter:blur(4px);z-index:40;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:30px;max-width:560px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(90,74,31,.22)}
+  .modal h2{font-family:var(--disp);font-size:28px;color:var(--gold);font-weight:500;margin-bottom:6px}
+  .modal .score{font-family:var(--disp);font-size:52px;font-weight:500;line-height:1;margin:10px 0;color:var(--slate)}
+  .grade{display:inline-block;font-family:var(--disp);font-size:22px;font-weight:600;padding:3px 16px;border-radius:10px;background:var(--gold);color:#fff;margin-left:10px}
+  .debrief-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);gap:14px}
+  .debrief-row .lbl{color:var(--txt-dim)}
+  .debrief-row .rating{font-weight:600;text-align:right;font-family:var(--mono);font-size:11.5px}
+
+  .hint{color:var(--txt-faint);font-size:10.5px;margin-top:6px;line-height:1.5}
+  .hint b{color:var(--txt-dim)}
+  .tip{cursor:help;border-bottom:1px dotted var(--txt-faint)}
+  svg text{font-family:var(--mono)}
+
+  /* Academy */
+  #academy{max-width:920px;margin:0 auto}
+  .acad-panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px 32px;box-shadow:0 1px 2px rgba(184,134,11,.05),0 10px 36px rgba(90,74,31,.07)}
+  .acad-steps{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+  .acad-steps .s{flex:1;min-width:70px;height:5px;border-radius:4px;background:var(--line);transition:.3s}
+  .acad-steps .s.done{background:var(--gold)}
+  .acad-steps .s.cur{background:linear-gradient(90deg,var(--gold),var(--amber))}
+  .lesson-kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);font-weight:500;margin-bottom:8px}
+  .lesson-title{font-family:var(--disp);font-size:30px;font-weight:500;color:var(--gold);line-height:1.05;margin-bottom:10px;letter-spacing:-.01em}
+  .lesson-lede{color:var(--txt-dim);font-size:14px;line-height:1.65;margin-bottom:6px;max-width:62ch}
+  .lesson-lede b{color:var(--gold)}
+  .lesson-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin:22px 0 8px}
+  @media(max-width:760px){.lesson-body{grid-template-columns:1fr}}
+  .viz-box{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:18px;min-height:300px}
+  .viz-controls{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+  .ctrl-row{display:flex;align-items:center;gap:10px}
+  .ctrl-row label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-dim);min-width:96px}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font-family:var(--mono);font-size:10.5px;padding:7px 12px;border-radius:20px;border:1px solid var(--line2);background:var(--bg2);color:var(--txt-dim);cursor:pointer;transition:.13s;flex:none}
+  .chip:hover{border-color:var(--amber);color:var(--amber)}
+  .takeaway{background:rgba(224,144,42,.08);border:1px solid rgba(224,144,42,.28);border-radius:10px;padding:13px 15px;margin-top:6px}
+  .takeaway .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:5px}
+  .takeaway .txt{color:var(--txt);font-size:12.5px;line-height:1.6}
+  .takeaway .txt b{color:var(--gold)}
+  .lesson-points{list-style:none;margin:14px 0}
+  .lesson-points li{padding:7px 0 7px 26px;position:relative;color:var(--txt-dim);font-size:13px;line-height:1.55}
+  .lesson-points li::before{content:"";position:absolute;left:0;top:9px;width:13px;height:13px;border-radius:50%;border:2px solid var(--gold)}
+  .lesson-points li b{color:var(--txt)}
+  .acad-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}
+  .acad-nav .right{display:flex;gap:10px}
+  .read-out{font-family:var(--mono);font-size:12px;color:var(--txt-dim)}
+  .read-out b{font-size:14px;color:var(--slate)}
+  .bar-anim{transition:height .5s cubic-bezier(.2,.8,.25,1),y .5s cubic-bezier(.2,.8,.25,1),fill .3s}
+  .line-anim{transition:all .5s cubic-bezier(.2,.8,.25,1)}
+  .hidden{display:none !important}
+</style>
 </head>
 <body>
-    <div id="root"></div>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Safe <span class="amp">&amp;</span> Sound <span class="bolt">🛡️</span></h1>
+      <div class="sub">Portfolio Hedging — from scratch · <span class="evolta">Evolta — learn · play · evolve</span></div>
+    </div>
+    <div class="topbar">
+      <div class="clock" id="clock" style="display:none">
+        <div class="month" id="monthLabel">—</div>
+        <div class="turn" id="turnLabel">Press start</div>
+      </div>
+      <a class="back-btn" href="TradingGamePortal.html">‹ All games</a>
+    </div>
+  </header>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+  <!-- ACADEMY -->
+  <div id="academy">
+    <div class="acad-panel">
+      <div class="acad-steps" id="acadSteps"></div>
+      <div id="lessonContent"></div>
+      <div class="acad-nav">
+        <button class="ghost-btn" id="backBtn" onclick="acadBack()" style="flex:none">‹ Back</button>
+        <div class="right">
+          <button class="ghost-btn" id="skipBtn" onclick="startGame()" style="flex:none">Skip to game ›</button>
+          <button class="big-btn" id="nextBtn" onclick="acadNext()" style="width:auto;flex:none;padding:11px 26px">Next ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Simple icon components
-        const Icon = ({ name, className }) => {
-            const icons = {
-                'shield': 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
-                'trending-down': 'M23 18l-9.5-9.5-5 5L1 6',
-                'trending-up': 'M23 6l-9.5 9.5-5-5L1 18',
-                'alert-triangle': 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01',
-                'award': 'M12 15l-2 5-7-2 2-7 5 2zM12 15l2 5 7-2-2-7-5 2zM12 2v6M12 15V8',
-                'target': 'M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10zM8 12c0 2.21 1.79 4 4 4s4-1.79 4-4-1.79-4-4-4-4 1.79-4 4z',
-                'zap': 'M13 2L3 14h9l-1 8 10-12h-9l1-8z'
-            };
-            
-            return (
-                <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d={icons[name]} />
-                </svg>
-            );
-        };
+  <!-- GAME -->
+  <div id="game" class="grid hidden">
+    <div>
+      <div class="panel" id="newsPanel">
+        <h2><span class="dot"></span>Market Wire</h2>
+        <div id="newsBox">
+          <div class="news">
+            <div class="hl">You manage a $100,000 portfolio.</div>
+            <div class="src">Evolta Investment Desk</div>
+            <div class="ex">Over 10 rounds the market will throw shocks at your holdings. Buy <b>hedges</b> — insurance that pays off when things crash — to protect your downside, but mind the <b>premium</b> you pay for it. Press <b>Start</b> to see the first scenario.</div>
+          </div>
+        </div>
+      </div>
 
-        const HedgingGame = () => {
-            // Portfolio state
-            const [cash, setCash] = useState(20000);
-            const [portfolio, setPortfolio] = useState([
-                { name: 'Tech Stocks', value: 30000, exposure: 'tech', quantity: 300 },
-                { name: 'Bank Stocks', value: 25000, exposure: 'financial', quantity: 500 },
-                { name: 'Energy Stocks', value: 25000, exposure: 'energy', quantity: 250 },
-                { name: 'International Stocks', value: 20000, exposure: 'currency', quantity: 200 }
-            ]);
-            
-            // Hedging instruments state
-            const [hedges, setHedges] = useState([]);
-            const [availableHedges] = useState([
-                { 
-                    id: 'tech_put', 
-                    name: 'Tech Sector Put Options', 
-                    cost: 1500, 
-                    protection: 15000, 
-                    exposure: 'tech',
-                    description: 'Protects against 50% drop in tech stocks'
-                },
-                { 
-                    id: 'market_put', 
-                    name: 'Market Index Put Options', 
-                    cost: 2000, 
-                    protection: 20000, 
-                    exposure: 'market',
-                    description: 'Protects against 20% market decline'
-                },
-                { 
-                    id: 'bank_short', 
-                    name: 'Short Bank ETF', 
-                    cost: 0, 
-                    protection: 12000, 
-                    exposure: 'financial',
-                    description: 'Hedge financial sector exposure'
-                },
-                { 
-                    id: 'oil_futures', 
-                    name: 'Oil Futures Hedge', 
-                    cost: 1000, 
-                    protection: 10000, 
-                    exposure: 'energy',
-                    description: 'Protects against oil price drops'
-                },
-                { 
-                    id: 'currency_hedge', 
-                    name: 'Currency Forward Contract', 
-                    cost: 800, 
-                    protection: 8000, 
-                    exposure: 'currency',
-                    description: 'Locks in exchange rates'
-                },
-                { 
-                    id: 'vix_calls', 
-                    name: 'Volatility (VIX) Call Options', 
-                    cost: 1200, 
-                    protection: 15000, 
-                    exposure: 'volatility',
-                    description: 'Profits from increased volatility'
-                }
-            ]);
+      <div class="panel">
+        <h2><span class="dot"></span>Your Holdings</h2>
+        <table class="mkt">
+          <thead><tr><th>Sector</th><th style="text-align:right">Value</th><th style="text-align:right">Δ last</th></tr></thead>
+          <tbody id="mktBody"></tbody>
+        </table>
+        <div class="hint" id="concHint"></div>
+      </div>
 
-            // Game state
-            const [scenario, setScenario] = useState(null);
-            const [gamePhase, setGamePhase] = useState('setup'); // setup, event, result
-            const [score, setScore] = useState(0);
-            const [round, setRound] = useState(1);
-            const [gameHistory, setGameHistory] = useState([]);
-            const [eventResult, setEventResult] = useState(null);
+      <div class="panel">
+        <h2><span class="dot"></span>Insurance Desk</h2>
+        <div class="act-grid" id="tradeGrid"></div>
+        <div style="margin-top:14px">
+          <button class="big-btn" id="advanceBtn" onclick="startOrAdvance()">▶ Start</button>
+        </div>
+      </div>
+    </div>
 
-            // Scenarios
-            const scenarios = [
-                {
-                    id: 1,
-                    name: 'Tech Bubble Burst',
-                    description: 'Signs of overvaluation in tech sector. Analysts predict potential 40% correction.',
-                    impact: { tech: -40, financial: -10, energy: 0, currency: 0, market: -15 },
-                    news: 'Major tech companies report disappointing earnings, triggering massive selloff!'
-                },
-                {
-                    id: 2,
-                    name: 'Banking Crisis',
-                    description: 'Credit concerns rising. Regional banks showing stress.',
-                    impact: { tech: -10, financial: -35, energy: -5, currency: 0, market: -20 },
-                    news: 'Banking sector collapses as credit losses mount!'
-                },
-                {
-                    id: 3,
-                    name: 'Oil Supply Shock',
-                    description: 'Geopolitical tensions threaten oil supply, energy prices soaring.',
-                    impact: { tech: -5, financial: 5, energy: 30, currency: -5, market: -10 },
-                    news: 'Oil prices skyrocket as supply disruptions hit global markets! Energy stocks surge.'
-                },
-                {
-                    id: 4,
-                    name: 'Currency Crisis',
-                    description: 'Dollar showing extreme volatility against major currencies.',
-                    impact: { tech: -5, financial: -10, energy: 0, currency: -25, market: -10 },
-                    news: 'Currency markets in turmoil as dollar crashes!'
-                },
-                {
-                    id: 5,
-                    name: 'Market Crash',
-                    description: 'Multiple indicators suggesting broad market decline.',
-                    impact: { tech: -25, financial: -25, energy: -20, currency: -15, market: -25 },
-                    news: 'Global markets crash on recession fears!'
-                },
-                {
-                    id: 6,
-                    name: 'Volatility Spike',
-                    description: 'Market uncertainty at extreme levels.',
-                    impact: { tech: -20, financial: -15, energy: -15, currency: -10, volatility: 50 },
-                    news: 'Markets whipsawed by extreme volatility!'
-                },
-                {
-                    id: 7,
-                    name: 'Interest Rate Shock',
-                    description: 'Central bank announces unexpected 200bp rate hike to combat inflation.',
-                    impact: { tech: -30, financial: -20, energy: -5, currency: 10, market: -18 },
-                    news: 'Fed shocks markets with massive rate hike! Growth stocks plummet, dollar surges.'
-                },
-                {
-                    id: 8,
-                    name: 'Cyber Attack Crisis',
-                    description: 'Major financial infrastructure targeted by sophisticated cyber attacks.',
-                    impact: { tech: -15, financial: -30, energy: -5, currency: -5, market: -20 },
-                    news: 'Massive cyber attack paralyzes banking systems! Financial sector in freefall.'
-                },
-                {
-                    id: 9,
-                    name: 'Trade War Escalation',
-                    description: 'New tariffs announced on technology and manufacturing imports.',
-                    impact: { tech: -25, financial: -10, energy: -8, currency: -20, market: -15 },
-                    news: 'Trade war intensifies! Tech and international stocks hammered by new tariffs.'
-                }
-            ];
+    <div>
+      <div class="panel">
+        <h2><span class="dot"></span>Portfolio</h2>
+        <div class="big-num" id="equityNum">$100.0k</div>
+        <div class="stat"><span class="k">Total return</span><span class="v" id="retVal">0.0%</span></div>
+        <div class="stat"><span class="k">Premium paid</span><span class="v" id="premVal">$0</span></div>
+        <div class="stat"><span class="k">Hedge payouts</span><span class="v" id="payVal">$0</span></div>
+        <div class="stat"><span class="k">Cash</span><span class="v" id="cashVal">$10.0k</span></div>
+      </div>
 
-            // Calculate total portfolio value
-            const totalPortfolioValue = portfolio.reduce((sum, asset) => sum + asset.value, 0) + cash;
+      <div class="panel">
+        <h2><span class="dot"></span>Risk</h2>
+        <div class="stat"><span class="k tip" title="The largest peak-to-trough drop in your portfolio value so far. Lower is better.">Max drawdown</span><span class="v" id="ddVal">0.0%</span></div>
+        <div class="meter"><span id="riskBar" style="width:0%;background:var(--pos)"></span></div>
+        <div class="hint" id="riskHint">No drawdown yet. Capital intact.</div>
+      </div>
 
-            // Start new round
-            const startNewRound = () => {
-                const newScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-                setScenario(newScenario);
-                setGamePhase('setup');
-                setHedges([]);
-                setEventResult(null);
-            };
+      <div class="panel">
+        <h2><span class="dot"></span>Active Hedges</h2>
+        <div id="posBox"><div class="hint">No hedges in place for this round.</div></div>
+      </div>
 
-            // Purchase hedge
-            const purchaseHedge = (hedge) => {
-                if (cash < hedge.cost) {
-                    alert('Not enough cash to purchase this hedge!');
-                    return;
-                }
-                
-                if (hedges.find(h => h.id === hedge.id)) {
-                    alert('You already have this hedge!');
-                    return;
-                }
+      <div class="panel" id="recapPanel" style="display:none">
+        <h2><span class="dot"></span>This Round — What Happened</h2>
+        <div id="recapBox"></div>
+      </div>
 
-                setCash(prev => prev - hedge.cost);
-                setHedges(prev => [...prev, hedge]);
-            };
+      <div class="panel">
+        <h2><span class="dot"></span>Glossary</h2>
+        <div style="font-size:11px;color:var(--txt-dim);line-height:1.7">
+          <b style="color:var(--gold)">Exposure</b> how much you'd lose if a sector falls<br>
+          <b style="color:var(--gold)">Hedge</b> a position that gains when your portfolio loses<br>
+          <b style="color:var(--gold)">Put option</b> insurance that pays off if a price falls below a level<br>
+          <b style="color:var(--gold)">Premium</b> the upfront cost of a hedge — the "drag"<br>
+          <b style="color:var(--gold)">Diversification</b> spreading risk so no single shock sinks you<br>
+          <b style="color:var(--gold)">Drawdown</b> the worst peak-to-trough fall in your value
+        </div>
+        <div style="margin-top:12px"><button class="ghost-btn" onclick="openAcademy()" style="width:100%">↺ Replay the Academy</button></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-            // Remove hedge
-            const removeHedge = (hedgeId) => {
-                const hedge = hedges.find(h => h.id === hedgeId);
-                if (hedge) {
-                    setCash(prev => prev + hedge.cost * 0.5); // Get back 50% of cost
-                    setHedges(prev => prev.filter(h => h.id !== hedgeId));
-                }
-            };
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalInner"></div></div>
 
-            // Execute market event
-            const executeEvent = () => {
-                setGamePhase('event');
-                
-                // Calculate losses
-                let losses = {};
-                let totalLoss = 0;
-                
-                portfolio.forEach(asset => {
-                    const impactFactor = (scenario.impact[asset.exposure] || 0) / 100; // Convert percentage to decimal
-                    const loss = asset.value * impactFactor;
-                    losses[asset.name] = loss;
-                    totalLoss += loss;
-                });
+<script>
+/* =========================================================
+   PART 1 — ACADEMY (teach hedging interactively)
+   ========================================================= */
+let acadStep=0;
+const SECTORS=[
+  {key:'tech',name:'Tech',color:'#3a86c8'},
+  {key:'banks',name:'Banks',color:'#b8860b'},
+  {key:'energy',name:'Energy',color:'#c0392b'},
+  {key:'intl',name:'Intl',color:'#1a7a4c'},
+];
+const LESSONS=[L0,L1,L2,L3,L4,L5];
 
-                // Calculate hedge protection
-                let totalProtection = 0;
-                let hedgeDetails = [];
+function renderSteps(){
+  document.getElementById('acadSteps').innerHTML=LESSONS.map((_,i)=>{
+    const c=i<acadStep?'done':i===acadStep?'cur':''; return `<div class="s ${c}"></div>`;
+  }).join('');
+}
+function renderAcademy(){
+  renderSteps(); LESSONS[acadStep]();
+  document.getElementById('backBtn').style.visibility=acadStep===0?'hidden':'visible';
+  document.getElementById('nextBtn').textContent=acadStep===LESSONS.length-1?'Open the desk 🛡️':'Next ›';
+  document.getElementById('skipBtn').style.display=acadStep===LESSONS.length-1?'none':'inline-block';
+}
+function acadNext(){ if(acadStep>=LESSONS.length-1){startGame();return;} acadStep++;renderAcademy();window.scrollTo({top:0,behavior:'smooth'}); }
+function acadBack(){ if(acadStep>0){acadStep--;renderAcademy();window.scrollTo({top:0,behavior:'smooth'});} }
+function openAcademy(){
+  document.getElementById('game').classList.add('hidden');
+  document.getElementById('clock').style.display='none';
+  document.getElementById('academy').classList.remove('hidden');
+  acadStep=0;renderAcademy();window.scrollTo({top:0,behavior:'smooth'});
+}
 
-                hedges.forEach(hedge => {
-                    let protection = 0;
-                    
-                    if (hedge.exposure === 'market') {
-                        // Market hedge protects proportionally
-                        protection = Math.min(hedge.protection, Math.abs(totalLoss) * 0.8);
-                    } else if (hedge.exposure === 'volatility' && scenario.impact.volatility) {
-                        // VIX hedge profits from volatility
-                        protection = hedge.protection * (scenario.impact.volatility / 100);
-                    } else if (scenario.impact[hedge.exposure]) {
-                        // Specific hedges protect their exposure
-                        protection = Math.min(hedge.protection, Math.abs(losses[portfolio.find(p => p.exposure === hedge.exposure)?.name] || 0));
-                    }
-                    
-                    totalProtection += protection;
-                    hedgeDetails.push({ name: hedge.name, protection });
-                });
+function L0(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 1 of 5</div>
+    <div class="lesson-title">Owning things means risking things</div>
+    <p class="lesson-lede">When you hold stocks, you make money when they rise — but you also <b>lose</b> when they fall. Hedging is the art of keeping your upside while putting a floor under your downside. Think of it as <b>insurance for your portfolio</b>.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 260" width="100%">
+          <text x="70" y="22" text-anchor="middle" font-size="10" fill="#6e6038">Calm market</text>
+          <text x="270" y="22" text-anchor="middle" font-size="10" fill="#6e6038">A crash hits</text>
+          <line x1="20" y1="210" x2="340" y2="210" stroke="#e0d5bd" stroke-width="1.5"/>
+          <rect x="40" y="70" width="60" height="140" rx="4" fill="#b8860b" opacity="0.8"/>
+          <text x="70" y="62" text-anchor="middle" font-size="11" fill="#5a4a1f" font-weight="600">$100k</text>
+          <rect x="160" y="70" width="60" height="140" rx="4" fill="#b8860b" opacity="0.25"/>
+          <rect x="160" y="150" width="60" height="60" rx="4" fill="#c0392b" opacity="0.8"/>
+          <text x="190" y="62" text-anchor="middle" font-size="11" fill="#c0392b" font-weight="600">$62k</text>
+          <text x="190" y="240" text-anchor="middle" font-size="9" fill="#a89868">unprotected: −38%</text>
+          <rect x="280" y="70" width="40" height="140" rx="4" fill="#b8860b" opacity="0.25"/>
+          <rect x="280" y="118" width="40" height="92" rx="4" fill="#1a7a4c" opacity="0.8"/>
+          <text x="300" y="62" text-anchor="middle" font-size="11" fill="#1a7a4c" font-weight="600">$88k</text>
+          <text x="300" y="240" text-anchor="middle" font-size="9" fill="#1a7a4c">hedged: −12%</text>
+        </svg>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>You are a portfolio manager.</b> You hold a mix of sectors — tech, banks, energy, international stocks.</li>
+          <li><b>Shocks are coming.</b> Earnings misses, rate hikes, oil spikes, crises — each hits different sectors.</li>
+          <li><b>Your job isn't to predict every shock.</b> It's to size your insurance so a bad month dents you instead of sinking you.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">The core trade-off</div>
+          <div class="txt">Insurance costs money every round (the <b>premium</b>), but it pays off big in a crash. Too little and a crash wipes you out; too much and the premiums bleed your returns. The next lessons build your intuition.</div>
+        </div>
+      </div>
+    </div>`;
+}
 
-                // Calculate final result
-                const netLoss = totalLoss + totalProtection;
-                const hedgeCost = hedges.reduce((sum, h) => sum + h.cost, 0);
-                const efficiency = hedgeCost > 0 ? (totalProtection / hedgeCost) : 0;
-                
-                // Update portfolio values
-                setPortfolio(prev => prev.map(asset => ({
-                    ...asset,
-                    value: asset.value + (losses[asset.name] || 0) + 
-                           (totalProtection * (losses[asset.name] / totalLoss || 0))
-                })));
+let expVals={tech:30,banks:25,energy:20,intl:15};
+function L1(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 2 of 5</div>
+    <div class="lesson-title">Exposure: where your money can bleed</div>
+    <p class="lesson-lede">Your portfolio is split across sectors. Each is an <b>exposure</b> — a place where bad news costs you. Click a shock and watch which bars shrink. Notice how a single concentrated bet can hurt the whole book.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 240" width="100%" id="expSvg">
+          <line x1="40" y1="200" x2="344" y2="200" stroke="#e0d5bd" stroke-width="1.5"/>
+          <g id="expBars"></g>
+        </svg>
+        <div class="chip-row" style="margin-top:6px">
+          <div class="chip" onclick="expShock('tech')">📉 Tech selloff</div>
+          <div class="chip" onclick="expShock('banks')">🏦 Bank crisis</div>
+          <div class="chip" onclick="expShock('energy')">🛢️ Oil crash</div>
+          <div class="chip" onclick="expShock('reset')">↺ Reset</div>
+        </div>
+        <div class="read-out" id="expRead" style="margin-top:10px">Total portfolio: <b>$90.0k</b> in stocks</div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Concentration is risk.</b> If most of your money sits in one sector, that sector's bad day is your disaster.</li>
+          <li><b>Different shocks hit different sectors.</b> A bank crisis barely touches energy; an oil crash barely touches banks.</li>
+          <li><b>Knowing your exposures</b> tells you what to insure. You hedge the things you can't afford to lose.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">Try this</div>
+          <div class="txt">Hit the same shock twice — the bar keeps shrinking. Real portfolios that don't manage concentration can lose half their value in one event. <b>Spreading out</b> and <b>insuring</b> are how you survive.</div>
+        </div>
+      </div>
+    </div>`;
+  expVals={tech:30,banks:25,energy:20,intl:15}; drawExp();
+}
+function drawExp(){
+  const x0=40,base=200,maxV=34,h=150;
+  const bw=58,gap=20;
+  let html='';
+  SECTORS.forEach((s,i)=>{
+    const v=expVals[s.key]; const bh=v/maxV*h; const x=x0+i*(bw+gap);
+    html+=`<rect class="bar-anim" x="${x}" y="${base-bh}" width="${bw}" height="${bh}" rx="3" fill="${s.color}" opacity="0.82"/>
+      <text x="${x+bw/2}" y="${base-bh-6}" text-anchor="middle" font-size="10" fill="#5a4a1f" font-weight="600" class="line-anim">$${v.toFixed(0)}k</text>
+      <text x="${x+bw/2}" y="218" text-anchor="middle" font-size="9.5" fill="#6e6038">${s.name}</text>`;
+  });
+  document.getElementById('expBars').innerHTML=html;
+  const tot=Object.values(expVals).reduce((a,b)=>a+b,0);
+  document.getElementById('expRead').innerHTML=`Total portfolio: <b>$${tot.toFixed(1)}k</b> in stocks`;
+}
+function expShock(k){
+  if(k==='reset'){expVals={tech:30,banks:25,energy:20,intl:15};}
+  else if(k==='tech'){expVals.tech=Math.max(2,expVals.tech*0.6);expVals.intl*=0.95;}
+  else if(k==='banks'){expVals.banks=Math.max(2,expVals.banks*0.55);expVals.tech*=0.92;}
+  else if(k==='energy'){expVals.energy=Math.max(2,expVals.energy*0.55);}
+  drawExp();
+}
 
-                // Calculate score
-                const protectionRatio = Math.abs(totalProtection / totalLoss) || 0;
-                const roundScore = Math.round(
-                    (protectionRatio * 100) + 
-                    (efficiency * 20) - 
-                    (hedgeCost / 100)
-                );
-                
-                setScore(prev => prev + Math.max(0, roundScore));
+let putCover=60;
+function L2(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 3 of 5 · the key tool</div>
+    <div class="lesson-title">A put option puts a floor under you</div>
+    <p class="lesson-lede">The classic hedge is a <b>put option</b>. It pays you back when the market falls past a chosen level — so your losses stop there. The orange line is your portfolio <b>without</b> a hedge; the green line is <b>with</b> one. Drag the coverage and watch the floor rise.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 250" width="100%">
+          <line x1="40" y1="20" x2="40" y2="210" stroke="#e0d5bd" stroke-width="1.5"/>
+          <line x1="40" y1="115" x2="344" y2="115" stroke="#e0d5bd" stroke-width="1.5"/>
+          <text x="348" y="118" text-anchor="end" font-size="8" fill="#a89868">0%</text>
+          <text x="40" y="16" text-anchor="middle" font-size="8" fill="#a89868">your return</text>
+          <text x="320" y="128" font-size="8" fill="#a89868">market →</text>
+          <line x1="40" y1="205" x2="344" y2="25" stroke="#c0392b" stroke-width="2" opacity="0.55"/>
+          <text x="300" y="40" font-size="9" fill="#c0392b">unhedged</text>
+          <polyline id="hedgeLine" class="line-anim" fill="none" stroke="#1a7a4c" stroke-width="2.5" points=""/>
+          <text x="70" y="200" font-size="9" fill="#1a7a4c">hedged floor</text>
+        </svg>
+        <div class="viz-controls">
+          <div class="ctrl-row"><label>Coverage</label><input type="range" min="0" max="100" value="60" id="coverSlider" oninput="updatePut(+this.value)"></div>
+          <div class="read-out" id="putRead"></div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Below the floor, the green line goes flat.</b> No matter how far the market drops, your losses stop — that's the protection.</li>
+          <li><b>Above zero, the lines nearly overlap.</b> You keep almost all your upside; the hedge just costs a small premium.</li>
+          <li><b>More coverage = higher floor</b>, but a bigger premium. You're buying peace of mind by the dollar.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">The shape that matters</div>
+          <div class="txt">A hedge bends your payoff: <b>capped losses, (almost) full gains</b>. That asymmetry — lose a little to avoid losing a lot — is the whole game.</div>
+        </div>
+      </div>
+    </div>`;
+  updatePut(60);
+}
+function updatePut(c){
+  putCover=c;
+  const x0=40,x1=344,zeroY=115,topY=25,botY=205;
+  // market return from -40 (x0) to +40 (x1); floor at -(40*(1-c/100))
+  const floorRet=-40*(1-c/100);
+  const premium=(c/100)*4; // up to ~4% premium drag
+  const pts=[];
+  for(let i=0;i<=40;i++){
+    const mret=-40+i*2; // -40..+40
+    let pret=Math.max(mret,floorRet)-premium;
+    const x=x0+(i/40)*(x1-x0);
+    const y=zeroY-(pret/40)*(zeroY-topY);
+    pts.push(`${x.toFixed(1)},${Math.max(topY,Math.min(botY,y)).toFixed(1)}`);
+  }
+  document.getElementById('hedgeLine').setAttribute('points',pts.join(' '));
+  document.getElementById('putRead').innerHTML=`Floor at <b>${floorRet.toFixed(0)}%</b> · premium drag <b>${premium.toFixed(1)}%</b>. ${c<25?'Cheap, but thin protection.':c>80?'Strong floor — but the premium bites your gains.':'Balanced cover.'}`;
+}
 
-                setEventResult({
-                    losses,
-                    totalLoss,
-                    totalProtection,
-                    netLoss,
-                    hedgeCost,
-                    efficiency,
-                    roundScore,
-                    hedgeDetails
-                });
+let costScenario='crash';
+function L3(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 4 of 5</div>
+    <div class="lesson-title">Insurance is a cost — until it isn't</div>
+    <p class="lesson-lede">Here's the catch beginners miss: in <b>calm</b> markets the hedge just costs you the premium and you'd have been better off without it. In a <b>crash</b>, the same hedge saves your portfolio. You can't tell in advance which round is which — so you size insurance you can live with either way.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 230" width="100%">
+          <line x1="20" y1="190" x2="340" y2="190" stroke="#e0d5bd" stroke-width="1.5"/>
+          <text x="95" y="22" text-anchor="middle" font-size="10" fill="#6e6038">Unhedged</text>
+          <text x="255" y="22" text-anchor="middle" font-size="10" fill="#6e6038">Hedged</text>
+          <rect id="barUn" class="bar-anim" x="60" y="60" width="70" height="130" rx="4" fill="#b8860b" opacity="0.8"/>
+          <rect id="barHe" class="bar-anim" x="220" y="60" width="70" height="130" rx="4" fill="#1a7a4c" opacity="0.82"/>
+          <text id="lblUn" x="95" y="52" text-anchor="middle" font-size="13" fill="#5a4a1f" font-weight="600">$100k</text>
+          <text id="lblHe" x="255" y="52" text-anchor="middle" font-size="13" fill="#1a7a4c" font-weight="600">$100k</text>
+          <text id="vCap" x="180" y="214" text-anchor="middle" font-size="10" fill="#6e6038"></text>
+        </svg>
+        <div class="chip-row" style="margin-top:6px">
+          <div class="chip" onclick="setScenario('crash')">📉 Crash round</div>
+          <div class="chip" onclick="setScenario('calm')">🌤️ Calm round</div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Calm round:</b> the hedge expires worthless. The hedged book ends slightly lower — you "wasted" the premium.</li>
+          <li><b>Crash round:</b> the put pays out and the hedged book barely flinches while the unhedged one craters.</li>
+          <li><b>Over a long run</b> you pay many small premiums to avoid one ruinous loss. Survivors think in those terms.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">The mindset</div>
+          <div class="txt">Don't judge a hedge by a single calm round where it "lost." Judge your <b>whole season</b>: did you stay solvent and smooth through the shocks? That's what the debrief grades.</div>
+        </div>
+      </div>
+    </div>`;
+  setScenario('crash');
+}
+function setScenario(s){
+  costScenario=s;
+  const base=130; // px for $100k
+  let un,he,cap;
+  if(s==='crash'){ un=0.66; he=0.90; cap='Crash: hedge paid off — saved ~24%'; }
+  else { un=1.05; he=1.01; cap='Calm: hedge cost the premium — small drag'; }
+  const setBar=(id,lid,frac,col,pre)=>{
+    const h=base*frac; const r=document.getElementById(id);
+    r.setAttribute('height',h); r.setAttribute('y',190-h);
+    const l=document.getElementById(lid); l.textContent='$'+(100*frac).toFixed(0)+'k'; l.setAttribute('y',190-h-8);
+  };
+  setBar('barUn','lblUn',un); setBar('barHe','lblHe',he);
+  document.getElementById('vCap').textContent=cap;
+}
 
-                setGamePhase('result');
-            };
+let corr=0.8;
+function L4(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 5 of 5</div>
+    <div class="lesson-title">Diversification: the only free lunch</div>
+    <p class="lesson-lede">You don't always need to buy insurance — sometimes you just spread out. If two holdings don't move together (low <b>correlation</b>), their ups and downs partly cancel, and your overall swings shrink for free. Drag the correlation and watch the combined risk bar.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 230" width="100%">
+          <line x1="20" y1="190" x2="340" y2="190" stroke="#e0d5bd" stroke-width="1.5"/>
+          <rect x="50" y="60" width="55" height="130" rx="4" fill="#3a86c8" opacity="0.7"/>
+          <text x="77" y="52" text-anchor="middle" font-size="10" fill="#5a4a1f">Asset A</text>
+          <rect x="135" y="60" width="55" height="130" rx="4" fill="#b8860b" opacity="0.7"/>
+          <text x="162" y="52" text-anchor="middle" font-size="10" fill="#5a4a1f">Asset B</text>
+          <rect id="barCombo" class="bar-anim" x="245" y="60" width="70" height="130" rx="4" fill="#1a7a4c" opacity="0.85"/>
+          <text id="lblCombo" x="280" y="52" text-anchor="middle" font-size="11" fill="#1a7a4c" font-weight="600">risk</text>
+          <text x="280" y="214" text-anchor="middle" font-size="9.5" fill="#6e6038">Combined</text>
+        </svg>
+        <div class="viz-controls">
+          <div class="ctrl-row"><label>Correlation</label><input type="range" min="-100" max="100" value="80" id="corrSlider" oninput="updateCorr(+this.value)"></div>
+          <div class="read-out" id="corrRead"></div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Correlation +1:</b> the two move in lockstep — combining them saves nothing.</li>
+          <li><b>Correlation 0:</b> they're independent — combined risk already drops noticeably.</li>
+          <li><b>Correlation −1:</b> perfect opposites — gains in one offset losses in the other. That's a natural hedge with no premium.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">Why it's "free"</div>
+          <div class="txt">Unlike a put, diversification costs no premium — you just hold uncorrelated things. In the game, <b>Rebalance</b> spreads your money evenly to cut concentration before a shock lands.</div>
+        </div>
+      </div>
+    </div>`;
+  updateCorr(80);
+}
+function updateCorr(c){
+  corr=c/100;
+  // combined vol of two equal assets each vol 1: sqrt(0.5*(1+corr))
+  const vol=Math.sqrt(0.5*(1+corr));
+  const base=130, h=base*vol;
+  const r=document.getElementById('barCombo'); r.setAttribute('height',h); r.setAttribute('y',190-h);
+  document.getElementById('lblCombo').setAttribute('y',190-h-6);
+  document.getElementById('lblCombo').textContent=(vol*100).toFixed(0)+'%';
+  document.getElementById('corrRead').innerHTML=`Correlation <b>${corr.toFixed(2)}</b> → combined risk <b>${(vol*100).toFixed(0)}%</b> of a single asset. ${corr<-0.3?'Strong natural hedge!':corr<0.4?'Nice diversification benefit.':'Little benefit — too similar.'}`;
+}
 
-            // Continue to next round
-            const nextRound = () => {
-                if (round >= 5) {
-                    setGamePhase('gameover');
-                    return;
-                }
-                
-                setRound(prev => prev + 1);
-                startNewRound();
-            };
+function L5(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy complete</div>
+    <div class="lesson-title">You're ready to manage the book</div>
+    <p class="lesson-lede">The four ideas you'll use every round:</p>
+    <ul class="lesson-points" style="max-width:64ch">
+      <li><b>Exposure</b> — know which sectors can hurt you, and how much.</li>
+      <li><b>Puts</b> — insurance that floors your losses while keeping upside, for a premium.</li>
+      <li><b>Cost vs protection</b> — premiums drag in calm rounds and save you in crashes; size for both.</li>
+      <li><b>Diversification</b> — spread out to cut risk for free before insuring the rest.</li>
+    </ul>
+    <div class="takeaway" style="max-width:64ch">
+      <div class="lab">Your job for 10 rounds</div>
+      <div class="txt">Start with <b>$100,000</b>. Each round, read the scenario, decide what to insure or rebalance, then resolve. Keep your <b>drawdown</b> shallow and your premiums sensible. A scored <b>debrief</b> grades your protection at the end — replay the Academy anytime from the Glossary.</div>
+    </div>`;
+}
 
-            // Reset game
-            const resetGame = () => {
-                setCash(20000);
-                setPortfolio([
-                    { name: 'Tech Stocks', value: 30000, exposure: 'tech', quantity: 300 },
-                    { name: 'Bank Stocks', value: 25000, exposure: 'financial', quantity: 500 },
-                    { name: 'Energy Stocks', value: 25000, exposure: 'energy', quantity: 250 },
-                    { name: 'International Stocks', value: 20000, exposure: 'currency', quantity: 200 }
-                ]);
-                setHedges([]);
-                setScore(0);
-                setRound(1);
-                setGameHistory([]);
-                startNewRound();
-            };
+/* =========================================================
+   PART 2 — THE GAME
+   ========================================================= */
+const START={tech:30000,banks:25000,energy:20000,intl:15000,cash:10000};
+const ROUNDS=10;
+const PUT_DEDUCT=4;     // % deductible on a sector put
+const PUT_PREM=2.0;     // % premium of insured sector value
+const IDX_DEDUCT=6;     // % deductible on index put
+const IDX_PREM=2.5;     // % premium of total
+let S=null;
 
-            // Initialize game
-            useEffect(() => {
-                startNewRound();
-            }, []);
+function freshState(){
+  return {started:false, round:0,
+    val:{tech:START.tech,banks:START.banks,energy:START.energy,intl:START.intl},
+    cash:START.cash,
+    startEquity:100000, peak:100000, maxDD:0,
+    premiumPaid:0, payoutReceived:0,
+    hedges:{tech:false,banks:false,energy:false,intl:false,index:false},
+    last:{tech:0,banks:0,energy:0,intl:0},
+    pendingEvent:null, recap:null,
+    rebalances:0, crashesProtected:0, crashesUnprotected:0, hedgeRounds:0,
+  };
+}
+const EVENTS=[
+  {hl:"Tech earnings blow past estimates",src:"MarketWatch",ex:"A wave of strong results lifts technology stocks. Great if you're exposed to tech, little help elsewhere.",ret:{tech:18,banks:3,energy:1,intl:4}},
+  {hl:"Rate-hike fears trigger a tech selloff",src:"Bloomberg",ex:"Higher rates hit long-duration growth stocks hardest. Tech-heavy books feel it most.",ret:{tech:-22,banks:-3,energy:-2,intl:-4},crash:'tech'},
+  {hl:"Regional banking stress spreads",src:"Reuters",ex:"Deposit flight and credit worries slam financials, with spillover into tech and international names.",ret:{tech:-6,banks:-25,energy:-2,intl:-8},crash:'banks'},
+  {hl:"Central bank surprises with a rate cut",src:"FT",ex:"Cheaper money lifts almost everything, financials especially.",ret:{tech:9,banks:14,energy:5,intl:7}},
+  {hl:"Oil spikes on supply shock",src:"S&P Global",ex:"Energy rallies hard, but pricier oil pressures tech margins and import-heavy international names.",ret:{tech:-5,banks:1,energy:20,intl:-4}},
+  {hl:"Energy glut sends crude tumbling",src:"ICE",ex:"Oversupply craters energy stocks while the rest of the market shrugs.",ret:{tech:2,banks:2,energy:-19,intl:1},crash:'energy'},
+  {hl:"Emerging-market currency crisis",src:"WSJ",ex:"A sharp FX selloff hammers international holdings; modest ripple elsewhere.",ret:{tech:-3,banks:-4,energy:-3,intl:-24},crash:'intl'},
+  {hl:"Broad risk-on rally lifts all sectors",src:"CNBC",ex:"Soft-landing optimism floats every boat. A good round to be fully invested.",ret:{tech:8,banks:7,energy:6,intl:9}},
+  {hl:"Global growth scare sparks a market crash",src:"Bloomberg",ex:"A across-the-board selloff. This is exactly what an index hedge is for.",ret:{tech:-16,banks:-15,energy:-13,intl:-17},crash:'index'},
+  {hl:"Sector rotation: out of tech, into energy",src:"Morgan Desk",ex:"Money rotates from growth to value and commodities. Winners and losers in the same breath.",ret:{tech:-8,banks:6,energy:11,intl:2}},
+  {hl:"Goldilocks data: steady growth, cooling inflation",src:"FT",ex:"A gentle, broad uplift with no drama. Hedges will likely expire unused.",ret:{tech:5,banks:4,energy:3,intl:5}},
+];
+function pickEvent(){ return EVENTS[Math.floor(Math.random()*EVENTS.length)]; }
 
-            return (
-                <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl shadow-xl">
-                    <div className="mb-6">
-                        <h1 className="text-3xl font-bold text-gray-800 mb-2">Portfolio Hedging Game</h1>
-                        <p className="text-gray-600">Protect your portfolio from market events using hedging instruments</p>
-                    </div>
+function totalStocks(){ return S.val.tech+S.val.banks+S.val.energy+S.val.intl; }
+function equity(){ return totalStocks()+S.cash; }
 
-                    {/* Game Stats */}
-                    <div className="grid grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white p-4 rounded-lg shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-600">Portfolio Value</span>
-                                <Icon name="target" className="w-5 h-5 text-blue-500" />
-                            </div>
-                            <div className="text-2xl font-bold text-gray-800">${totalPortfolioValue.toLocaleString()}</div>
-                        </div>
-                        
-                        <div className="bg-white p-4 rounded-lg shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-600">Cash Available</span>
-                                <Icon name="trending-up" className="w-5 h-5 text-green-500" />
-                            </div>
-                            <div className="text-2xl font-bold text-gray-800">${cash.toLocaleString()}</div>
-                        </div>
-                        
-                        <div className="bg-white p-4 rounded-lg shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-600">Score</span>
-                                <Icon name="award" className="w-5 h-5 text-yellow-500" />
-                            </div>
-                            <div className="text-2xl font-bold text-gray-800">{score}</div>
-                        </div>
-                        
-                        <div className="bg-white p-4 rounded-lg shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-600">Round</span>
-                                <Icon name="zap" className="w-5 h-5 text-purple-500" />
-                            </div>
-                            <div className="text-2xl font-bold text-gray-800">{round} / 5</div>
-                        </div>
-                    </div>
+function buyPut(sector){
+  if(!S.started){toast("Press Start first.");return;}
+  if(S.hedges[sector]){toast("Already insured this round.");return;}
+  const prem=S.val[sector]*PUT_PREM/100;
+  if(prem>S.cash){toast("Not enough cash for that premium.",true);return;}
+  S.cash-=prem; S.premiumPaid+=prem; S.hedges[sector]=true;
+  toast(`Bought ${sectorName(sector)} put — premium ${fmtUSD(prem)}.`); render();
+}
+function buyIndexPut(){
+  if(!S.started){toast("Press Start first.");return;}
+  if(S.hedges.index){toast("Index put already in place.");return;}
+  const prem=totalStocks()*IDX_PREM/100;
+  if(prem>S.cash){toast("Not enough cash for the index put.",true);return;}
+  S.cash-=prem; S.premiumPaid+=prem; S.hedges.index=true;
+  toast(`Bought index put — premium ${fmtUSD(prem)}.`); render();
+}
+function rebalance(){
+  if(!S.started){toast("Press Start first.");return;}
+  const tot=totalStocks(); const each=tot/4;
+  S.val={tech:each,banks:each,energy:each,intl:each};
+  S.rebalances++;
+  toast("Rebalanced to equal weights — concentration cut."); render();
+}
+function raiseCash(){
+  if(!S.started){toast("Press Start first.");return;}
+  // move 20% of each sector to cash (de-risk)
+  let moved=0;
+  for(const k of ['tech','banks','energy','intl']){ const m=S.val[k]*0.2; S.val[k]-=m; moved+=m; }
+  S.cash+=moved;
+  toast(`Raised ${fmtUSD(moved)} to cash — exposure reduced.`); render();
+}
+function sectorName(k){return {tech:'Tech',banks:'Banks',energy:'Energy',intl:'Intl'}[k];}
 
-                    {/* Portfolio Holdings */}
-                    <div className="bg-white p-4 rounded-lg shadow mb-6">
-                        <h3 className="font-semibold mb-3">Your Portfolio</h3>
-                        <div className="grid grid-cols-4 gap-3">
-                            {portfolio.map(asset => (
-                                <div key={asset.name} className="p-3 bg-gray-50 rounded">
-                                    <div className="font-medium text-gray-800">{asset.name}</div>
-                                    <div className="text-xl font-bold text-gray-700">${asset.value.toLocaleString()}</div>
-                                    <div className="text-sm text-gray-500">{asset.quantity} shares</div>
-                                    <div className="text-xs text-gray-400 mt-1">Exposure: {asset.exposure}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+function startOrAdvance(){
+  if(!S.started){ S.started=true; S.round=0; S.pendingEvent=pickEvent();
+    document.getElementById('advanceBtn').textContent="▶ Resolve Round"; render(); return; }
+  resolveRound();
+}
+function resolveRound(){
+  const ev=S.pendingEvent;
+  const before={...S.val,cash:S.cash,equity:equity()};
+  const anyHedge=Object.values(S.hedges).some(Boolean); if(anyHedge)S.hedgeRounds++;
 
-                    {/* Game Phases */}
-                    {gamePhase === 'setup' && scenario && (
-                        <>
-                            {/* Scenario Warning */}
-                            <div className="bg-yellow-50 border-2 border-yellow-300 p-4 rounded-lg mb-6">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Icon name="alert-triangle" className="w-6 h-6 text-yellow-600" />
-                                    <h3 className="font-bold text-lg">Market Alert: {scenario.name}</h3>
-                                </div>
-                                <p className="text-gray-700">{scenario.description}</p>
-                            </div>
+  // apply returns
+  const lines=[]; let payout=0;
+  for(const k of ['tech','banks','energy','intl']){
+    const r=ev.ret[k]; const v0=S.val[k];
+    S.val[k]=v0*(1+r/100);
+    S.last[k]=r;
+    // sector put payout
+    if(S.hedges[k] && r<0){
+      const lossPct=Math.max(0,-r-PUT_DEDUCT);
+      const pay=lossPct/100*v0;
+      if(pay>0){ S.val[k]+=pay; payout+=pay; }
+    }
+    lines.push({k,r,v0});
+  }
+  // index put payout on whole book
+  if(S.hedges.index){
+    const portRet=(totalStocks()-(before.tech+before.banks+before.energy+before.intl))/(before.tech+before.banks+before.energy+before.intl)*100;
+    const lossPct=Math.max(0,-portRet-IDX_DEDUCT);
+    if(lossPct>0){ const pay=lossPct/100*(before.tech+before.banks+before.energy+before.intl); S.cash+=pay; payout+=pay; }
+  }
+  S.payoutReceived+=payout;
 
-                            {/* Available Hedges */}
-                            <div className="bg-white p-4 rounded-lg shadow mb-6">
-                                <h3 className="font-semibold mb-3">Available Hedges</h3>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {availableHedges.map(hedge => (
-                                        <div key={hedge.id} className="p-3 border rounded-lg">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div>
-                                                    <div className="font-medium">{hedge.name}</div>
-                                                    <div className="text-sm text-gray-600">{hedge.description}</div>
-                                                </div>
-                                                <Icon name="shield" className="w-5 h-5 text-blue-500" />
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <div>
-                                                    <div className="text-sm text-gray-500">Cost: ${hedge.cost.toLocaleString()}</div>
-                                                    <div className="text-sm text-green-600">Protection: ${hedge.protection.toLocaleString()}</div>
-                                                </div>
-                                                <button
-                                                    onClick={() => purchaseHedge(hedge)}
-                                                    disabled={hedges.find(h => h.id === hedge.id) || cash < hedge.cost}
-                                                    className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:bg-gray-300"
-                                                >
-                                                    {hedges.find(h => h.id === hedge.id) ? 'Owned' : 'Buy'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+  // crash protection tracking
+  if(ev.crash){
+    const protectedNow = ev.crash==='index'?S.hedges.index : S.hedges[ev.crash];
+    if(protectedNow) S.crashesProtected++; else S.crashesUnprotected++;
+  }
 
-                            {/* Active Hedges */}
-                            <div className="bg-white p-4 rounded-lg shadow mb-6">
-                                <h3 className="font-semibold mb-3">Your Active Hedges</h3>
-                                {hedges.length === 0 ? (
-                                    <p className="text-gray-500">No hedges active. Your portfolio is fully exposed to risk!</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {hedges.map(hedge => (
-                                            <div key={hedge.id} className="flex justify-between items-center p-2 bg-green-50 rounded">
-                                                <div>
-                                                    <span className="font-medium">{hedge.name}</span>
-                                                    <span className="ml-2 text-sm text-gray-600">
-                                                        (Protection: ${hedge.protection.toLocaleString()})
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    onClick={() => removeHedge(hedge.id)}
-                                                    className="px-2 py-1 bg-red-100 text-red-600 rounded text-sm hover:bg-red-200"
-                                                >
-                                                    Remove (50% refund)
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                <div className="mt-3 pt-3 border-t">
-                                    <div className="flex justify-between font-semibold">
-                                        <span>Total Hedge Cost:</span>
-                                        <span>${hedges.reduce((sum, h) => sum + h.cost, 0).toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            </div>
+  // drawdown
+  const eq=equity();
+  if(eq>S.peak)S.peak=eq;
+  const dd=(S.peak-eq)/S.peak*100; if(dd>S.maxDD)S.maxDD=dd;
 
-                            {/* Execute Event Button */}
-                            <button
-                                onClick={executeEvent}
-                                className="w-full py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600"
-                            >
-                                Execute Market Event
-                            </button>
-                        </>
-                    )}
+  // recap
+  S.recap={ ev, lines, payout, swing:eq-before.equity, hedged:{...S.hedges} };
 
-                    {/* Event Result */}
-                    {gamePhase === 'result' && eventResult && (
-                        <div className="space-y-6">
-                            <div className="bg-red-50 border-2 border-red-300 p-4 rounded-lg">
-                                <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                                    <Icon name="trending-down" className="w-6 h-6 text-red-600" />
-                                    Market Event Occurred!
-                                </h3>
-                                <p className="text-gray-700 font-medium">{scenario.news}</p>
-                            </div>
+  // reset hedges (one-round insurance)
+  S.hedges={tech:false,banks:false,energy:false,intl:false,index:false};
+  S.round++;
+  if(S.round>=ROUNDS){ render(); endGame(); return; }
+  S.pendingEvent=pickEvent(); render();
+}
 
-                            <div className="bg-white p-4 rounded-lg shadow">
-                                <h3 className="font-semibold mb-3">Impact on Portfolio</h3>
-                                <div className="space-y-2">
-                                    {Object.entries(eventResult.losses).map(([asset, loss]) => (
-                                        <div key={asset} className="flex justify-between">
-                                            <span>{asset}</span>
-                                            <span className={loss < 0 ? 'text-red-600 font-medium' : loss > 0 ? 'text-green-600 font-medium' : 'text-gray-600'}>
-                                                {loss >= 0 ? '+$' : '-$'}{Math.abs(loss).toFixed(0)}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+/* ---- render ---- */
+function fmtUSD(n){const s=n<0?"-":"";const a=Math.abs(n);
+  if(a>=1e6)return s+"$"+(a/1e6).toFixed(2)+"M";
+  if(a>=1e3)return s+"$"+(a/1e3).toFixed(1)+"k";
+  return s+"$"+a.toFixed(0);}
+function colorPL(n){return n>0?'up':n<0?'down':'flat';}
+function arrow(n){return n>0?'▲':n<0?'▼':'—';}
 
-                            <div className="bg-white p-4 rounded-lg shadow">
-                                <h3 className="font-semibold mb-3">Hedge Performance</h3>
-                                {eventResult.hedgeDetails.length === 0 ? (
-                                    <p className="text-gray-500">No hedges were active!</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {eventResult.hedgeDetails.map((hedge, idx) => (
-                                            <div key={idx} className="flex justify-between">
-                                                <span>{hedge.name}</span>
-                                                <span className="text-green-600 font-medium">
-                                                    +${hedge.protection.toFixed(0)}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+function render(){
+  document.getElementById('monthLabel').textContent=S.started?`Round ${Math.min(S.round+1,ROUNDS)}`:"—";
+  document.getElementById('turnLabel').textContent=S.started?`of ${ROUNDS}`:"Press start";
 
-                            <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-lg">
-                                <h3 className="font-semibold mb-3">Round Summary</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <div className="text-sm text-gray-600">Portfolio Impact</div>
-                                        <div className={`text-xl font-bold ${eventResult.totalLoss < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                            {eventResult.totalLoss >= 0 ? '+$' : '-$'}{Math.abs(eventResult.totalLoss).toFixed(0)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-gray-600">Hedge Protection</div>
-                                        <div className="text-xl font-bold text-green-600">
-                                            +${eventResult.totalProtection.toFixed(0)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-gray-600">Hedge Cost</div>
-                                        <div className="text-xl font-bold text-orange-600">
-                                            -${eventResult.hedgeCost.toFixed(0)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-gray-600">Net P&L</div>
-                                        <div className={`text-xl font-bold ${(eventResult.netLoss - eventResult.hedgeCost) < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                            {(eventResult.netLoss - eventResult.hedgeCost) >= 0 ? '+$' : '-$'}{Math.abs(eventResult.netLoss - eventResult.hedgeCost).toFixed(0)}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="mt-3 pt-3 border-t grid grid-cols-2 gap-4">
-                                    <div>
-                                        <div className="text-sm text-gray-600">Hedge Efficiency</div>
-                                        <div className="text-lg font-bold">
-                                            {(eventResult.efficiency * 100).toFixed(0)}%
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-gray-600">Round Score</div>
-                                        <div className="text-lg font-bold text-purple-600">
-                                            +{eventResult.roundScore}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+  if(S.pendingEvent){const n=S.pendingEvent;
+    document.getElementById('newsBox').innerHTML=
+      `<div class="news"><div class="hl">${n.hl}</div><div class="src">${n.src}</div>
+       <div class="ex"><b>What it means:</b> ${n.ex}</div></div>`;}
 
-                            <button
-                                onClick={nextRound}
-                                className="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600"
-                            >
-                                {round >= 5 ? 'View Final Score' : 'Next Round'}
-                            </button>
-                        </div>
-                    )}
+  // holdings table
+  const rows=['tech','banks','energy','intl'].map(k=>{
+    const v=S.val[k]; const ch=S.last[k];
+    return `<tr><td class="nm">${sectorName(k)}<small>${S.hedges[k]?'🛡️ insured this round':'unhedged'}</small></td>
+      <td class="px">${fmtUSD(v)}</td><td class="chg ${ch>0?'up':ch<0?'down':'flat'}">${ch?arrow(ch)+' '+Math.abs(ch).toFixed(0)+'%':'—'}</td></tr>`;
+  }).join('');
+  document.getElementById('mktBody').innerHTML=rows+
+    `<tr><td class="nm">Cash<small>safe, no return</small></td><td class="px">${fmtUSD(S.cash)}</td><td class="chg flat">—</td></tr>`;
 
-                    {/* Game Over */}
-                    {gamePhase === 'gameover' && (
-                        <div className="text-center">
-                            <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-8 rounded-lg mb-6">
-                                <Icon name="award" className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
-                                <h2 className="text-3xl font-bold mb-4">Game Complete!</h2>
-                                <div className="text-5xl font-bold text-gray-800 mb-2">
-                                    Final Score: {score}
-                                </div>
-                                <div className="text-xl text-gray-600">
-                                    Portfolio Value: ${totalPortfolioValue.toLocaleString()}
-                                </div>
-                            </div>
-                            
-                            <button
-                                onClick={resetGame}
-                                className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600"
-                            >
-                                Play Again
-                            </button>
-                        </div>
-                    )}
+  // concentration hint
+  const tot=totalStocks(); const top=Math.max(S.val.tech,S.val.banks,S.val.energy,S.val.intl);
+  const conc=tot>0?top/tot*100:0;
+  const ch=document.getElementById('concHint');
+  ch.innerHTML = conc>40?`<b>Concentration ${conc.toFixed(0)}%</b> in your biggest sector — a shock there would sting. Consider Rebalance or a put.`:
+    `Concentration ${conc.toFixed(0)}% in your biggest sector — reasonably balanced.`;
 
-                    {/* Instructions */}
-                    {gamePhase === 'setup' && (
-                        <div className="mt-6 p-4 bg-purple-50 rounded-lg">
-                            <h3 className="font-semibold mb-2">How to Play:</h3>
-                            <ul className="text-sm text-gray-700 space-y-1">
-                                <li>• Read the market alert to understand the coming risk</li>
-                                <li>• Purchase hedges that protect against specific exposures</li>
-                                <li>• Balance protection cost against potential losses</li>
-                                <li>• Execute the event to see how well your hedges performed</li>
-                                <li>• Score is based on protection effectiveness and cost efficiency</li>
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            );
-        };
+  // insurance desk
+  const tg=document.getElementById('tradeGrid');
+  const secOptions=['tech','banks','energy','intl'].map(k=>`<option value="${k}">${sectorName(k)} — premium ${fmtUSD(S.val[k]*PUT_PREM/100)}</option>`).join('');
+  tg.innerHTML=`
+    <div class="trade-card">
+      <div class="tt">Sector Put</div>
+      <div class="td">Insure one sector. Caps its loss this round at about −${PUT_DEDUCT}%. Costs ${PUT_PREM}% of that sector.</div>
+      <div class="qty-row"><select id="putSel">${secOptions}</select></div>
+      <div class="btn-row"><button class="buy" onclick="buyPut(document.getElementById('putSel').value)">Buy Put</button></div>
+    </div>
+    <div class="trade-card">
+      <div class="tt">Index Put</div>
+      <div class="td">Insure the whole book against a broad crash. Caps total loss at about −${IDX_DEDUCT}%. Costs ${IDX_PREM}% of stocks (${fmtUSD(totalStocks()*IDX_PREM/100)}).</div>
+      <div class="btn-row"><button class="buy" onclick="buyIndexPut()">Buy Index Put</button></div>
+    </div>
+    <div class="trade-card">
+      <div class="tt">Rebalance</div>
+      <div class="td">Spread money evenly across sectors to cut concentration. Free — but you trim your winners.</div>
+      <div class="btn-row"><button onclick="rebalance()">Rebalance</button></div>
+    </div>
+    <div class="trade-card">
+      <div class="tt">Raise Cash</div>
+      <div class="td">Move 20% of each sector into safe cash. Lowers risk and upside — pure de-risking.</div>
+      <div class="btn-row"><button onclick="raiseCash()">De-risk</button></div>
+    </div>`;
 
-        // Render the app
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<HedgingGame />);
-    </script>
+  // portfolio sidebar
+  const eq=equity(); const ret=(eq-S.startEquity)/S.startEquity*100;
+  document.getElementById('equityNum').textContent=fmtUSD(eq);
+  document.getElementById('equityNum').className='big-num '+colorPL(ret);
+  document.getElementById('retVal').innerHTML=`<span class="${colorPL(ret)}">${ret>=0?'+':''}${ret.toFixed(1)}%</span>`;
+  document.getElementById('premVal').textContent=fmtUSD(S.premiumPaid);
+  document.getElementById('payVal').innerHTML=`<span class="up">${fmtUSD(S.payoutReceived)}</span>`;
+  document.getElementById('cashVal').textContent=fmtUSD(S.cash);
+
+  // risk / drawdown
+  document.getElementById('ddVal').innerHTML=`<span class="${S.maxDD>10?'down':'flat'}">${S.maxDD.toFixed(1)}%</span>`;
+  const bar=document.getElementById('riskBar'); bar.style.width=Math.min(100,S.maxDD/30*100)+'%';
+  bar.style.background=S.maxDD<8?'var(--pos)':S.maxDD<18?'var(--amber)':'var(--neg)';
+  document.getElementById('riskHint').textContent=
+    S.maxDD<1?'No drawdown yet. Capital intact.':
+    S.maxDD<8?`Drawdown ${S.maxDD.toFixed(0)}% — shallow, well managed.`:
+    S.maxDD<18?`Drawdown ${S.maxDD.toFixed(0)}% — getting bumpy.`:
+    `Drawdown ${S.maxDD.toFixed(0)}% — deep hole, hard to recover.`;
+
+  // active hedges
+  const pb=document.getElementById('posBox'); let html='';
+  ['tech','banks','energy','intl'].forEach(k=>{ if(S.hedges[k])
+    html+=`<div class="pos"><div class="pl"><span><span class="tag hedge">Put</span> ${sectorName(k)}</span><small>caps loss at −${PUT_DEDUCT}% this round</small></div></div>`;});
+  if(S.hedges.index) html+=`<div class="pos"><div class="pl"><span><span class="tag hedge">Put</span> Whole book</span><small>caps total loss at −${IDX_DEDUCT}% this round</small></div></div>`;
+  pb.innerHTML=html||'<div class="hint">No hedges in place for this round.</div>';
+
+  // recap
+  const rp=document.getElementById('recapPanel'), rb=document.getElementById('recapBox');
+  if(S.recap){
+    const r=S.recap; const swCls=colorPL(r.swing);
+    let h=`<div style="margin-bottom:10px"><span style="font-family:var(--mono);font-size:10px;color:var(--txt-faint);text-transform:uppercase;letter-spacing:.1em">Portfolio swing</span><br>
+      <span class="big-num ${swCls}" style="font-size:24px">${r.swing>=0?'+':''}${fmtUSD(r.swing)}</span></div>`;
+    h+=`<div style="font-size:11.5px;color:var(--txt-dim);line-height:1.7"><b style="color:var(--gold)">Sector moves:</b><br>`+
+      r.lines.map(l=>`· ${sectorName(l.k)} ${l.r>=0?'+':''}${l.r}%${(r.hedged[l.k]&&l.r<0)?' <span class="up">(put paid)</span>':''}`).join('<br>')+`</div>`;
+    if(r.payout>0) h+=`<div style="font-size:11.5px;border-top:1px solid var(--line);padding-top:8px;margin-top:8px"><b style="color:var(--gold)">Hedge payouts:</b> <span class="up">${fmtUSD(r.payout)}</span> back from your insurance.</div>`;
+    else if(Object.values(r.hedged).some(Boolean)) h+=`<div class="hint" style="margin-top:8px">Your hedges expired unused this round — that's the premium cost of protection.</div>`;
+    rb.innerHTML=h; rp.style.display='block';
+  } else rp.style.display='none';
+}
+
+let toastT;
+function toast(msg,warn){const t=document.getElementById('toast');t.innerHTML=msg;t.className='toast show'+(warn?' warn':'');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.className='toast'+(warn?' warn':''),2600);}
+
+function endGame(){
+  const eq=equity(); const ret=(eq-S.startEquity)/S.startEquity*100;
+  const hedgeEff=S.premiumPaid>0?S.payoutReceived/S.premiumPaid:(S.payoutReceived>0?2:1);
+  const premPct=S.premiumPaid/S.startEquity*100;
+  let pts=50;
+  pts+=Math.max(-35,Math.min(45,ret*1.4));
+  pts-=Math.max(0,(S.maxDD-8)*2.2);
+  pts+=Math.min(14,S.crashesProtected*7);
+  pts-=S.crashesUnprotected*8;
+  pts-=Math.max(0,(premPct-12)*1.5);
+  pts=Math.max(0,Math.min(100,Math.round(pts)));
+  const grade=pts>=85?'A':pts>=70?'B':pts>=55?'C':pts>=40?'D':'F';
+  const ddScore=S.maxDD<8?'Smooth':S.maxDD<18?'Bumpy':'Volatile';
+  const effScore=hedgeEff>=1.2?'Insurance paid for itself':hedgeEff>=0.6?'Reasonable':'Premium-heavy';
+
+  const dbg=[
+    ['Final value', fmtUSD(eq)+` (${ret>=0?'+':''}${ret.toFixed(1)}%)`, ret>=0?'up':'down'],
+    ['Max drawdown', `${ddScore} — ${S.maxDD.toFixed(1)}% worst fall`, S.maxDD<8?'up':S.maxDD<18?'flat':'down'],
+    ['Crashes protected', `${S.crashesProtected} covered / ${S.crashesUnprotected} taken bare`, S.crashesUnprotected===0?'up':S.crashesProtected>=S.crashesUnprotected?'flat':'down'],
+    ['Hedge efficiency', `${effScore} (${(hedgeEff).toFixed(2)}× payout/premium)`, hedgeEff>=1?'up':'flat'],
+    ['Premium spent', `${fmtUSD(S.premiumPaid)} (${premPct.toFixed(1)}% of book)`, premPct<12?'up':'down'],
+  ];
+  const coaching=coach(ret,S,hedgeEff,premPct);
+  document.getElementById('modalInner').innerHTML=`
+    <h2>Season Debrief <span class="grade" style="background:${grade==='F'||grade==='D'?'var(--neg)':grade==='A'?'var(--pos)':'var(--gold)'}">${grade}</span></h2>
+    <div class="score ${ret>=0?'up':'down'}">${pts}<span style="font-size:18px;color:var(--txt-dim)">/100</span></div>
+    ${dbg.map(d=>`<div class="debrief-row"><span class="lbl">${d[0]}</span><span class="rating ${d[2]}">${d[1]}</span></div>`).join('')}
+    <div style="margin-top:16px;padding:14px;background:var(--panel2);border-radius:8px;border-left:3px solid var(--gold)">
+      <div style="font-family:var(--disp);color:var(--gold);font-size:14px;margin-bottom:6px">Desk notes</div>
+      <div style="color:var(--txt-dim);font-size:12px;line-height:1.65">${coaching}</div>
+    </div>
+    <button class="big-btn" style="margin-top:18px" onclick="restart()">↺ Manage Another Season</button>`;
+  document.getElementById('modalBg').classList.add('show');
+}
+function coach(ret,s,eff,premPct){
+  const n=[];
+  if(ret>10) n.push("Strong, steady result — you protected capital and still grew it.");
+  else if(ret<0) n.push("You finished down. Check whether a crash caught you un-hedged, or premiums dragged too hard.");
+  if(s.crashesUnprotected>0) n.push(`You took ${s.crashesUnprotected} crash${s.crashesUnprotected>1?'es':''} with no cover — an index put before broad selloffs would have softened those.`);
+  if(premPct>14) n.push("You spent heavily on premiums. In calm runs that bleeds returns — insure the big risks, not every wiggle.");
+  if(eff<0.5 && s.premiumPaid>0) n.push("Most of your hedges expired unused. Buying puts every round regardless of the setup is expensive over-insurance.");
+  if(s.maxDD>18) n.push("Your drawdown ran deep. Rebalancing away from concentration and holding an index put through scary headlines keeps the holes shallow.");
+  if(s.rebalances===0) n.push("You never rebalanced — diversification is free risk reduction worth using before shocks.");
+  if(n.length===0) n.push("Balanced and disciplined. Next: trim unnecessary premiums in calm rounds to lift returns without taking on real risk.");
+  return n.join(" ");
+}
+function restart(){
+  document.getElementById('modalBg').classList.remove('show');
+  S=freshState();
+  document.getElementById('advanceBtn').textContent="▶ Start";
+  document.getElementById('newsBox').innerHTML=
+    `<div class="news"><div class="hl">Fresh book. $100,000 to protect.</div><div class="src">Evolta Investment Desk</div>
+     <div class="ex">Press <b>Start</b> to see the first scenario.</div></div>`;
+  render();
+}
+function startGame(){
+  document.getElementById('academy').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+  document.getElementById('clock').style.display='block';
+  S=freshState(); render(); window.scrollTo({top:0,behavior:'smooth'});
+}
+renderAcademy();
+</script>
 </body>
 </html>

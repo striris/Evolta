@@ -1,436 +1,770 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Market Making Game</title>
-    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-    <!-- Pinned to 7.x: Babel 8's React preset defaults to the automatic JSX runtime,
-         which injects an ES `import` that breaks this non-module script (blank page). -->
-    <script src="https://unpkg.com/@babel/standalone@7.27.0/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/lucide@latest/font/lucide.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Spread — Market Making, From Scratch | Evolta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f1f7f3;
+    --bg2:#ffffff;
+    --panel:#ffffff;
+    --panel2:#eaf4ee;
+    --line:#dcebe2;
+    --line2:#cbe0d4;
+    /* Green theme */
+    --green:#168058;       /* primary emerald */
+    --green-lt:#27a06f;
+    --teal:#0e7c7b;        /* secondary */
+    --teal-lt:#2a9d9b;
+    --amber:#d98a1f;       /* accent */
+    --accent:#168058;
+    --pos:#168058;         /* up (green theme: up is brand green) */
+    --neg:#c0392b;         /* down */
+    --white:#13251c;
+    --txt:#1f332a;
+    --txt-dim:#557064;
+    --txt-faint:#8fab9e;
+    --mono:'IBM Plex Mono',monospace;
+    --sans:'Inter',-apple-system,sans-serif;
+    --disp:'Fraunces',serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:
+      radial-gradient(ellipse at 12% -5%, #ddf0e6 0%, transparent 45%),
+      radial-gradient(ellipse at 95% 5%, #daf0ee 0%, transparent 42%),
+      var(--bg);
+    color:var(--txt);font-family:var(--sans);font-size:13px;line-height:1.5;min-height:100vh;padding:0 0 60px;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px;position:relative;z-index:2}
+  header{border-bottom:1px solid var(--line);padding:24px 0 20px;margin-bottom:24px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .brand h1{font-family:var(--disp);font-weight:500;font-size:38px;line-height:.95;letter-spacing:-.02em;color:var(--green)}
+  .brand h1 .amp{color:var(--teal);font-style:italic}
+  .brand h1 .bolt{color:var(--amber);font-style:normal}
+  .brand .sub{color:var(--txt-dim);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin-top:8px;font-family:var(--mono)}
+  .brand .evolta{color:var(--teal);font-weight:600}
+  .topbar{display:flex;align-items:center;gap:14px}
+  .back-btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--txt-dim);text-decoration:none;border:1px solid var(--line2);border-radius:8px;padding:8px 13px;transition:.15s;white-space:nowrap}
+  .back-btn:hover{border-color:var(--green);color:var(--green)}
+  .clock{text-align:right}
+  .clock .month{font-family:var(--disp);font-size:26px;color:var(--teal);font-weight:500}
+  .clock .turn{color:var(--txt-faint);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-family:var(--mono)}
+
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(22,128,88,.05),0 6px 22px rgba(14,124,123,.05)}
+  .panel h2{font-family:var(--mono);font-weight:500;font-size:11px;color:var(--txt-faint);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .panel h2 .dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+  .mkt{width:100%;border-collapse:collapse}
+  .mkt th{text-align:left;color:var(--txt-faint);font-weight:500;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+  .mkt td{padding:9px 8px;border-bottom:1px solid var(--line)}
+  .mkt tr:last-child td{border-bottom:none}
+  .mkt .nm{color:var(--txt);font-weight:500}
+  .mkt .nm small{display:block;color:var(--txt-faint);font-size:10px;font-weight:400}
+  .mkt .px{font-weight:600;font-size:15px;text-align:right;font-family:var(--mono)}
+  .mkt .chg{text-align:right;font-size:12px;font-family:var(--mono)}
+  .up{color:var(--pos)}.down{color:var(--neg)}.flat{color:var(--txt-faint)}
+
+  .news{border-left:3px solid var(--green);padding:2px 0 2px 14px;margin-bottom:8px}
+  .news .hl{color:var(--white);font-weight:600;margin-bottom:4px;font-size:14px}
+  .news .src{color:var(--teal);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);font-weight:500}
+  .news .ex{color:var(--txt-dim);font-size:12px;margin-top:8px;line-height:1.6;border-top:1px solid var(--line);padding-top:8px}
+  .news .ex b{color:var(--green)}
+
+  .trade-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:15px}
+  .trade-card .tt{font-family:var(--disp);font-size:15px;color:var(--green);margin-bottom:3px;font-weight:500}
+  .trade-card .td{color:var(--txt-dim);font-size:10.5px;margin-bottom:11px;line-height:1.5}
+  .ctrl-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .ctrl-row label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt-dim);min-width:110px}
+  .ctrl-row .val{font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;min-width:54px;text-align:right}
+  input[type=range]{accent-color:var(--green);width:100%;flex:1}
+  .quote-preview{display:flex;justify-content:space-between;gap:10px;margin:10px 0 4px}
+  .qbox{flex:1;text-align:center;border:1px solid var(--line2);border-radius:8px;padding:8px}
+  .qbox .ql{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-faint)}
+  .qbox .qv{font-family:var(--mono);font-size:17px;font-weight:600;margin-top:2px}
+  .qbox.bid .qv{color:var(--pos)}.qbox.ask .qv{color:var(--neg)}.qbox.mid .qv{color:var(--teal)}
+  button{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.03em;border:1px solid var(--line2);background:var(--bg2);color:var(--txt);padding:8px 10px;border-radius:7px;cursor:pointer;transition:.13s}
+  button:hover{border-color:var(--green);color:var(--green)}
+  .big-btn{width:100%;padding:15px;font-size:14px;font-family:var(--sans);font-weight:600;background:linear-gradient(135deg,var(--green),var(--teal));color:#fff;border:none;letter-spacing:.02em;border-radius:10px;box-shadow:0 4px 14px rgba(14,124,123,.2)}
+  .big-btn:hover{filter:brightness(1.07);color:#fff}
+  .ghost-btn{background:transparent;border:1px solid var(--line2);color:var(--txt-dim);padding:10px 16px;border-radius:9px;font-family:var(--mono);font-size:11px}
+  .ghost-btn:hover{border-color:var(--green);color:var(--green)}
+
+  .stat{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+  .stat:last-child{border-bottom:none}
+  .stat .k{color:var(--txt-dim);font-size:11px}
+  .stat .v{font-weight:600;font-family:var(--mono)}
+  .big-num{font-family:var(--disp);font-size:32px;font-weight:500;line-height:1;margin:2px 0 8px;color:var(--teal)}
+
+  .blot{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:11.5px;font-family:var(--mono)}
+  .blot:last-child{border-bottom:none}
+  .tag{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;font-family:var(--mono)}
+  .tag.buy{background:rgba(22,128,88,.13);color:var(--pos)}
+  .tag.sell{background:rgba(192,57,43,.10);color:var(--neg)}
+
+  .meter{height:7px;background:var(--line);border-radius:5px;overflow:hidden;margin:8px 0;position:relative}
+  .meter span{display:block;height:100%;transition:.4s;border-radius:5px}
+  .meter.center{background:linear-gradient(90deg,var(--neg),var(--line) 50%,var(--pos))}
+  .meter.center i{position:absolute;top:-2px;width:3px;height:11px;background:var(--white);border-radius:2px;transition:.4s;transform:translateX(-50%)}
+
+  .toast{position:fixed;left:50%;top:20px;transform:translateX(-50%);z-index:50;background:var(--bg2);border:1px solid var(--green);border-radius:10px;padding:12px 22px;color:var(--txt);font-size:12px;box-shadow:0 10px 36px rgba(14,124,123,.16);max-width:90vw;opacity:0;transition:.3s;pointer-events:none;font-family:var(--mono)}
+  .toast.show{opacity:1;top:32px}
+  .toast.warn{border-color:var(--neg);color:var(--neg)}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(19,37,28,.5);backdrop-filter:blur(4px);z-index:40;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:30px;max-width:560px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(14,124,123,.22)}
+  .modal h2{font-family:var(--disp);font-size:28px;color:var(--green);font-weight:500;margin-bottom:6px}
+  .modal .score{font-family:var(--disp);font-size:52px;font-weight:500;line-height:1;margin:10px 0;color:var(--teal)}
+  .grade{display:inline-block;font-family:var(--disp);font-size:22px;font-weight:600;padding:3px 16px;border-radius:10px;background:var(--green);color:#fff;margin-left:10px}
+  .debrief-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);gap:14px}
+  .debrief-row .lbl{color:var(--txt-dim)}
+  .debrief-row .rating{font-weight:600;text-align:right;font-family:var(--mono);font-size:11.5px}
+
+  .hint{color:var(--txt-faint);font-size:10.5px;margin-top:6px;line-height:1.5}
+  .hint b{color:var(--txt-dim)}
+  .tip{cursor:help;border-bottom:1px dotted var(--txt-faint)}
+  svg text{font-family:var(--mono)}
+
+  /* Academy */
+  #academy{max-width:920px;margin:0 auto}
+  .acad-panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px 32px;box-shadow:0 1px 2px rgba(22,128,88,.05),0 10px 36px rgba(14,124,123,.07)}
+  .acad-steps{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+  .acad-steps .s{flex:1;min-width:70px;height:5px;border-radius:4px;background:var(--line);transition:.3s}
+  .acad-steps .s.done{background:var(--green)}
+  .acad-steps .s.cur{background:linear-gradient(90deg,var(--green),var(--teal))}
+  .lesson-kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);font-weight:500;margin-bottom:8px}
+  .lesson-title{font-family:var(--disp);font-size:30px;font-weight:500;color:var(--green);line-height:1.05;margin-bottom:10px;letter-spacing:-.01em}
+  .lesson-lede{color:var(--txt-dim);font-size:14px;line-height:1.65;margin-bottom:6px;max-width:62ch}
+  .lesson-lede b{color:var(--green)}
+  .lesson-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin:22px 0 8px}
+  @media(max-width:760px){.lesson-body{grid-template-columns:1fr}}
+  .viz-box{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:18px;min-height:300px}
+  .viz-controls{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font-family:var(--mono);font-size:10.5px;padding:7px 12px;border-radius:20px;border:1px solid var(--line2);background:var(--bg2);color:var(--txt-dim);cursor:pointer;transition:.13s;flex:none}
+  .chip:hover{border-color:var(--amber);color:var(--amber)}
+  .takeaway{background:rgba(217,138,31,.08);border:1px solid rgba(217,138,31,.26);border-radius:10px;padding:13px 15px;margin-top:6px}
+  .takeaway .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:5px}
+  .takeaway .txt{color:var(--txt);font-size:12.5px;line-height:1.6}
+  .takeaway .txt b{color:var(--green)}
+  .lesson-points{list-style:none;margin:14px 0}
+  .lesson-points li{padding:7px 0 7px 26px;position:relative;color:var(--txt-dim);font-size:13px;line-height:1.55}
+  .lesson-points li::before{content:"";position:absolute;left:0;top:9px;width:13px;height:13px;border-radius:50%;border:2px solid var(--green)}
+  .lesson-points li b{color:var(--txt)}
+  .acad-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}
+  .acad-nav .right{display:flex;gap:10px}
+  .read-out{font-family:var(--mono);font-size:12px;color:var(--txt-dim)}
+  .read-out b{font-size:14px;color:var(--teal)}
+  .anim{transition:all .45s cubic-bezier(.2,.8,.25,1)}
+  .hidden{display:none !important}
+</style>
 </head>
 <body>
-    <div id="root"></div>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>The Spread <span class="bolt">📈</span></h1>
+      <div class="sub">Market Making — from scratch · <span class="evolta">Evolta — learn · play · evolve</span></div>
+    </div>
+    <div class="topbar">
+      <div class="clock" id="clock" style="display:none">
+        <div class="month" id="monthLabel">—</div>
+        <div class="turn" id="turnLabel">Press start</div>
+      </div>
+      <a class="back-btn" href="TradingGamePortal.html">‹ All games</a>
+    </div>
+  </header>
 
-    <script type="text/babel">
-        const { useState, useEffect, useCallback } = React;
+  <!-- ACADEMY -->
+  <div id="academy">
+    <div class="acad-panel">
+      <div class="acad-steps" id="acadSteps"></div>
+      <div id="lessonContent"></div>
+      <div class="acad-nav">
+        <button class="ghost-btn" id="backBtn" onclick="acadBack()">‹ Back</button>
+        <div class="right">
+          <button class="ghost-btn" id="skipBtn" onclick="startGame()">Skip to game ›</button>
+          <button class="big-btn" id="nextBtn" onclick="acadNext()" style="width:auto;padding:11px 26px">Next ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Lucide icon components
-        const Icon = ({ name, className }) => {
-            const icons = {
-                'trending-up': 'M23 6l-9.5 9.5-5-5L1 18',
-                'trending-down': 'M23 18l-9.5-9.5-5 5L1 6',
-                'dollar-sign': 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
-                'package': 'M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z',
-                'alert-circle': 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 8v4M12 16h.01',
-                'trophy': 'M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 2h4M12 2v17'
-            };
-            
-            return (
-                <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d={icons[name]} />
-                </svg>
-            );
-        };
+  <!-- GAME -->
+  <div id="game" class="grid hidden">
+    <div>
+      <div class="panel" id="newsPanel">
+        <h2><span class="dot"></span>Order-Flow Wire</h2>
+        <div id="newsBox">
+          <div class="news">
+            <div class="hl">You're the market maker.</div>
+            <div class="src">Evolta Trading Floor</div>
+            <div class="ex">You quote a <b>bid</b> (where you'll buy) and an <b>ask</b> (where you'll sell). Buyers and sellers hit your quotes; you pocket the <b>spread</b> — but you carry whatever <b>inventory</b> you accumulate. Set your spread &amp; skew, then advance. Read the flow to avoid getting picked off.</div>
+          </div>
+        </div>
+      </div>
 
-        const MarketMakingGame = () => {
-            // Game state
-            const [cash, setCash] = useState(10000);
-            const [inventory, setInventory] = useState(0);
-            const [trueValue, setTrueValue] = useState(100);
-            const [bidPrice, setBidPrice] = useState(99);
-            const [askPrice, setAskPrice] = useState(101);
-            const [trades, setTrades] = useState([]);
-            const [currentTrade, setCurrentTrade] = useState(0);
-            const [gameActive, setGameActive] = useState(false);
-            const [level, setLevel] = useState(1);
-            const [totalPnL, setTotalPnL] = useState(0);
-            const [lastTradeResult, setLastTradeResult] = useState(null);
-            
-            const MAX_TRADES = 50;
-            const MAX_INVENTORY = 100;
+      <div class="panel">
+        <h2><span class="dot"></span>The Book</h2>
+        <table class="mkt">
+          <thead><tr><th>Level</th><th style="text-align:right">Price</th><th style="text-align:right">Δ tick</th></tr></thead>
+          <tbody id="mktBody"></tbody>
+        </table>
+        <div class="hint" id="bookHint"></div>
+      </div>
 
-            // Calculate current portfolio value
-            const portfolioValue = cash + (inventory * trueValue);
-            const startingValue = 10000;
-            const currentPnL = portfolioValue - startingValue;
+      <div class="panel">
+        <h2><span class="dot"></span>Your Quotes</h2>
+        <div class="trade-card">
+          <div class="quote-preview">
+            <div class="qbox bid"><div class="ql">Your Bid</div><div class="qv" id="bidPrev">—</div></div>
+            <div class="qbox mid"><div class="ql">Mid</div><div class="qv" id="midPrev">—</div></div>
+            <div class="qbox ask"><div class="ql">Your Ask</div><div class="qv" id="askPrev">—</div></div>
+          </div>
+          <div class="ctrl-row"><label class="tip" title="Total distance between your bid and ask. Tighter = more fills but less edge per trade. Wider = fewer fills, more edge.">Spread width</label>
+            <input type="range" min="0.4" max="5" step="0.1" value="1.6" id="widthSlider" oninput="updateQuotes()">
+            <span class="val" id="widthVal">1.6</span></div>
+          <div class="ctrl-row"><label class="tip" title="Shift both quotes up or down. Skew DOWN to sell off a long inventory; skew UP to buy when you're short.">Skew</label>
+            <input type="range" min="-3" max="3" step="0.1" value="0" id="skewSlider" oninput="updateQuotes()">
+            <span class="val" id="skewVal">0.0</span></div>
+          <div class="hint" id="quoteHint"></div>
+        </div>
+        <div style="margin-top:14px">
+          <button class="big-btn" id="advanceBtn" onclick="startOrAdvance()">▶ Start Session</button>
+        </div>
+      </div>
+    </div>
 
-            // Random walk for true value
-            const updateTrueValue = useCallback(() => {
-                setTrueValue(prev => {
-                    const change = (Math.random() - 0.5) * (level === 1 ? 2 : level === 2 ? 4 : 6);
-                    return Math.max(85, Math.min(115, prev + change));
-                });
-            }, [level]);
+    <div>
+      <div class="panel">
+        <h2><span class="dot"></span>P&amp;L</h2>
+        <div class="big-num" id="pnlNum">$0</div>
+        <div class="stat"><span class="k tip" title="Edge captured by buying at your bid and selling at your ask, vs the mid price.">Spread captured</span><span class="v" id="spreadCap">$0</span></div>
+        <div class="stat"><span class="k tip" title="Gain or loss from price moving while you hold inventory.">Inventory P&amp;L</span><span class="v" id="invPL">$0</span></div>
+        <div class="stat"><span class="k">Fills</span><span class="v" id="fillCt">0</span></div>
+      </div>
 
-            // Simulate trader arrival
-            const simulateTrade = useCallback(() => {
-                if (!gameActive || currentTrade >= MAX_TRADES) {
-                    setGameActive(false);
-                    return;
-                }
+      <div class="panel">
+        <h2><span class="dot"></span>Inventory</h2>
+        <div class="big-num" id="invNum" style="font-size:26px">0 <span style="font-size:13px;color:var(--txt-faint)">lots</span></div>
+        <div class="meter center"><i id="invMark" style="left:50%"></i></div>
+        <div class="hint" id="invHint">Flat. No price risk.</div>
+      </div>
 
-                const isInformed = level === 3 && Math.random() < 0.2;
-                const futureValue = isInformed ? trueValue + (Math.random() - 0.5) * 10 : trueValue;
-                
-                // Determine if trader wants to buy or sell
-                const spread = askPrice - bidPrice;
-                const midPrice = (askPrice + bidPrice) / 2;
-                
-                let tradeType = null;
-                let executed = false;
-                let price = 0;
-                let profit = 0;
+      <div class="panel">
+        <h2><span class="dot"></span>Trade Blotter</h2>
+        <div id="blotBox"><div class="hint">No fills yet.</div></div>
+      </div>
 
-                // Informed traders are more likely to trade in profitable direction
-                if (isInformed) {
-                    if (futureValue > askPrice && inventory > -MAX_INVENTORY) {
-                        tradeType = 'BUY';
-                        price = askPrice;
-                        executed = true;
-                    } else if (futureValue < bidPrice && inventory < MAX_INVENTORY) {
-                        tradeType = 'SELL';
-                        price = bidPrice;
-                        executed = true;
-                    }
-                } else {
-                    // Random traders
-                    const buyProbability = Math.max(0.1, Math.min(0.9, 0.5 - (midPrice - trueValue) / 20));
-                    
-                    if (Math.random() < buyProbability && inventory > -MAX_INVENTORY) {
-                        tradeType = 'BUY';
-                        price = askPrice;
-                        executed = true;
-                    } else if (inventory < MAX_INVENTORY) {
-                        tradeType = 'SELL';
-                        price = bidPrice;
-                        executed = true;
-                    }
-                }
+      <div class="panel" id="recapPanel" style="display:none">
+        <h2><span class="dot"></span>This Tick — Breakdown</h2>
+        <div id="recapBox"></div>
+      </div>
 
-                if (executed) {
-                    if (tradeType === 'BUY') {
-                        // Trader buys from us at our ask price
-                        setCash(prev => prev + price);
-                        setInventory(prev => prev - 1);
-                        profit = price - trueValue;
-                    } else {
-                        // Trader sells to us at our bid price
-                        setCash(prev => prev - price);
-                        setInventory(prev => prev + 1);
-                        profit = trueValue - price;
-                    }
+      <div class="panel">
+        <h2><span class="dot"></span>Glossary</h2>
+        <div style="font-size:11px;color:var(--txt-dim);line-height:1.7">
+          <b style="color:var(--green)">Bid / Ask</b> the prices you'll buy / sell at<br>
+          <b style="color:var(--green)">Spread</b> ask − bid; your gross edge per round-trip<br>
+          <b style="color:var(--green)">Mid</b> the fair price, halfway between bid and ask<br>
+          <b style="color:var(--green)">Inventory</b> net lots you're holding — your price risk<br>
+          <b style="color:var(--green)">Skew</b> shifting quotes to steer your inventory<br>
+          <b style="color:var(--green)">Adverse selection</b> getting filled right before the price moves against you
+        </div>
+        <div style="margin-top:12px"><button class="ghost-btn" onclick="openAcademy()" style="width:100%">↺ Replay the Academy</button></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-                    const trade = {
-                        id: currentTrade + 1,
-                        type: tradeType,
-                        price: price,
-                        profit: profit,
-                        informed: isInformed
-                    };
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalInner"></div></div>
 
-                    setTrades(prev => [...prev, trade]);
-                    setTotalPnL(prev => prev + profit);
-                    setLastTradeResult(trade);
-                    
-                    setTimeout(() => setLastTradeResult(null), 2000);
-                }
+<script>
+/* =========================================================
+   PART 1 — ACADEMY
+   ========================================================= */
+let acadStep=0;
+const LESSONS=[L0,L1,L2,L3,L5];
+function renderSteps(){document.getElementById('acadSteps').innerHTML=LESSONS.map((_,i)=>{const c=i<acadStep?'done':i===acadStep?'cur':'';return `<div class="s ${c}"></div>`;}).join('');}
+function renderAcademy(){renderSteps();LESSONS[acadStep]();
+  document.getElementById('backBtn').style.visibility=acadStep===0?'hidden':'visible';
+  document.getElementById('nextBtn').textContent=acadStep===LESSONS.length-1?'Open the desk 📈':'Next ›';
+  document.getElementById('skipBtn').style.display=acadStep===LESSONS.length-1?'none':'inline-block';}
+function acadNext(){if(acadStep>=LESSONS.length-1){startGame();return;}acadStep++;renderAcademy();window.scrollTo({top:0,behavior:'smooth'});}
+function acadBack(){if(acadStep>0){acadStep--;renderAcademy();window.scrollTo({top:0,behavior:'smooth'});}}
+function openAcademy(){document.getElementById('game').classList.add('hidden');document.getElementById('clock').style.display='none';document.getElementById('academy').classList.remove('hidden');acadStep=0;renderAcademy();window.scrollTo({top:0,behavior:'smooth'});}
 
-                setCurrentTrade(prev => prev + 1);
-                updateTrueValue();
-            }, [gameActive, currentTrade, askPrice, bidPrice, inventory, trueValue, level, updateTrueValue]);
+function L0(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 1 of 5</div>
+    <div class="lesson-title">A market maker is a shopkeeper for stocks</div>
+    <p class="lesson-lede">You don't bet on prices going up or down. You run a <b>stall</b>: you'll buy from anyone who wants to sell, and sell to anyone who wants to buy — always quoting two prices at once. You earn the gap between them, the <b>spread</b>, thousands of times a day.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 250" width="100%">
+          <text x="180" y="24" text-anchor="middle" font-size="11" fill="#557064">You quote both sides at once</text>
+          <rect x="40" y="60" width="110" height="70" rx="8" fill="#168058" opacity="0.12"/>
+          <text x="95" y="86" text-anchor="middle" font-size="10" fill="#557064">BUY at your</text>
+          <text x="95" y="106" text-anchor="middle" font-size="13" fill="#168058" font-weight="700">Bid $99.5</text>
+          <rect x="210" y="60" width="110" height="70" rx="8" fill="#c0392b" opacity="0.10"/>
+          <text x="265" y="86" text-anchor="middle" font-size="10" fill="#557064">SELL at your</text>
+          <text x="265" y="106" text-anchor="middle" font-size="13" fill="#c0392b" font-weight="700">Ask $100.5</text>
+          <line x1="150" y1="95" x2="210" y2="95" stroke="#cbe0d4" stroke-width="2" stroke-dasharray="3 3"/>
+          <text x="180" y="160" text-anchor="middle" font-size="11" fill="#0e7c7b" font-weight="600">Spread = $1.00</text>
+          <text x="180" y="184" text-anchor="middle" font-size="10" fill="#8fab9e">buy low, sell high — over and over</text>
+          <text x="180" y="214" text-anchor="middle" font-size="9.5" fill="#557064">you provide liquidity; the spread is your fee</text>
+        </svg>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>You quote a bid and an ask</b> around the fair price (the "mid"). The market comes to you.</li>
+          <li><b>Every round-trip earns the spread:</b> buy one share at your bid, sell one at your ask, pocket the difference.</li>
+          <li><b>The risk:</b> you can't control who shows up. If only sellers come, you pile up shares — and now you're exposed if the price drops.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">The balancing act</div>
+          <div class="txt">Make money on the spread while keeping your <b>inventory near zero</b>. Quote too wide and nobody trades with you; too tight and you barely earn. The next lessons build the instinct.</div>
+        </div>
+      </div>
+    </div>`;
+}
 
-            // Auto-run trades
-            useEffect(() => {
-                if (gameActive) {
-                    const interval = setInterval(simulateTrade, 2000);
-                    return () => clearInterval(interval);
-                }
-            }, [gameActive, simulateTrade]);
+let spW=1.6;
+function L1(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 2 of 5</div>
+    <div class="lesson-title">The spread: your price, your edge</div>
+    <p class="lesson-lede">Your two quotes sit on either side of the mid. The distance between them is the spread. Drag it: a <b>tight</b> spread wins lots of trades but little per trade; a <b>wide</b> spread earns more each time but scares flow away. There's no free lunch.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 200" width="100%">
+          <line x1="40" y1="100" x2="320" y2="100" stroke="#cbe0d4" stroke-width="2"/>
+          <line x1="180" y1="40" x2="180" y2="160" stroke="#0e7c7b" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text x="180" y="32" text-anchor="middle" font-size="10" fill="#0e7c7b">mid $100</text>
+          <circle id="bidDot" class="anim" cx="150" cy="100" r="9" fill="#168058"/>
+          <circle id="askDot" class="anim" cx="210" cy="100" r="9" fill="#c0392b"/>
+          <text id="bidT" class="anim" x="150" y="128" text-anchor="middle" font-size="10" fill="#168058" font-weight="600">$99.2</text>
+          <text id="askT" class="anim" x="210" y="128" text-anchor="middle" font-size="10" fill="#c0392b" font-weight="600">$100.8</text>
+          <text id="fillT" x="180" y="180" text-anchor="middle" font-size="10" fill="#557064"></text>
+        </svg>
+        <div class="viz-controls">
+          <div class="ctrl-row" style="display:flex;align-items:center;gap:10px"><label style="font-family:var(--mono);font-size:10px;text-transform:uppercase;color:#557064;min-width:96px">Spread width</label>
+            <input type="range" min="0.4" max="5" step="0.1" value="1.6" id="spwSlider" oninput="updateSpw(+this.value)"></div>
+          <div class="read-out" id="spwRead"></div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Tight spread (e.g. $0.40):</b> very competitive, you win most of the flow — but earn pennies each time.</li>
+          <li><b>Wide spread (e.g. $4):</b> fat profit per trade, but traders go elsewhere and you sit idle.</li>
+          <li><b>The art</b> is matching your spread to conditions: calm and liquid → tighten; wild and risky → widen to get paid for the danger.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">Rule of thumb</div>
+          <div class="txt">Your spread is the price of your service. <b>Widen it when the world gets scary</b> (volatility, one-sided flow), tighten it when it's calm. You'll do exactly this in the game.</div>
+        </div>
+      </div>
+    </div>`;
+  updateSpw(1.6);
+}
+function updateSpw(w){
+  spW=w; const mid=180, scale=28; const half=w/2*scale;
+  const bx=mid-half, ax=mid+half;
+  document.getElementById('bidDot').setAttribute('cx',bx);
+  document.getElementById('askDot').setAttribute('cx',ax);
+  document.getElementById('bidT').setAttribute('x',bx); document.getElementById('bidT').textContent='$'+(100-w/2).toFixed(2);
+  document.getElementById('askT').setAttribute('x',ax); document.getElementById('askT').textContent='$'+(100+w/2).toFixed(2);
+  const fillRate=Math.max(8,Math.min(96,96-w*17));
+  document.getElementById('fillT').textContent=`~${fillRate.toFixed(0)}% of orders trade with you`;
+  document.getElementById('spwRead').innerHTML=`Spread <b>$${w.toFixed(2)}</b> · edge per trade <b>$${(w/2).toFixed(2)}</b> · fill rate <b>${fillRate.toFixed(0)}%</b>. ${w<0.8?'Razor-thin — high volume, low margin.':w>3.2?'Very wide — fat margin, few takers.':'A balanced quote.'}`;
+}
 
-            // Start new game
-            const startGame = () => {
-                setCash(10000);
-                setInventory(0);
-                setTrueValue(100);
-                setBidPrice(99);
-                setAskPrice(101);
-                setTrades([]);
-                setCurrentTrade(0);
-                setTotalPnL(0);
-                setGameActive(true);
-                setLastTradeResult(null);
-            };
+let invDemo=0, priceDemo=100;
+function L2(){
+  invDemo=0; priceDemo=100;
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 3 of 5 · the hidden danger</div>
+    <div class="lesson-title">Inventory: the risk you didn't choose</div>
+    <p class="lesson-lede">Here's what catches new market makers out. When more sellers than buyers show up, you keep <b>buying</b> — and end up holding a big pile of stock. If the price then drops, that inventory loses money fast. Stack up some inventory, then move the price and watch.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 210" width="100%">
+          <text x="180" y="22" text-anchor="middle" font-size="10" fill="#557064">Your inventory &amp; its value</text>
+          <line x1="40" y1="150" x2="320" y2="150" stroke="#cbe0d4" stroke-width="1.5"/>
+          <rect id="invBar" class="anim" x="150" y="150" width="60" height="0" rx="3" fill="#168058" opacity="0.8"/>
+          <text id="invLbl" class="anim" x="180" y="145" text-anchor="middle" font-size="12" fill="#168058" font-weight="600">0 lots</text>
+          <text id="plLbl" x="180" y="185" text-anchor="middle" font-size="13" font-weight="700" fill="#557064">P&amp;L: $0</text>
+        </svg>
+        <div class="chip-row" style="margin-top:6px">
+          <div class="chip" onclick="invAct('buy')">＋ Get filled (buy 2)</div>
+          <div class="chip" onclick="invAct('up')">📈 Price +$2</div>
+          <div class="chip" onclick="invAct('down')">📉 Price −$2</div>
+          <div class="chip" onclick="invAct('reset')">↺ Flatten</div>
+        </div>
+        <div class="read-out" id="invDemoRead" style="margin-top:10px">Inventory <b>0</b> · price <b>$100</b></div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Fills change your inventory.</b> Buy fills make you longer; sell fills make you shorter.</li>
+          <li><b>Inventory × price move = P&amp;L.</b> Long 6 lots and the price drops $2? You're down $12 — even though you "did nothing wrong."</li>
+          <li><b>Flat is safe.</b> With zero inventory, price moves don't touch you. That's why MMs constantly try to get back to flat.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">The trap</div>
+          <div class="txt">A great spread-capture day can be wiped out by one bad inventory swing. <b>Managing inventory is the whole job</b> — which brings us to skew.</div>
+        </div>
+      </div>
+    </div>`;
+  drawInvDemo();
+}
+function drawInvDemo(){
+  const base=150,h=Math.min(120,Math.abs(invDemo)*14);
+  const bar=document.getElementById('invBar');
+  if(invDemo>=0){bar.setAttribute('y',base-h);bar.setAttribute('fill','#168058');}
+  else{bar.setAttribute('y',base);bar.setAttribute('fill','#c0392b');}
+  bar.setAttribute('height',h);
+  document.getElementById('invLbl').setAttribute('y',invDemo>=0?base-h-6:base+h+16);
+  document.getElementById('invLbl').textContent=invDemo+' lots';
+  const pl=invDemo*(priceDemo-100);
+  const pe=document.getElementById('plLbl'); pe.textContent='P&L: '+(pl<0?'-$':'$')+Math.abs(pl).toFixed(0);
+  pe.setAttribute('fill',pl>0?'#168058':pl<0?'#c0392b':'#557064');
+  document.getElementById('invDemoRead').innerHTML=`Inventory <b>${invDemo}</b> · price <b>$${priceDemo.toFixed(0)}</b>`;
+}
+function invAct(a){
+  if(a==='buy')invDemo+=2;
+  else if(a==='up')priceDemo+=2;
+  else if(a==='down')priceDemo-=2;
+  else {invDemo=0;priceDemo=100;}
+  drawInvDemo();
+}
 
-            // Handle price updates
-            const updatePrices = (newBid, newAsk) => {
-                if (newBid >= newAsk) {
-                    alert("Bid price must be less than ask price!");
-                    return;
-                }
-                if (newBid < 70 || newAsk > 130) {
-                    alert("Keep prices between 70 and 130!");
-                    return;
-                }
-                setBidPrice(newBid);
-                setAskPrice(newAsk);
-            };
+let skewDemo=0;
+function L3(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy · Lesson 4 of 5 · the steering wheel</div>
+    <div class="lesson-title">Skew: nudging the flow back to flat</div>
+    <p class="lesson-lede">If you're stuck <b>long</b> (too much inventory), you want to sell. So you <b>shift both quotes down</b> — your ask becomes a bargain that buyers snap up, while your now-lower bid discourages more buying. That's skewing. Drag it and watch which side gets more attractive.</p>
+    <div class="lesson-body">
+      <div class="viz-box">
+        <svg viewBox="0 0 360 210" width="100%">
+          <line x1="40" y1="105" x2="320" y2="105" stroke="#cbe0d4" stroke-width="2"/>
+          <line x1="180" y1="45" x2="180" y2="165" stroke="#0e7c7b" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text x="180" y="38" text-anchor="middle" font-size="10" fill="#0e7c7b">mid $100</text>
+          <circle id="sbid" class="anim" cx="150" cy="105" r="9" fill="#168058"/>
+          <circle id="sask" class="anim" cx="210" cy="105" r="9" fill="#c0392b"/>
+          <text id="sbidT" class="anim" x="150" y="133" text-anchor="middle" font-size="9.5" fill="#168058"></text>
+          <text id="saskT" class="anim" x="210" y="133" text-anchor="middle" font-size="9.5" fill="#c0392b"></text>
+          <text id="skewMsg" x="180" y="190" text-anchor="middle" font-size="10" fill="#557064"></text>
+        </svg>
+        <div class="viz-controls">
+          <div class="ctrl-row" style="display:flex;align-items:center;gap:10px"><label style="font-family:var(--mono);font-size:10px;text-transform:uppercase;color:#557064;min-width:96px">Skew</label>
+            <input type="range" min="-3" max="3" step="0.1" value="0" id="skSlider" oninput="updateSkew(+this.value)"></div>
+          <div class="read-out" id="skRead"></div>
+        </div>
+      </div>
+      <div>
+        <ul class="lesson-points">
+          <li><b>Long inventory → skew DOWN.</b> Cheaper ask = buyers take your stock; you shed risk back to flat.</li>
+          <li><b>Short inventory → skew UP.</b> Higher bid = sellers fill you; you cover the short.</li>
+          <li><b>You give up a little edge</b> to control inventory — almost always worth it. Runaway inventory is what blows up market makers.</li>
+        </ul>
+        <div class="takeaway">
+          <div class="lab">In the game</div>
+          <div class="txt">You'll set spread width <b>and</b> skew each tick. When the flow is one-sided or you've built a position, skew is how you fight back to flat before a price move punishes you.</div>
+        </div>
+      </div>
+    </div>`;
+  updateSkew(0);
+}
+function updateSkew(s){
+  skewDemo=s; const mid=180,scale=24,half=0.8*scale,off=s*scale;
+  const bx=mid-half+off, ax=mid+half+off;
+  document.getElementById('sbid').setAttribute('cx',bx);
+  document.getElementById('sask').setAttribute('cx',ax);
+  document.getElementById('sbidT').setAttribute('x',bx);document.getElementById('sbidT').textContent='bid $'+(99.2+s).toFixed(1);
+  document.getElementById('saskT').setAttribute('x',ax);document.getElementById('saskT').textContent='ask $'+(100.8+s).toFixed(1);
+  const msg=s<-0.4?'Quotes shifted DOWN — your ask is cheap, sellers of risk rejoice. Good when long.':
+            s>0.4?'Quotes shifted UP — your bid is rich, sellers hit it. Good when short.':'Neutral — symmetric quotes, no inventory pressure.';
+  document.getElementById('skewMsg').textContent='';
+  document.getElementById('skRead').innerHTML=`Skew <b>${s>=0?'+':''}${s.toFixed(1)}</b>. ${msg}`;
+}
 
-            return (
-                <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl shadow-xl">
-                    <div className="mb-6">
-                        <h1 className="text-3xl font-bold text-gray-800 mb-2">Market Making Game</h1>
-                        <p className="text-gray-600">Set bid/ask prices to profit from the spread while managing inventory risk</p>
-                    </div>
+function L5(){
+  document.getElementById('lessonContent').innerHTML=`
+    <div class="lesson-kicker">Academy complete</div>
+    <div class="lesson-title">You're ready to make markets</div>
+    <p class="lesson-lede">Everything you'll do at the desk comes down to four ideas:</p>
+    <ul class="lesson-points" style="max-width:64ch">
+      <li><b>Quote both sides</b> — a bid and an ask around the mid; the spread is your fee.</li>
+      <li><b>Width is a dial</b> — tight for volume in calm markets, wide to get paid in volatile ones.</li>
+      <li><b>Inventory is risk</b> — every fill builds a position that price moves can punish.</li>
+      <li><b>Skew to stay flat</b> — shift your quotes to bleed off inventory before it bites.</li>
+    </ul>
+    <div class="takeaway" style="max-width:64ch">
+      <div class="lab">Your job for the session</div>
+      <div class="txt">Across the ticks, set your <b>spread</b> and <b>skew</b>, read each order-flow headline, and harvest spread while keeping inventory near zero. Watch out for <b>adverse selection</b> — getting filled right before a one-way move. A scored <b>debrief</b> grades you, and you can replay this Academy anytime.</div>
+    </div>`;
+}
 
-                    {/* Level Selection */}
-                    {!gameActive && (
-                        <div className="mb-6 p-4 bg-white rounded-lg shadow">
-                            <h3 className="font-semibold mb-3">Select Difficulty Level:</h3>
-                            <div className="grid grid-cols-3 gap-3">
-                                <button
-                                    onClick={() => setLevel(1)}
-                                    className={`p-3 rounded ${level === 1 ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-                                >
-                                    <div className="font-semibold">Level 1</div>
-                                    <div className="text-sm">Stable Market</div>
-                                </button>
-                                <button
-                                    onClick={() => setLevel(2)}
-                                    className={`p-3 rounded ${level === 2 ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-                                >
-                                    <div className="font-semibold">Level 2</div>
-                                    <div className="text-sm">Volatile Market</div>
-                                </button>
-                                <button
-                                    onClick={() => setLevel(3)}
-                                    className={`p-3 rounded ${level === 3 ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-                                >
-                                    <div className="font-semibold">Level 3</div>
-                                    <div className="text-sm">Informed Traders</div>
-                                </button>
-                            </div>
-                        </div>
-                    )}
+/* =========================================================
+   PART 2 — THE GAME
+   ========================================================= */
+const START_MID=100, TICKS=20, POS_LIMIT=12, LOT=100; // $ per lot per $1 move = 100
+let S=null;
+function freshState(){
+  return {started:false,tick:0,mid:START_MID,lastMid:START_MID,
+    cash:0,inv:0,width:1.6,skew:0,
+    spreadCaptured:0,fills:0,maxAbsInv:0,breaches:0,adverse:0,
+    blotter:[],pendingEvent:null,recap:null,startEquity:0,
+  };
+}
+const EVENTS=[
+  {hl:"Quiet, balanced two-way flow",src:"Tape",drift:0,vol:0.5,bias:0,ex:"No clear direction — buyers and sellers roughly matched. Tighten up and harvest the spread."},
+  {hl:"Buyers leaning in; momentum building",src:"Flow Desk",drift:1.5,vol:0.6,bias:1,ex:"More buyers than sellers and price likely drifts up. If you sell too cheap you'll be short into a rally — skew your quotes up."},
+  {hl:"Sellers pressing; risk-off tone",src:"Flow Desk",drift:-1.5,vol:0.6,bias:-1,ex:"Heavy selling and price likely falls. Don't pile up longs — skew down so you're not caught holding."},
+  {hl:"Volatility spike — headlines hitting the tape",src:"News",drift:0,vol:2.2,bias:0,ex:"Big two-way swings. Widen your spread to get paid for the extra risk; tight quotes will get run over."},
+  {hl:"Thin liquidity — you're nearly the only quote",src:"Tape",drift:0,vol:0.8,bias:0,thin:true,ex:"Almost all flow hits you. Easy spread, but inventory stacks up fast — manage it actively."},
+  {hl:"Large informed buyer sweeping offers",src:"Surveillance",drift:2.6,vol:0.7,bias:1,toxic:true,ex:"Someone who knows something is lifting asks before a jump. Classic adverse selection — skew up or widen, or you'll sell right before the pop."},
+  {hl:"Forced seller dumping size",src:"Surveillance",drift:-2.6,vol:0.7,bias:-1,toxic:true,ex:"A motivated seller is hitting bids before a drop. Skew down or widen, or you'll buy right before it falls."},
+  {hl:"Steady, liquid conditions",src:"Tape",drift:0.3,vol:0.5,bias:0,ex:"Calm and liquid. Tight spreads win lots of small, safe round-trips."},
+];
+function pickEvent(){return EVENTS[Math.floor(Math.random()*EVENTS.length)];}
 
-                    {/* Main Dashboard */}
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                        <div className="bg-white p-4 rounded-lg shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-600">Cash</span>
-                                <Icon name="dollar-sign" className="w-5 h-5 text-green-500" />
-                            </div>
-                            <div className="text-2xl font-bold text-gray-800">${cash.toFixed(2)}</div>
-                        </div>
-                        
-                        <div className="bg-white p-4 rounded-lg shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-600">Inventory</span>
-                                <Icon name="package" className="w-5 h-5 text-blue-500" />
-                            </div>
-                            <div className="text-2xl font-bold text-gray-800">{inventory} shares</div>
-                            <div className="text-sm text-gray-500">Max: ±{MAX_INVENTORY}</div>
-                        </div>
-                        
-                        <div className="bg-white p-4 rounded-lg shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-600">P&L</span>
-                                <Icon name={currentPnL >= 0 ? "trending-up" : "trending-down"} className={`w-5 h-5 ${currentPnL >= 0 ? 'text-green-500' : 'text-red-500'}`} />
-                            </div>
-                            <div className={`text-2xl font-bold ${currentPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                ${currentPnL.toFixed(2)}
-                            </div>
-                        </div>
-                    </div>
+function bidPrice(){return S.mid - S.width/2 + S.skew;}
+function askPrice(){return S.mid + S.width/2 + S.skew;}
+function equity(){return S.cash + S.inv*S.mid;}
 
-                    {/* Market Info */}
-                    <div className="bg-white p-4 rounded-lg shadow mb-6">
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">True Value (Hidden)</div>
-                                <div className="text-xl font-bold text-purple-600">
-                                    ${gameActive ? '???' : trueValue.toFixed(2)}
-                                </div>
-                            </div>
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">Spread</div>
-                                <div className="text-xl font-bold text-gray-800">
-                                    ${(askPrice - bidPrice).toFixed(2)}
-                                </div>
-                            </div>
-                            <div>
-                                <div className="text-sm text-gray-600 mb-1">Trade Progress</div>
-                                <div className="text-xl font-bold text-gray-800">
-                                    {currentTrade} / {MAX_TRADES}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+function updateQuotes(){
+  if(!S) return;
+  S.width=+document.getElementById('widthSlider').value;
+  S.skew=+document.getElementById('skewSlider').value;
+  document.getElementById('widthVal').textContent=S.width.toFixed(1);
+  document.getElementById('skewVal').textContent=(S.skew>=0?'+':'')+S.skew.toFixed(1);
+  document.getElementById('bidPrev').textContent='$'+bidPrice().toFixed(2);
+  document.getElementById('askPrev').textContent='$'+askPrice().toFixed(2);
+  document.getElementById('midPrev').textContent='$'+S.mid.toFixed(2);
+  const qh=document.getElementById('quoteHint');
+  let msg='';
+  if(S.inv>4 && S.skew>-0.3) msg='You\'re long '+S.inv+' lots — consider skewing DOWN to sell some off.';
+  else if(S.inv<-4 && S.skew<0.3) msg='You\'re short '+S.inv+' lots — consider skewing UP to cover.';
+  else if(S.width<0.8) msg='Very tight — lots of fills, thin edge. Risky if volatility is high.';
+  else if(S.width>3.2) msg='Very wide — fat edge but you may sit idle.';
+  else msg='Balanced quote. Advance the tick to see who trades with you.';
+  qh.textContent=msg;
+}
 
-                    {/* Price Controls */}
-                    <div className="bg-white p-4 rounded-lg shadow mb-6">
-                        <h3 className="font-semibold mb-3">Your Quotes</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-sm text-gray-600">Bid Price (You Buy At)</label>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <input
-                                        type="number"
-                                        value={bidPrice}
-                                        onChange={(e) => updatePrices(parseFloat(e.target.value), askPrice)}
-                                        disabled={!gameActive}
-                                        step="0.5"
-                                        className="w-full p-2 border rounded"
-                                    />
-                                    <button
-                                        onClick={() => updatePrices(bidPrice - 0.5, askPrice)}
-                                        disabled={!gameActive}
-                                        className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200 disabled:opacity-50"
-                                    >
-                                        -
-                                    </button>
-                                    <button
-                                        onClick={() => updatePrices(bidPrice + 0.5, askPrice)}
-                                        disabled={!gameActive}
-                                        className="px-3 py-2 bg-green-100 text-green-600 rounded hover:bg-green-200 disabled:opacity-50"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label className="text-sm text-gray-600">Ask Price (You Sell At)</label>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <input
-                                        type="number"
-                                        value={askPrice}
-                                        onChange={(e) => updatePrices(bidPrice, parseFloat(e.target.value))}
-                                        disabled={!gameActive}
-                                        step="0.5"
-                                        className="w-full p-2 border rounded"
-                                    />
-                                    <button
-                                        onClick={() => updatePrices(bidPrice, askPrice - 0.5)}
-                                        disabled={!gameActive}
-                                        className="px-3 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200 disabled:opacity-50"
-                                    >
-                                        -
-                                    </button>
-                                    <button
-                                        onClick={() => updatePrices(bidPrice, askPrice + 0.5)}
-                                        disabled={!gameActive}
-                                        className="px-3 py-2 bg-green-100 text-green-600 rounded hover:bg-green-200 disabled:opacity-50"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+function startOrAdvance(){
+  if(!S.started){S.started=true;S.tick=0;S.pendingEvent=pickEvent();
+    document.getElementById('advanceBtn').textContent="▶ Advance Tick";render();return;}
+  resolveTick();
+}
+function randn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
 
-                    {/* Trade Notification */}
-                    {lastTradeResult && (
-                        <div className={`mb-4 p-3 rounded-lg ${lastTradeResult.profit > 0 ? 'bg-green-100' : 'bg-red-100'} animate-pulse`}>
-                            <div className="flex items-center gap-2">
-                                {lastTradeResult.informed && <Icon name="alert-circle" className="w-5 h-5 text-yellow-600" />}
-                                <span className="font-semibold">
-                                    Trader {lastTradeResult.type === 'BUY' ? 'BOUGHT' : 'SOLD'} at ${lastTradeResult.price.toFixed(2)}
-                                </span>
-                                <span className={`ml-auto font-bold ${lastTradeResult.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {lastTradeResult.profit > 0 ? '+' : ''}${lastTradeResult.profit.toFixed(2)}
-                                </span>
-                            </div>
-                        </div>
-                    )}
+function resolveTick(){
+  const ev=S.pendingEvent;
+  const before={cash:S.cash,inv:S.inv,mid:S.mid,equity:equity()};
+  const fills=[];
+  // arriving orders
+  let buyers=1+(Math.random()<0.5?1:0);
+  let sellers=1+(Math.random()<0.5?1:0);
+  if(ev.bias>0)buyers+=1; if(ev.bias<0)sellers+=1;
+  if(ev.thin){buyers+=1;sellers+=1;}
+  const askEdge=askPrice()-S.mid, bidEdge=S.mid-bidPrice();
+  const pAsk=Math.max(0.05,Math.min(0.96,0.92-askEdge*0.3));
+  const pBid=Math.max(0.05,Math.min(0.96,0.92-bidEdge*0.3));
+  let tickSpread=0;
+  // buyers may lift your ask -> you SELL
+  for(let i=0;i<buyers;i++){ if(Math.random()<pAsk){
+    S.cash+=askPrice(); S.inv-=1; S.fills++; tickSpread+=askEdge;
+    fills.push({side:'sell',px:askPrice()});
+  }}
+  // sellers may hit your bid -> you BUY
+  for(let i=0;i<sellers;i++){ if(Math.random()<pBid){
+    S.cash-=bidPrice(); S.inv+=1; S.fills++; tickSpread+=bidEdge;
+    fills.push({side:'buy',px:bidPrice()});
+  }}
+  S.spreadCaptured+=tickSpread;
 
-                    {/* Recent Trades */}
-                    <div className="bg-white p-4 rounded-lg shadow mb-6">
-                        <h3 className="font-semibold mb-3">Recent Trades</h3>
-                        <div className="max-h-40 overflow-y-auto">
-                            {trades.length === 0 ? (
-                                <p className="text-gray-500">No trades yet</p>
-                            ) : (
-                                <div className="space-y-1">
-                                    {trades.slice(-5).reverse().map(trade => (
-                                        <div key={trade.id} className="flex justify-between text-sm">
-                                            <span className={trade.type === 'BUY' ? 'text-green-600' : 'text-red-600'}>
-                                                {trade.type} @ ${trade.price.toFixed(2)}
-                                            </span>
-                                            <span className={trade.profit > 0 ? 'text-green-600' : 'text-red-600'}>
-                                                {trade.profit > 0 ? '+' : ''}${trade.profit.toFixed(2)}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
+  // adverse selection: toxic flow + you traded the wrong way
+  if(ev.toxic){
+    const soldIntoRally = ev.drift>0 && fills.some(f=>f.side==='sell');
+    const boughtIntoDrop = ev.drift<0 && fills.some(f=>f.side==='buy');
+    if(soldIntoRally||boughtIntoDrop) S.adverse++;
+  }
 
-                    {/* Game Controls */}
-                    <div className="flex gap-4">
-                        {!gameActive ? (
-                            <button
-                                onClick={startGame}
-                                className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold"
-                            >
-                                Start Game
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => setGameActive(false)}
-                                className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 font-semibold"
-                            >
-                                End Game
-                            </button>
-                        )}
-                    </div>
+  // price moves
+  S.lastMid=S.mid;
+  S.mid=Math.max(5,+(S.mid+ev.drift+randn()*ev.vol).toFixed(2));
 
-                    {/* Game Over */}
-                    {!gameActive && currentTrade >= MAX_TRADES && (
-                        <div className="mt-6 p-6 bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg">
-                            <div className="flex items-center gap-3 mb-4">
-                                <Icon name="trophy" className="w-8 h-8 text-yellow-500" />
-                                <h2 className="text-2xl font-bold">Game Complete!</h2>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-gray-600">Final P&L</p>
-                                    <p className={`text-2xl font-bold ${currentPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        ${currentPnL.toFixed(2)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-gray-600">Portfolio Value</p>
-                                    <p className="text-2xl font-bold text-gray-800">
-                                        ${portfolioValue.toFixed(2)}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+  // inventory bookkeeping
+  S.maxAbsInv=Math.max(S.maxAbsInv,Math.abs(S.inv));
+  if(Math.abs(S.inv)>POS_LIMIT){
+    S.breaches++;
+    // forced partial flatten at mid (cross half the spread as penalty)
+    const flatten=S.inv>0?-3:3; const px=S.mid;
+    S.cash-= flatten*px*0 ; // mark; we flatten at mid minus a small slippage
+    const slip=Math.abs(flatten)*0.25;
+    S.cash-=slip; S.inv+=flatten;
+    toast(`⚠ Position limit breached — forced to flatten ${Math.abs(flatten)} lots (slippage ${fmtUSD(slip*LOT)}).`,true);
+  }
 
-                    {/* Instructions */}
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                        <h3 className="font-semibold mb-2">How to Play:</h3>
-                        <ul className="text-sm text-gray-700 space-y-1">
-                            <li>• Set your bid (buy) and ask (sell) prices to create a spread</li>
-                            <li>• Traders will randomly arrive and trade at your prices</li>
-                            <li>• Earn profit from the spread, but watch your inventory!</li>
-                            <li>• Too much inventory exposes you to price risk</li>
-                            <li>• In Level 3, beware of informed traders who know future prices</li>
-                        </ul>
-                    </div>
-                </div>
-            );
-        };
+  // blotter
+  fills.forEach(f=>S.blotter.unshift({...f,tick:S.tick+1}));
+  if(S.blotter.length>8)S.blotter=S.blotter.slice(0,8);
 
-        // Render the app
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<MarketMakingGame />);
-    </script>
+  // recap attribution
+  const invPLswing=before.inv*(S.mid-before.mid); // value change on inventory held
+  S.recap={ev,fills,tickSpread:tickSpread*LOT,invPLswing:invPLswing*LOT,
+    move:S.mid-before.mid, endInv:S.inv};
+
+  S.tick++;
+  if(S.tick>=TICKS){render();endGame();return;}
+  S.pendingEvent=pickEvent();render();
+}
+
+/* ---- render ---- */
+function fmtUSD(n){const s=n<0?"-":"";const a=Math.abs(n);
+  if(a>=1e6)return s+"$"+(a/1e6).toFixed(2)+"M";
+  if(a>=1e3)return s+"$"+(a/1e3).toFixed(1)+"k";
+  return s+"$"+a.toFixed(0);}
+function colorPL(n){return n>0?'up':n<0?'down':'flat';}
+function arrow(n){return n>0?'▲':n<0?'▼':'—';}
+
+function render(){
+  document.getElementById('monthLabel').textContent=S.started?`Tick ${Math.min(S.tick+1,TICKS)}`:"—";
+  document.getElementById('turnLabel').textContent=S.started?`of ${TICKS}`:"Press start";
+
+  if(S.pendingEvent){const n=S.pendingEvent;
+    document.getElementById('newsBox').innerHTML=
+      `<div class="news"><div class="hl">${n.hl}</div><div class="src">${n.src}</div>
+       <div class="ex"><b>Read the flow:</b> ${n.ex}</div></div>`;}
+
+  // book
+  const dMid=S.mid-S.lastMid;
+  document.getElementById('mktBody').innerHTML=`
+    <tr><td class="nm">Your Ask<small>where you sell</small></td><td class="px down">$${askPrice().toFixed(2)}</td><td class="chg flat">—</td></tr>
+    <tr><td class="nm">Mid<small>fair price</small></td><td class="px">$${S.mid.toFixed(2)}</td><td class="chg ${dMid>0?'up':dMid<0?'down':'flat'}">${dMid?arrow(dMid)+' '+Math.abs(dMid).toFixed(2):'—'}</td></tr>
+    <tr><td class="nm">Your Bid<small>where you buy</small></td><td class="px up">$${bidPrice().toFixed(2)}</td><td class="chg flat">—</td></tr>
+    <tr><td class="nm">Spread<small>your edge</small></td><td class="px">$${S.width.toFixed(2)}</td><td class="chg flat">${S.skew?('skew '+(S.skew>0?'+':'')+S.skew.toFixed(1)):'centered'}</td></tr>`;
+  const bh=document.getElementById('bookHint');
+  bh.innerHTML = `Mid is the market's fair price; it drifts each tick. You earn the gap between your quotes and the mid — but only on the trades that actually fill.`;
+
+  updateQuotes();
+
+  // P&L
+  const eq=equity();
+  document.getElementById('pnlNum').textContent=fmtUSD(eq*LOT);
+  document.getElementById('pnlNum').className='big-num '+colorPL(eq);
+  document.getElementById('spreadCap').innerHTML=`<span class="up">${fmtUSD(S.spreadCaptured*LOT)}</span>`;
+  const invPL=(eq - S.spreadCaptured)*LOT; // remainder attributable to inventory marks/penalties
+  document.getElementById('invPL').innerHTML=`<span class="${colorPL(invPL)}">${fmtUSD(invPL)}</span>`;
+  document.getElementById('fillCt').textContent=S.fills;
+
+  // inventory
+  document.getElementById('invNum').innerHTML=`${S.inv} <span style="font-size:13px;color:var(--txt-faint)">lots</span>`;
+  document.getElementById('invNum').className='big-num '+(Math.abs(S.inv)>8?'down':'');
+  document.getElementById('invNum').style.fontSize='26px';
+  const mark=document.getElementById('invMark');
+  const pct=50+Math.max(-50,Math.min(50,S.inv/POS_LIMIT*50));
+  mark.style.left=pct+'%';
+  document.getElementById('invHint').textContent=
+    S.inv===0?'Flat. No price risk — exactly where you want to end.':
+    Math.abs(S.inv)<5?`${S.inv>0?'Long':'Short'} ${Math.abs(S.inv)} lots — modest risk.`:
+    Math.abs(S.inv)<POS_LIMIT?`${S.inv>0?'Long':'Short'} ${Math.abs(S.inv)} lots — skew to reduce before a move hits.`:
+    `${S.inv>0?'Long':'Short'} ${Math.abs(S.inv)} lots — at the limit! Dangerous.`;
+
+  // blotter
+  const bb=document.getElementById('blotBox');
+  bb.innerHTML=S.blotter.length?S.blotter.map(f=>
+    `<div class="blot"><span><span class="tag ${f.side}">${f.side==='buy'?'Bought':'Sold'}</span> 1 lot</span><span>@ $${f.px.toFixed(2)} <span style="color:var(--txt-faint)">t${f.tick}</span></span></div>`
+  ).join(''):'<div class="hint">No fills yet.</div>';
+
+  // recap
+  const rp=document.getElementById('recapPanel'), rb=document.getElementById('recapBox');
+  if(S.recap){const r=S.recap;
+    let h=`<div style="font-size:11.5px;color:var(--txt-dim);line-height:1.7">`;
+    h+=`<b style="color:var(--green)">Fills:</b> ${r.fills.length?r.fills.map(f=>f.side==='buy'?'bought':'sold').join(', '):'none — your quotes were too wide for the flow'}<br>`;
+    h+=`<b style="color:var(--green)">Spread earned:</b> <span class="up">${fmtUSD(r.tickSpread)}</span><br>`;
+    h+=`<b style="color:var(--green)">Price move:</b> ${r.move>=0?'+':''}$${r.move.toFixed(2)} → inventory P&L <span class="${colorPL(r.invPLswing)}">${fmtUSD(r.invPLswing)}</span></div>`;
+    if(r.ev.toxic && S.adverse>0) h+=`<div class="hint" style="margin-top:8px;color:var(--neg)">Adverse selection: informed flow filled you just before the move. Wider/skewed quotes protect against this.</div>`;
+    else if(Math.abs(r.endInv)>8) h+=`<div class="hint" style="margin-top:8px">Inventory is piling up — skew your quotes to push it back toward flat.</div>`;
+    rb.innerHTML=h; rp.style.display='block';
+  } else rp.style.display='none';
+}
+
+let toastT;
+function toast(msg,warn){const t=document.getElementById('toast');t.innerHTML=msg;t.className='toast show'+(warn?' warn':'');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.className='toast'+(warn?' warn':''),2600);}
+
+function endGame(){
+  // flatten remaining inventory at mid for final P&L
+  const eq=equity()*LOT;
+  const spreadCap=S.spreadCaptured*LOT;
+  const invPL=eq-spreadCap;
+  let pts=50;
+  pts+=Math.max(-30,Math.min(45,eq/40));
+  pts+=Math.min(18,S.fills*0.7);
+  pts-=Math.max(0,(S.maxAbsInv-8)*2.5);
+  pts-=S.breaches*7;
+  pts-=S.adverse*5;
+  pts=Math.max(0,Math.min(100,Math.round(pts)));
+  const grade=pts>=85?'A':pts>=70?'B':pts>=55?'C':pts>=40?'D':'F';
+  const invScore=S.maxAbsInv<6?'Tight':S.maxAbsInv<POS_LIMIT?'Loose':'Out of control';
+  const dbg=[
+    ['Total P&L', fmtUSD(eq), eq>=0?'up':'down'],
+    ['Spread captured', fmtUSD(spreadCap)+` (${S.fills} fills)`, spreadCap>0?'up':'flat'],
+    ['Inventory P&L', fmtUSD(invPL), invPL>=0?'up':'down'],
+    ['Inventory control', `${invScore} — peak ${S.maxAbsInv} lots`, S.maxAbsInv<6?'up':S.maxAbsInv<POS_LIMIT?'flat':'down'],
+    ['Limit breaches', S.breaches===0?'None — clean':`${S.breaches} forced flatten(s)`, S.breaches===0?'up':'down'],
+    ['Adverse selection', S.adverse===0?'Dodged it':`Picked off ${S.adverse}×`, S.adverse===0?'up':'down'],
+  ];
+  const coaching=coach(eq,spreadCap,invPL,S);
+  document.getElementById('modalInner').innerHTML=`
+    <h2>Session Debrief <span class="grade" style="background:${grade==='F'||grade==='D'?'var(--neg)':grade==='A'?'var(--green)':'var(--teal)'}">${grade}</span></h2>
+    <div class="score ${eq>=0?'up':'down'}">${pts}<span style="font-size:18px;color:var(--txt-dim)">/100</span></div>
+    ${dbg.map(d=>`<div class="debrief-row"><span class="lbl">${d[0]}</span><span class="rating ${d[2]}">${d[1]}</span></div>`).join('')}
+    <div style="margin-top:16px;padding:14px;background:var(--panel2);border-radius:8px;border-left:3px solid var(--green)">
+      <div style="font-family:var(--disp);color:var(--green);font-size:14px;margin-bottom:6px">Desk notes</div>
+      <div style="color:var(--txt-dim);font-size:12px;line-height:1.65">${coaching}</div>
+    </div>
+    <button class="big-btn" style="margin-top:18px" onclick="restart()">↺ Make Markets Again</button>`;
+  document.getElementById('modalBg').classList.add('show');
+}
+function coach(eq,sc,ip,s){
+  const n=[];
+  if(eq>300) n.push("Strong session — you harvested spread and kept inventory under control.");
+  else if(eq<0) n.push("You finished red. Usually that means inventory losses swamped the spread you earned.");
+  if(ip<-100) n.push("Inventory P&L was your problem: you held positions into adverse moves. Skew harder to get back to flat before price runs.");
+  if(s.maxAbsInv>POS_LIMIT-1) n.push("You let inventory run to the limit. One sharp move there can erase a whole session — skew sooner, not later.");
+  if(s.adverse>0) n.push(`You got picked off ${s.adverse}× by informed flow. When surveillance flags a sweep or forced seller, widen or skew away from the toxic side.`);
+  if(sc<60) n.push("Low spread capture — your quotes may have been too wide. In calm, liquid ticks, tighten up to win more flow.");
+  if(n.length===0) n.push("Disciplined two-sided market making. Next: tighten in calm ticks to lift volume without taking on inventory risk.");
+  return n.join(" ");
+}
+function restart(){
+  document.getElementById('modalBg').classList.remove('show');
+  S=freshState();
+  document.getElementById('advanceBtn').textContent="▶ Start Session";
+  document.getElementById('widthSlider').value=1.6; document.getElementById('skewSlider').value=0;
+  document.getElementById('newsBox').innerHTML=
+    `<div class="news"><div class="hl">Fresh session. Quotes reset.</div><div class="src">Evolta Trading Floor</div>
+     <div class="ex">Set your spread &amp; skew, then press <b>Start Session</b>.</div></div>`;
+  render();
+}
+function startGame(){
+  document.getElementById('academy').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+  document.getElementById('clock').style.display='block';
+  S=freshState(); render(); window.scrollTo({top:0,behavior:'smooth'});
+}
+renderAcademy();
+</script>
 </body>
 </html>
