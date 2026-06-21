@@ -1,61 +1,459 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Trading Sandbox</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Sandbox — Evolta</title>
+
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        /* Header */
+        header {
+            padding: 40px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background-image: url('logo.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .back-link {
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #1a1a1a;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 160px 40px 80px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
+        .hero-content h1 {
+            font-size: 64px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+            color: #1a1a1a;
+            line-height: 1.1;
+        }
+
+        .tagline {
+            font-size: 22px;
+            color: #666;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: lowercase;
+            margin-bottom: 48px;
+        }
+
+        .hero-description {
+            font-size: 19px;
+            color: #555;
+            max-width: 720px;
+            margin: 0 auto;
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        /* Learn Section */
+        .learn {
+            padding: 100px 40px 40px;
+            background: #ffffff;
+        }
+
+        .learn-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .learn-item {
+            text-align: center;
+        }
+
+        .learn-item .num {
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .learn-item h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+
+        .learn-item p {
+            font-size: 15px;
+            color: #666;
+            font-weight: 300;
+        }
+
+        /* Games Section */
+        .products {
+            padding: 80px 40px 120px;
+            background: #ffffff;
+        }
+
+        .section-title {
+            font-size: 16px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .products-tagline {
+            font-size: 18px;
+            color: #666;
+            text-align: center;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            margin-bottom: 60px;
+            font-style: italic;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .product-card {
+            padding: 44px 40px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .product-card.featured {
+            border-color: #1a1a1a;
+            background: #ffffff;
+        }
+
+        .badge {
+            align-self: flex-start;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #fff;
+            background: #1a1a1a;
+            padding: 4px 10px;
+            border-radius: 2px;
+            margin-bottom: 16px;
+        }
+
+        .product-icon {
+            font-size: 44px;
+            margin-bottom: 20px;
+        }
+
+        .product-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+            letter-spacing: -0.5px;
+        }
+
+        .product-sub {
+            font-size: 14px;
+            color: #888;
+            font-weight: 400;
+            margin-bottom: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .product-features {
+            list-style: none;
+            color: #666;
+            font-size: 16px;
+            line-height: 2;
+            font-weight: 300;
+            margin-bottom: 28px;
+            flex-grow: 1;
+        }
+
+        .product-features li:before {
+            content: "—";
+            margin-right: 12px;
+            color: #999;
+        }
+
+        .play-btn {
+            align-self: flex-start;
+            display: inline-block;
+            padding: 10px 24px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: 2px;
+            transition: opacity 0.3s ease;
+        }
+
+        .play-btn:hover {
+            opacity: 0.82;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 40px;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        footer a {
+            color: #666;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        footer a:hover {
+            color: #1a1a1a;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 0 24px; }
+            header { padding: 24px 0; }
+            .logo { font-size: 22px; }
+            .logo-icon { width: 28px; height: 28px; }
+            .hero { padding: 130px 24px 60px; min-height: 60vh; }
+            .hero-content h1 { font-size: 44px; }
+            .tagline { font-size: 18px; }
+            .hero-description { font-size: 17px; }
+            .learn { padding: 70px 24px 20px; }
+            .learn-grid { grid-template-columns: 1fr; gap: 32px; }
+            .products { padding: 60px 24px 80px; }
+            .products-grid { grid-template-columns: 1fr; gap: 28px; }
+            .product-card { padding: 36px 28px; }
+        }
+
+        @media (max-width: 480px) {
+            .hero-content h1 { font-size: 36px; }
+            .product-title { font-size: 22px; }
+            .product-features { font-size: 15px; }
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-100 to-purple-100 min-h-screen flex flex-col items-center justify-center">
-  <div class="max-w-3xl mx-auto text-center px-6 py-12">
-    <h1 class="text-5xl font-bold text-gray-800 mb-4">The Trading Sandbox</h1>
-    <p class="text-lg text-gray-600 mb-8">
-      Welcome to the <strong>The Trading Sandbox</strong> — an interactive learning space 
-      where you can explore the world of trading and risk management through simulation games.  
-      Test your decision-making skills, understand market behavior, and learn financial 
-      concepts in a fun, hands-on way.
-    </p>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-inner">
+            <a class="logo" href="index.html">
+                <div class="logo-icon"></div>
+                Evolta
+            </a>
+            <a class="back-link" href="index.html">&larr; All products</a>
+        </div>
+    </header>
 
-    <div class="bg-white/70 backdrop-blur-sm p-6 rounded-xl shadow-lg mb-10 text-left text-gray-700 leading-relaxed">
-      <h2 class="text-2xl font-semibold mb-3 text-indigo-700">🎯 What You'll Learn</h2>
-      <ul class="list-disc pl-6 space-y-2">
-        <li><strong>Risk Hedging:</strong> Discover how to protect portfolios using derivatives and smart diversification.</li>
-        <li><strong>Market Making:</strong> Learn how traders provide liquidity by setting bid-ask spreads and managing inventory.</li>
-        <li><strong>Strategic Thinking:</strong> Balance profit, cost, and risk under uncertain market events.</li>
-      </ul>
-      <p class="mt-4">
-        Each game is self-contained, browser-based, and designed to give you insight into real-world finance mechanics — no installation or signup needed.
-      </p>
-    </div>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Trading Sandbox</h1>
+            <p class="tagline">learn, play, evolve</p>
+            <p class="hero-description">
+                An interactive space to explore trading and risk management through
+                simulation games. Test your decision-making, understand how markets
+                behave, and learn financial concepts hands-on — no installation, no signup.
+            </p>
+        </div>
+    </section>
 
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">Choose Your Game</h2>
+    <!-- What you'll learn -->
+    <section class="learn">
+        <div class="container">
+            <div class="section-title">What You'll Learn</div>
+            <p class="products-tagline">three ideas at the heart of every market</p>
+            <div class="learn-grid">
+                <div class="learn-item">
+                    <div class="num">01</div>
+                    <h4>Risk &amp; Hedging</h4>
+                    <p>Protect a book from unpredictable events using derivatives and diversification.</p>
+                </div>
+                <div class="learn-item">
+                    <div class="num">02</div>
+                    <h4>Market Making</h4>
+                    <p>Provide liquidity by setting bid–ask spreads and managing inventory.</p>
+                </div>
+                <div class="learn-item">
+                    <div class="num">03</div>
+                    <h4>Strategic Thinking</h4>
+                    <p>Balance profit, cost and risk under uncertainty and live market news.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <a href="HedgingGame.html"
-         class="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl hover:scale-105 transition-transform duration-200 border-t-4 border-indigo-400">
-        <h3 class="text-2xl font-semibold mb-2 text-indigo-600">📉 Portfolio Hedging Game</h3>
-        <p class="text-gray-500 mb-3">Protect your investments from unpredictable market events using hedging instruments.</p>
-        <p class="text-sm text-gray-400">Learn how diversification and derivatives reduce risk exposure.</p>
-      </a>
+    <!-- Games -->
+    <section class="products">
+        <div class="container">
+            <div class="section-title">Choose Your Game</div>
+            <p class="products-tagline">each one is self-contained and browser-based</p>
 
-      <a href="MarketMaking.html"
-         class="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl hover:scale-105 transition-transform duration-200 border-t-4 border-blue-400">
-        <h3 class="text-2xl font-semibold mb-2 text-blue-600">💹 Market Making Game</h3>
-        <p class="text-gray-500 mb-3">Set bid and ask prices, manage inventory, and earn profit from the spread.</p>
-        <p class="text-sm text-gray-400">Practice liquidity provision and price-making under volatility.</p>
-      </a>
+            <div class="products-grid">
+                <!-- Power Trading (new, featured) -->
+                <div class="product-card featured">
+                    <span class="badge">New</span>
+                    <div class="product-icon">⚡</div>
+                    <h3 class="product-title">Power Trading</h3>
+                    <p class="product-sub">Peak &amp; Dispatch — electricity from scratch</p>
+                    <ul class="product-features">
+                        <li>Beginner Academy: 5 interactive lessons</li>
+                        <li>Merit order, price spikes &amp; the spark spread</li>
+                        <li>12-month power &amp; gas trading simulation</li>
+                        <li>Live news, risk limits &amp; a scored debrief</li>
+                    </ul>
+                    <a class="play-btn" href="power-trading.html">Play Now</a>
+                </div>
 
-      <a href="sweet-spread.html"
-         class="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl hover:scale-105 transition-transform duration-200 border-t-4 border-pink-400">
-        <h3 class="text-2xl font-semibold mb-2 text-pink-600">🍰 Sweet Spread Game</h3>
-        <p class="text-gray-500 mb-3">Master the art of managing spreads with interactive challenges and real-time feedback.</p>
-        <p class="text-sm text-gray-400">Learn spread optimization and execution strategies in a dynamic market.</p>
-      </a>
-    </div>
-  </div>
+                <!-- Sweet Spread -->
+                <div class="product-card">
+                    <div class="product-icon">🍬</div>
+                    <h3 class="product-title">Sweet Spread</h3>
+                    <p class="product-sub">Sugar trading &amp; the refining arbitrage</p>
+                    <ul class="product-features">
+                        <li>Trade raw &amp; white sugar futures</li>
+                        <li>Lock the refining arbitrage</li>
+                        <li>Hedge FX and freight, survive margin calls</li>
+                        <li>Monthly news with a "why it moved" recap</li>
+                    </ul>
+                    <a class="play-btn" href="sweet-spread.html">Play Now</a>
+                </div>
 
-  <footer class="mt-auto py-6 text-gray-500 text-sm">
-    © 2025 Learn with XR — Built for interactive learning.
-  </footer>
+                <!-- Portfolio Hedging -->
+                <div class="product-card">
+                    <div class="product-icon">🛡️</div>
+                    <h3 class="product-title">Portfolio Hedging</h3>
+                    <p class="product-sub">Protect investments from market shocks</p>
+                    <ul class="product-features">
+                        <li>Build a diversified portfolio</li>
+                        <li>Buy puts and hedging instruments</li>
+                        <li>Weather random market events</li>
+                        <li>See how derivatives cut risk exposure</li>
+                    </ul>
+                    <a class="play-btn" href="HedgingGame.html">Play Now</a>
+                </div>
+
+                <!-- Market Making -->
+                <div class="product-card">
+                    <div class="product-icon">💹</div>
+                    <h3 class="product-title">Market Making</h3>
+                    <p class="product-sub">Earn the spread, manage your inventory</p>
+                    <ul class="product-features">
+                        <li>Set bid and ask prices live</li>
+                        <li>Profit from the spread you quote</li>
+                        <li>Manage inventory under volatility</li>
+                        <li>Practice price-making and liquidity</li>
+                    </ul>
+                    <a class="play-btn" href="MarketMaking.html">Play Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            © 2026 Evolta. Built for interactive learning. &nbsp;·&nbsp; <a href="index.html">evolta.ai</a>
+        </div>
+    </footer>
 </body>
 </html>
