@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Momentum & Energy Lab</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root{
+  --paper:#F5F6F1;
+  --grid:#C9D6E0;
+  --ink:#20242B;
+  --marker-blue:#2B5FAD;
+  --marker-red:#C0392B;
+  --marker-green:#2E8B57;
+  --highlight:#FFE066;
+  --panel:#FFFFFF;
+  --panel-edge:#DCE1DA;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--paper);
+  font-family:'Inter',sans-serif;
+  color:var(--ink);
+  min-height:100vh;
+  padding:24px 16px 60px;
+}
+.wrap{max-width:920px;margin:0 auto;}
+
+.back-btn{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  letter-spacing:.03em;
+  color:#5b6270;
+  text-decoration:none;
+  border:1.5px solid var(--ink);
+  border-radius:6px;
+  padding:6px 12px;
+  display:inline-block;
+  margin-bottom:14px;
+  transition:.15s;
+}
+.back-btn:hover{background:var(--ink);color:#fff;}
+
+.title-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:4px;}
+h1{
+  font-family:'Kalam',cursive;
+  font-size:34px;
+  margin:0;
+  font-weight:700;
+  transform:rotate(-0.6deg);
+}
+.subtitle{
+  font-family:'Kalam',cursive;
+  font-size:16px;
+  color:#5b6270;
+}
+.score-badge{
+  margin-left:auto;
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;
+  background:linear-gradient(120deg, var(--highlight) 0%, var(--highlight) 100%);
+  background-repeat:no-repeat;
+  padding:6px 12px;
+  border-radius:2px;
+  font-weight:600;
+}
+
+.tabs{display:flex;gap:8px;margin:18px 0 16px;flex-wrap:wrap;}
+.tab{
+  font-family:'Kalam',cursive;
+  font-size:17px;
+  padding:8px 18px;
+  border:2px solid var(--ink);
+  border-bottom:none;
+  border-radius:8px 8px 0 0;
+  background:#eceee7;
+  cursor:pointer;
+  transform:translateY(2px);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.tab.active{background:var(--panel);transform:translateY(0);font-weight:700;}
+
+.board{
+  border:2px solid var(--ink);
+  border-radius:0 8px 8px 8px;
+  background:var(--panel);
+  padding:20px;
+  display:grid;
+  grid-template-columns:1fr 300px;
+  gap:20px;
+}
+@media (max-width:720px){ .board{grid-template-columns:1fr;} }
+
+canvas{
+  width:100%;
+  height:auto;
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0/24px 24px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/24px 24px,
+    #FBFCFA;
+  border:1px solid var(--panel-edge);
+  border-radius:6px;
+  display:block;
+}
+
+.panel-section{
+  border:1px solid var(--panel-edge);
+  border-radius:6px;
+  padding:12px 14px;
+  margin-bottom:12px;
+}
+.panel-label{
+  font-family:'Kalam',cursive;
+  font-size:15px;
+  margin:0 0 8px;
+  color:#444;
+}
+.given-row{
+  display:flex;
+  justify-content:space-between;
+  font-family:'JetBrains Mono',monospace;
+  font-size:13.5px;
+  padding:2px 0;
+}
+.given-row .a{color:var(--marker-blue);font-weight:600;}
+.given-row .b{color:var(--marker-red);font-weight:600;}
+.given-row .neutral{color:var(--ink);font-weight:600;}
+
+.predict-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.predict-row label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:13.5px;
+  min-width:70px;
+}
+.predict-row input{
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;
+  width:90px;
+  padding:5px 7px;
+  border:1.5px solid var(--ink);
+  border-radius:4px;
+}
+
+button{
+  font-family:'Kalam',cursive;
+  font-size:15px;
+  border:2px solid var(--ink);
+  background:var(--panel);
+  border-radius:6px;
+  padding:8px 14px;
+  cursor:pointer;
+  margin-right:8px;
+  margin-bottom:8px;
+}
+button:hover{background:#eef1ea;}
+button.primary{background:var(--ink);color:#fff;}
+button.primary:hover{background:#3a3f4a;}
+button:disabled{opacity:0.4;cursor:not-allowed;}
+
+.diff-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.diff-btn{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  padding:5px 10px;
+  border:1.5px solid var(--ink);
+  border-radius:14px;
+  background:#fff;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.diff-btn.active{background:var(--ink);color:#fff;}
+
+.feedback{
+  font-family:'Kalam',cursive;
+  font-size:16px;
+  padding:10px 12px;
+  border-radius:6px;
+  margin-top:4px;
+  min-height:24px;
+}
+.hint-box{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  line-height:1.6;
+  background:#FDF7E3;
+  border:1.5px dashed #C9A227;
+  border-radius:6px;
+  padding:9px 11px;
+  margin-top:2px;
+  margin-bottom:8px;
+  display:none;
+}
+.hint-box.show{display:block;}
+.hint-box .formula{color:#8a6d00;font-weight:600;}
+button.hint-btn{background:#FFF6DA;}
+button.hint-btn:hover{background:#FBEDBF;}
+.feedback.correct{background:#E4F3E9;color:var(--marker-green);}
+.feedback.wrong{background:#FBE9E7;color:var(--marker-red);}
+.feedback.neutral{color:#777;}
+
+.legend{
+  display:flex;
+  gap:14px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;
+  margin-top:6px;
+  color:#666;
+}
+.legend span::before{content:'■ ';}
+.legend .a::before{color:var(--marker-blue);}
+.legend .b::before{color:var(--marker-red);}
+.legend .ke::before{color:#E08A2B;}
+.legend .pe::before{color:var(--marker-green);}
+
+@keyframes impact-shake{
+  0%{transform:translate(0,0);}
+  20%{transform:translate(-5px,3px);}
+  40%{transform:translate(5px,-3px);}
+  60%{transform:translate(-4px,2px);}
+  80%{transform:translate(3px,-1px);}
+  100%{transform:translate(0,0);}
+}
+canvas.shake{animation:impact-shake 0.35s ease;}
+
+@media (max-width:480px){
+  body{padding:16px 10px 48px;}
+  h1{font-size:26px;}
+  .subtitle{font-size:14px;}
+  .tab{font-size:15px;padding:7px 14px;}
+  .predict-row label{min-width:60px;font-size:12.5px;}
+  .board{padding:14px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back-btn" href="index.html">&larr; Evolta</a>
+
+  <div class="title-row">
+    <h1 id="mainTitle">Momentum Lab</h1>
+    <div class="score-badge" id="scoreBadge">0 / 0 correct</div>
+  </div>
+
+  <div class="tabs" id="tabsRow">
+    <div class="tab active" id="tabMomentum">Momentum</div>
+    <div class="tab" id="tabEnergy">Energy</div>
+  </div>
+
+  <div class="board">
+    <div>
+      <canvas id="canvas" width="600" height="340"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div>
+      <div class="diff-row" id="diffRow"></div>
+
+      <div class="panel-section">
+        <p class="panel-label">Given</p>
+        <div id="givenBox"></div>
+      </div>
+
+      <div class="panel-section">
+        <p class="panel-label">Your prediction</p>
+        <div id="predictBox"></div>
+        <div class="hint-box" id="hintBox"></div>
+        <button class="primary" id="checkBtn">Check &amp; Run</button>
+        <button class="hint-btn" id="hintBtn">Hint</button>
+        <button id="newBtn">New Problem</button>
+      </div>
+
+      <div class="feedback neutral" id="feedback">Set your prediction, then hit Check &amp; Run.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const G = 9.8;
+
+let mode = 'momentum'; // 'momentum' | 'energy'
+let difficulty = { momentum: 1, energy: 1 };
+let storedProblems = { momentum: {}, energy: {} };
+let score = 0, attempts = 0;
+let anim = null; // active animation state
+let phase = 'setup'; // 'setup' | 'running' | 'result'
+let problem = null;
+
+const scoreBadge = document.getElementById('scoreBadge');
+const givenBox = document.getElementById('givenBox');
+const predictBox = document.getElementById('predictBox');
+const feedback = document.getElementById('feedback');
+const checkBtn = document.getElementById('checkBtn');
+const newBtn = document.getElementById('newBtn');
+const diffRow = document.getElementById('diffRow');
+const legend = document.getElementById('legend');
+const mainTitle = document.getElementById('mainTitle');
+const tabMomentum = document.getElementById('tabMomentum');
+const tabEnergy = document.getElementById('tabEnergy');
+
+function rand(min, max){ return Math.round(Math.random()*(max-min))+min; }
+function rnd1(x){ return Math.round(x*10)/10; }
+
+// ---------- MODE TABS ----------
+function switchMode(newMode){
+  if(mode === newMode) return;
+  if(anim) cancelAnimationFrame(anim);
+  particles = [];
+  mode = newMode;
+  tabMomentum.classList.toggle('active', mode==='momentum');
+  tabEnergy.classList.toggle('active', mode==='energy');
+  mainTitle.textContent = mode==='momentum' ? 'Momentum Lab' : 'Energy Lab';
+  renderDiffRow();
+  newProblem();
+}
+tabMomentum.addEventListener('click', ()=>switchMode('momentum'));
+tabEnergy.addEventListener('click', ()=>switchMode('energy'));
+
+// ---------- DIFFICULTY UI ----------
+const levelConfig = {
+  momentum: [ {d:1, label:'Easy'}, {d:2, label:'Hard'}, {d:3, label:'2D'} ],
+  energy:   [ {d:1, label:'Level 1'}, {d:2, label:'Level 2'}, {d:3, label:'Level 3'} ]
+};
+function renderDiffRow(){
+  diffRow.innerHTML = '';
+  levelConfig[mode].forEach(({d,label})=>{
+    const b = document.createElement('div');
+    b.className = 'diff-btn' + (difficulty[mode]===d ? ' active' : '');
+    b.textContent = label;
+    b.onclick = ()=>{
+      if(difficulty[mode] === d) { renderDiffRow(); return; }
+      difficulty[mode]=d;
+      renderDiffRow();
+      newProblem();
+    };
+    diffRow.appendChild(b);
+  });
+}
+
+// ---------- MOMENTUM PROBLEM GENERATION ----------
+function genMomentumProblem(){
+  const d = difficulty.momentum;
+  let m1,m2,v1,v2,type;
+  if(d===1){
+    m1 = rand(2,5); m2 = m1; // equal mass
+    v1 = rand(2,6); v2 = -rand(1,4);
+    type = 'elastic';
+  } else if(d===2){
+    m1 = rand(1,3); m2 = rand(4,8);
+    v1 = rand(3,7); v2 = rand(-2,2);
+    type = 'elastic';
+  } else {
+    // 2D billiard-style: equal masses, B at rest, A scatters off at a given angle
+    const m = rand(2,5);
+    const v0 = rand(4,8);
+    const theta1 = rand(20,65); // degrees
+    return { m1:m, m2:m, v0, theta1, type:'elastic2d' };
+  }
+  return {m1,m2,v1,v2,type};
+}
+
+function solveMomentum(p){
+  if(p.type === 'elastic2d'){
+    const theta1rad = p.theta1*Math.PI/180;
+    return {
+      v1f: rnd1(p.v0*Math.cos(theta1rad)),
+      v2f: rnd1(p.v0*Math.sin(theta1rad)),
+      theta2: rnd1(90 - p.theta1)
+    };
+  }
+  const {m1,m2,v1,v2,type} = p;
+  if(type==='elastic'){
+    const v1f = ((m1-m2)*v1 + 2*m2*v2)/(m1+m2);
+    const v2f = ((m2-m1)*v2 + 2*m1*v1)/(m1+m2);
+    return {v1f: rnd1(v1f), v2f: rnd1(v2f)};
+  } else {
+    const vf = (m1*v1 + m2*v2)/(m1+m2);
+    return {vf: rnd1(vf)};
+  }
+}
+
+// ---------- ENERGY PROBLEM GENERATION ----------
+function genEnergyProblem(){
+  const d = difficulty.energy;
+  if(d===1){
+    const h0 = rand(3,10);
+    return { kind:'speedAtBottom', h0 };
+  } else if(d===2){
+    const v0 = rand(4,9);
+    return { kind:'heightFromSpeed', v0 };
+  } else {
+    const h0 = rand(6,12);
+    const h2 = rand(1, h0-2);
+    return { kind:'speedAtHill', h0, h2 };
+  }
+}
+
+function solveEnergy(p){
+  if(p.kind==='speedAtBottom'){
+    return { v: rnd1(Math.sqrt(2*G*p.h0)) };
+  } else if(p.kind==='heightFromSpeed'){
+    return { h: rnd1((p.v0*p.v0)/(2*G)) };
+  } else {
+    return { v: rnd1(Math.sqrt(2*G*(p.h0-p.h2))) };
+  }
+}
+
+// ---------- PROBLEM SETUP / RENDER GIVEN + PREDICT INPUTS ----------
+function newProblem(forceNew){
+  phase = 'setup';
+  anim = null;
+  attempts_lock = false;
+  const store = storedProblems[mode];
+  if(!forceNew && store[difficulty[mode]]){
+    problem = store[difficulty[mode]];
+  } else if(mode==='momentum'){
+    problem = genMomentumProblem();
+    store[difficulty[mode]] = problem;
+  } else {
+    problem = genEnergyProblem();
+    store[difficulty[mode]] = problem;
+  }
+  if(mode==='momentum'){
+    renderMomentumGiven();
+    renderMomentumPredict();
+    legend.innerHTML = '<span class="a">object A</span><span class="b">object B</span>';
+  } else {
+    renderEnergyGiven();
+    renderEnergyPredict();
+    legend.innerHTML = '<span class="pe">PE</span><span class="ke">KE</span>';
+  }
+  feedback.className = 'feedback neutral';
+  feedback.textContent = 'Set your prediction, then hit Check & Run.';
+  checkBtn.disabled = false;
+  hintBox.classList.remove('show');
+  hintBox.innerHTML = '';
+  drawStatic();
+}
+
+let attempts_lock = false;
+
+function renderMomentumGiven(){
+  if(problem.type==='elastic2d'){
+    const {m1,v0,theta1} = problem;
+    givenBox.innerHTML = `
+      <div class="given-row"><span class="a">m₁ = m₂ = ${m1} kg</span><span class="neutral">equal mass</span></div>
+      <div class="given-row"><span class="a">v₀ (A, before) = ${v0} m/s</span><span class="b">B at rest</span></div>
+      <div class="given-row"><span class="neutral">θ₁ (A's angle after) = ${theta1}°</span></div>
+      <div class="given-row"><span class="neutral">collision:</span><span class="neutral">elastic, top-down 2D</span></div>
+    `;
+    return;
+  }
+  const {m1,m2,v1,v2,type} = problem;
+  givenBox.innerHTML = `
+    <div class="given-row"><span class="a">m₁ = ${m1} kg</span><span class="a">v₁ = ${v1} m/s</span></div>
+    <div class="given-row"><span class="b">m₂ = ${m2} kg</span><span class="b">v₂ = ${v2} m/s</span></div>
+    <div class="given-row"><span class="neutral">collision:</span><span class="neutral">${type==='elastic'?'elastic':'perfectly inelastic'}</span></div>
+  `;
+}
+function renderMomentumPredict(){
+  if(problem.type==='elastic2d'){
+    predictBox.innerHTML = `
+      <div class="predict-row"><label>v₁' (m/s)</label><input type="number" step="0.1" id="p1"></div>
+      <div class="predict-row"><label>v₂' (m/s)</label><input type="number" step="0.1" id="p2"></div>
+      <div class="predict-row"><label>θ₂ (°)</label><input type="number" step="0.1" id="p3"></div>
+    `;
+  } else if(problem.type==='elastic'){
+    predictBox.innerHTML = `
+      <div class="predict-row"><label>v₁' (m/s)</label><input type="number" step="0.1" id="p1"></div>
+      <div class="predict-row"><label>v₂' (m/s)</label><input type="number" step="0.1" id="p2"></div>
+    `;
+  } else {
+    predictBox.innerHTML = `
+      <div class="predict-row"><label>v' (m/s)</label><input type="number" step="0.1" id="p1"></div>
+    `;
+  }
+}
+function renderEnergyGiven(){
+  if(problem.kind==='speedAtBottom'){
+    givenBox.innerHTML = `<div class="given-row"><span class="neutral">start height h₀ = ${problem.h0} m</span></div>
+      <div class="given-row"><span class="neutral">frictionless ramp</span></div>`;
+  } else if(problem.kind==='heightFromSpeed'){
+    givenBox.innerHTML = `<div class="given-row"><span class="neutral">launch speed v₀ = ${problem.v0} m/s</span></div>
+      <div class="given-row"><span class="neutral">frictionless ramp</span></div>`;
+  } else {
+    givenBox.innerHTML = `<div class="given-row"><span class="neutral">start height h₀ = ${problem.h0} m</span></div>
+      <div class="given-row"><span class="neutral">second hill h₂ = ${problem.h2} m</span></div>`;
+  }
+}
+function renderEnergyPredict(){
+  if(problem.kind==='heightFromSpeed'){
+    predictBox.innerHTML = `<div class="predict-row"><label>max h (m)</label><input type="number" step="0.1" id="p1"></div>`;
+  } else {
+    predictBox.innerHTML = `<div class="predict-row"><label>speed (m/s)</label><input type="number" step="0.1" id="p1"></div>`;
+  }
+}
+
+// ---------- HINT ----------
+const hintBox = document.getElementById('hintBox');
+const hintBtn = document.getElementById('hintBtn');
+
+function buildHint(){
+  if(mode==='momentum'){
+    if(problem.type==='elastic2d'){
+      const {m1,v0,theta1} = problem;
+      return `
+        <div class="formula">Equal-mass elastic collision, target at rest — a classic result: the two paths end up perpendicular (θ₁+θ₂=90°):</div>
+        v₁' = v₀ cos θ₁<br>
+        v₂' = v₀ sin θ₁<br>
+        θ₂ = 90° − θ₁<br><br>
+        <div class="formula">Plugged in:</div>
+        v₁' = ${v0} × cos(${theta1}°)<br>
+        v₂' = ${v0} × sin(${theta1}°)<br>
+        θ₂ = 90° − ${theta1}°
+      `;
+    }
+    const {m1,m2,v1,v2,type} = problem;
+    if(type==='elastic'){
+      return `
+        <div class="formula">Elastic collision — both quantities are conserved:</div>
+        Momentum: m₁v₁ + m₂v₂ = m₁v₁' + m₂v₂'<br>
+        KE: ½m₁v₁² + ½m₂v₂² = ½m₁v₁'² + ½m₂v₂'²<br><br>
+        <div class="formula">Plugged in:</div>
+        (${m1})(${v1}) + (${m2})(${v2}) = (${m1})v₁' + (${m2})v₂'<br>
+        ½(${m1})(${v1})² + ½(${m2})(${v2})² = ½(${m1})v₁'² + ½(${m2})v₂'²<br><br>
+        <div class="formula">Overall formula (solving that system):</div>
+        v₁' = [(m₁−m₂)v₁ + 2m₂v₂] / (m₁+m₂)<br>
+        v₂' = [(m₂−m₁)v₂ + 2m₁v₁] / (m₁+m₂)<br><br>
+        <div class="formula">Plugged in:</div>
+        v₁' = [(${m1}−${m2})(${v1}) + 2(${m2})(${v2})] / (${m1}+${m2})<br>
+        v₂' = [(${m2}−${m1})(${v2}) + 2(${m1})(${v1})] / (${m1}+${m2})
+      `;
+    } else {
+      return `
+        <div class="formula">Perfectly inelastic — objects stick together, only momentum is conserved:</div>
+        Momentum: m₁v₁ + m₂v₂ = (m₁+m₂)v'<br><br>
+        <div class="formula">Plugged in:</div>
+        (${m1})(${v1}) + (${m2})(${v2}) = (${m1}+${m2})v'<br><br>
+        <div class="formula">Overall formula (solving for v'):</div>
+        v' = (m₁v₁ + m₂v₂) / (m₁+m₂)<br><br>
+        <div class="formula">Plugged in:</div>
+        v' = (${m1}×${v1} + ${m2}×${v2}) / (${m1}+${m2})
+      `;
+    }
+  } else {
+    if(problem.kind==='speedAtBottom'){
+      return `
+        <div class="formula">Energy conservation: PE at top → KE at bottom (m cancels):</div>
+        v = √(2 g h₀)<br><br>
+        <div class="formula">Plugged in:</div>
+        v = √(2 × 9.8 × ${problem.h0})
+      `;
+    } else if(problem.kind==='heightFromSpeed'){
+      return `
+        <div class="formula">Energy conservation: KE at launch → PE at peak (m cancels):</div>
+        h = v₀² / (2g)<br><br>
+        <div class="formula">Plugged in:</div>
+        h = ${problem.v0}² / (2 × 9.8)
+      `;
+    } else {
+      return `
+        <div class="formula">Energy conservation between start height and second hill:</div>
+        v = √(2 g (h₀ − h₂))<br><br>
+        <div class="formula">Plugged in:</div>
+        v = √(2 × 9.8 × (${problem.h0} − ${problem.h2}))
+      `;
+    }
+  }
+}
+
+hintBtn.addEventListener('click', ()=>{
+  hintBox.innerHTML = buildHint();
+  hintBox.classList.toggle('show');
+});
+
+// ---------- CHECK BUTTON ----------
+checkBtn.addEventListener('click', ()=>{
+  if(phase!=='setup' || attempts_lock) return;
+  attempts_lock = true;
+  attempts++;
+  let correct = false, msg = '';
+  if(mode==='momentum'){
+    const sol = solveMomentum(problem);
+    const p1 = parseFloat(document.getElementById('p1').value);
+    if(problem.type==='elastic2d'){
+      const p2 = parseFloat(document.getElementById('p2').value);
+      const p3 = parseFloat(document.getElementById('p3').value);
+      const ok1 = Math.abs(p1 - sol.v1f) <= 0.3;
+      const ok2 = Math.abs(p2 - sol.v2f) <= 0.3;
+      const ok3 = Math.abs(p3 - sol.theta2) <= 3;
+      correct = ok1 && ok2 && ok3;
+      msg = correct ? `Nailed it — v₁' = ${sol.v1f} m/s, v₂' = ${sol.v2f} m/s, θ₂ = ${sol.theta2}°.`
+                    : `Not quite. Actual: v₁' = ${sol.v1f} m/s, v₂' = ${sol.v2f} m/s, θ₂ = ${sol.theta2}°.`;
+    } else if(problem.type==='elastic'){
+      const p2 = parseFloat(document.getElementById('p2').value);
+      const ok1 = Math.abs(p1 - sol.v1f) <= 0.3;
+      const ok2 = Math.abs(p2 - sol.v2f) <= 0.3;
+      correct = ok1 && ok2;
+      msg = correct ? `Nailed it — v₁' = ${sol.v1f}, v₂' = ${sol.v2f} m/s.`
+                    : `Not quite. Actual: v₁' = ${sol.v1f} m/s, v₂' = ${sol.v2f} m/s.`;
+    } else {
+      correct = Math.abs(p1 - sol.vf) <= 0.3;
+      msg = correct ? `Nailed it — combined v' = ${sol.vf} m/s.`
+                    : `Not quite. Actual combined v' = ${sol.vf} m/s.`;
+    }
+    startMomentumAnim(sol);
+  } else {
+    const sol = solveEnergy(problem);
+    const p1 = parseFloat(document.getElementById('p1').value);
+    if(problem.kind==='heightFromSpeed'){
+      correct = Math.abs(p1 - sol.h) <= 0.3;
+      msg = correct ? `Nailed it — max height = ${sol.h} m.` : `Not quite. Actual max height = ${sol.h} m.`;
+    } else {
+      correct = Math.abs(p1 - sol.v) <= 0.3;
+      msg = correct ? `Nailed it — speed = ${sol.v} m/s.` : `Not quite. Actual speed = ${sol.v} m/s.`;
+    }
+    startEnergyAnim(sol);
+  }
+  if(correct) score++;
+  scoreBadge.textContent = `${score} / ${attempts} correct`;
+  feedback.className = 'feedback ' + (correct?'correct':'wrong');
+  feedback.textContent = msg;
+  checkBtn.disabled = true;
+  if(!correct){
+    hintBox.innerHTML = '<div class="formula">Why:</div>' + buildHint();
+    hintBox.classList.add('show');
+  }
+});
+newBtn.addEventListener('click', ()=>newProblem(true));
+
+// ---------- CANVAS DRAWING ----------
+const W = 600, H = 340;
+
+// ---- impact particles / screen shake ----
+let particles = [];
+function spawnBurst(x, y, color){
+  for(let i=0;i<14;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = 1 + Math.random()*3.2;
+    particles.push({x, y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed, life:1, color});
+  }
+}
+function updateAndDrawParticles(){
+  if(!particles.length) return;
+  particles.forEach(p=>{ p.x += p.vx; p.y += p.vy; p.vx *= 0.94; p.vy *= 0.94; p.life -= 0.045; });
+  particles = particles.filter(p=>p.life>0);
+  particles.forEach(p=>{
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+function impactBurst(x, y, colorA, colorB){
+  spawnBurst(x, y, colorA || '#2B5FAD');
+  spawnBurst(x, y, colorB || '#C0392B');
+  canvas.classList.remove('shake');
+  void canvas.offsetWidth; // restart animation
+  canvas.classList.add('shake');
+}
+
+function drawStatic(){
+  ctx.clearRect(0,0,W,H);
+  particles = [];
+  if(mode==='momentum'){
+    if(problem.type==='elastic2d') drawMomentum2DFrame({ax:60, ay:175, bx:W/2, by:175, stage:'approach'});
+    else drawMomentumFrame(problem.m1, problem.v1, problem.m2, problem.v2, 0);
+  } else drawEnergyFrame(0);
+}
+
+// ---- Momentum drawing ----
+function drawMomentumFrame(m1, v1, m2, v2, t, mergedInfo){
+  ctx.clearRect(0,0,W,H);
+  const trackY = 220;
+  ctx.strokeStyle = '#8a8f86';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(30, trackY); ctx.lineTo(W-30, trackY); ctx.stroke();
+
+  const scale = 22; // px per meter for size
+  const w1 = 30 + Math.sqrt(m1)*8;
+  const w2 = 30 + Math.sqrt(m2)*8;
+
+  let x1, x2, merged=false;
+  if(mergedInfo && mergedInfo.merged){
+    x1 = mergedInfo.x; x2 = mergedInfo.x + w1 + 4;
+    merged = true;
+  } else {
+    x1 = mergedInfo ? mergedInfo.x1 : W*0.32;
+    x2 = mergedInfo ? mergedInfo.x2 : W*0.62;
+  }
+
+  // draw block A
+  ctx.fillStyle = 'rgba(43,95,173,0.15)';
+  ctx.strokeStyle = 'var(--marker-blue)';
+  ctx.strokeStyle = '#2B5FAD';
+  ctx.lineWidth = 2.5;
+  roundRect(x1-w1/2, trackY-34, w1, 34, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#2B5FAD';
+  ctx.font = '600 12px JetBrains Mono';
+  ctx.textAlign='center';
+  ctx.fillText('A', x1, trackY-14);
+
+  // draw block B
+  ctx.fillStyle = 'rgba(192,57,43,0.15)';
+  ctx.strokeStyle = '#C0392B';
+  roundRect(x2-w2/2, trackY-34, w2, 34, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#C0392B';
+  ctx.fillText('B', x2, trackY-14);
+
+  // velocity vectors (arrows above)
+  drawVectorArrow(x1, trackY-52, v1, '#2B5FAD');
+  if(!merged) drawVectorArrow(x2, trackY-52, v2, '#C0392B');
+
+  updateAndDrawParticles();
+  ctx.textAlign = 'left';
+
+  return {x1,x2,w1,w2,trackY};
+}
+
+function drawVectorArrow(cx, y, v, color){
+  if(Math.abs(v) < 0.05) return;
+  const len = Math.max(-40, Math.min(40, v*6));
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx+len, y); ctx.stroke();
+  const dir = len>=0?1:-1;
+  ctx.beginPath();
+  ctx.moveTo(cx+len, y);
+  ctx.lineTo(cx+len-8*dir, y-5);
+  ctx.lineTo(cx+len-8*dir, y+5);
+  ctx.closePath(); ctx.fill();
+}
+
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function startMomentumAnim(sol){
+  if(problem.type==='elastic2d'){ startMomentum2DAnim(sol); return; }
+  phase = 'running';
+  const {m1,v1,m2,v2,type} = problem;
+  const trackY = 220;
+  let x1 = W*0.32, x2 = W*0.62;
+  const meetX = (x1+x2)/2;
+  const closingSpeed = Math.max(0.3, (v1-v2));
+  const approachDuration = 900; // ms
+  const startTime = performance.now();
+  const postDuration = 1400;
+  let burstDone = false;
+
+  function step(now){
+    const t = now - startTime;
+    if(t < approachDuration){
+      const f = t/approachDuration;
+      const cx1 = x1 + (meetX-16 - x1)*f;
+      const cx2 = x2 + (meetX+16 - x2)*f;
+      drawMomentumFrame(m1,v1,m2,v2,t,{x1:cx1, x2:cx2});
+      anim = requestAnimationFrame(step);
+    } else {
+      if(!burstDone){ impactBurst(meetX, trackY-17); burstDone = true; }
+      const f = Math.min(1, (t-approachDuration)/postDuration);
+      if(type==='elastic'){
+        const cx1 = (meetX-16) + sol.v1f*6*f;
+        const cx2 = (meetX+16) + sol.v2f*6*f;
+        drawMomentumFrame(m1, f<1?v1:sol.v1f, m2, f<1?v2:sol.v2f, t, {x1:cx1, x2:cx2});
+        if(f<1){
+          drawFinalVelOverlay(sol);
+          anim = requestAnimationFrame(step);
+        } else {
+          finishMomentumAnim(sol);
+        }
+      } else {
+        const mx = meetX-16 + sol.vf*6*f;
+        drawMomentumFrame(m1+m2, sol.vf, 0, 0, t, {merged:true, x:mx});
+        if(f<1){ anim = requestAnimationFrame(step); }
+        else { finishMomentumAnim(sol); }
+      }
+    }
+  }
+  anim = requestAnimationFrame(step);
+}
+
+function drawFinalVelOverlay(){}
+
+function finishMomentumAnim(sol){
+  phase = 'result';
+  ctx.font = '600 13px JetBrains Mono';
+  ctx.fillStyle = '#20242B';
+  ctx.textAlign = 'center';
+  if(problem.type==='elastic'){
+    ctx.fillText(`v₁' = ${sol.v1f} m/s     v₂' = ${sol.v2f} m/s`, W/2, 300);
+  } else {
+    ctx.fillText(`v' (combined) = ${sol.vf} m/s`, W/2, 300);
+  }
+  ctx.textAlign = 'left';
+}
+
+// ---- 2D momentum drawing (top-down billiard scattering) ----
+function drawMomentum2DFrame(state){
+  const {ax, ay, bx, by, showAngles} = state;
+  ctx.clearRect(0,0,W,H);
+  const cx = W/2, cy = 175;
+
+  ctx.strokeStyle = '#d8ddd2'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(30, cy); ctx.lineTo(W-30, cy); ctx.stroke();
+
+  if(showAngles){
+    ctx.setLineDash([4,4]);
+    ctx.strokeStyle = '#aab0a5';
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ax, ay); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(bx, by); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  ctx.fillStyle = 'rgba(43,95,173,0.18)'; ctx.strokeStyle = '#2B5FAD'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(ax, ay, 14, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#2B5FAD'; ctx.font = '600 12px JetBrains Mono'; ctx.textAlign = 'center';
+  ctx.fillText('A', ax, ay+4);
+
+  ctx.fillStyle = 'rgba(192,57,43,0.18)'; ctx.strokeStyle = '#C0392B';
+  ctx.beginPath(); ctx.arc(bx, by, 14, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#C0392B'; ctx.fillText('B', bx, by+4);
+
+  updateAndDrawParticles();
+  ctx.textAlign = 'left';
+}
+
+function startMomentum2DAnim(sol){
+  phase = 'running';
+  const cx = W/2, cy = 175;
+  const startAx = 60;
+  const approachDuration = 900;
+  const postDuration = 1400;
+  const startTime = performance.now();
+  let burstDone = false;
+
+  function step(now){
+    const t = now - startTime;
+    if(t < approachDuration){
+      const f = t/approachDuration;
+      const ax = startAx + (cx-16 - startAx)*f;
+      drawMomentum2DFrame({ax, ay:cy, bx:cx, by:cy, stage:'approach'});
+      anim = requestAnimationFrame(step);
+    } else {
+      if(!burstDone){ impactBurst(cx, cy); burstDone = true; }
+      const f = Math.min(1, (t-approachDuration)/postDuration);
+      const theta1rad = problem.theta1*Math.PI/180;
+      const theta2rad = sol.theta2*Math.PI/180;
+      const speedScale = 5.5;
+      const ax = cx + Math.cos(theta1rad)*sol.v1f*speedScale*f;
+      const ay = cy - Math.sin(theta1rad)*sol.v1f*speedScale*f;
+      const bx = cx + Math.cos(theta2rad)*sol.v2f*speedScale*f;
+      const by = cy + Math.sin(theta2rad)*sol.v2f*speedScale*f;
+      drawMomentum2DFrame({ax, ay, bx, by, stage:'post', showAngles:true});
+      if(f < 1){ anim = requestAnimationFrame(step); }
+      else { finishMomentum2DAnim(sol); }
+    }
+  }
+  anim = requestAnimationFrame(step);
+}
+
+function finishMomentum2DAnim(sol){
+  phase = 'result';
+  ctx.font = '600 13px JetBrains Mono';
+  ctx.fillStyle = '#20242B';
+  ctx.textAlign = 'center';
+  ctx.fillText(`v₁' = ${sol.v1f} m/s   v₂' = ${sol.v2f} m/s   θ₂ = ${sol.theta2}°`, W/2, 300);
+  ctx.textAlign = 'left';
+}
+
+// ---- Energy drawing ----
+function rampHeight(x, h0, h2){
+  // x in [0,1]: 0 = start (h0), 0.5 = bottom (0), 1 = far hill top (h2)
+  if(x<=0.5){
+    const u = x/0.5;
+    return h0 * Math.cos(u*Math.PI/2)*Math.cos(u*Math.PI/2); // smooth h0->0
+  } else {
+    const u = (x-0.5)/0.5;
+    return h2 * (Math.sin(u*Math.PI/2)*Math.sin(u*Math.PI/2));
+  }
+}
+
+function drawEnergyFrame(ballX){
+  ctx.clearRect(0,0,W,H);
+  let h0, h2;
+  if(problem.kind==='speedAtBottom'){ h0 = problem.h0; h2 = 0; }
+  else if(problem.kind==='heightFromSpeed'){ h0 = (problem.v0*problem.v0)/(2*G); h2 = h0; }
+  else { h0 = problem.h0; h2 = problem.h2; }
+
+  const padX = 40, padTop = 30, padBottom = 40;
+  const trackW = W - padX*2;
+  const maxH = Math.max(h0, h2, 1);
+  const trackH = H - padTop - padBottom;
+
+  // draw ramp path
+  ctx.strokeStyle = '#8a8f86'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  for(let i=0;i<=100;i++){
+    const u = i/100;
+    const hx = rampHeight(u, h0, h2);
+    const px = padX + u*trackW;
+    const py = padTop + trackH - (hx/maxH)*trackH;
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  // ball
+  const u = ballX;
+  const hx = rampHeight(u, h0, h2);
+  const bx = padX + u*trackW;
+  const by = padTop + trackH - (hx/maxH)*trackH;
+  ctx.fillStyle = '#E08A2B';
+  ctx.beginPath(); ctx.arc(bx, by-10, 9, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#a5601a'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // energy bars
+  const totalE = h0; // proportional (mgh0), using h as proxy since m cancels
+  const curKE = Math.max(0, h0 - hx);
+  const barX = W-100, barW = 26, barTop = 30, barH = 140;
+  const peH = (hx/totalE)*barH;
+  const keH = (curKE/totalE)*barH;
+  ctx.fillStyle = '#2E8B57';
+  ctx.fillRect(barX, barTop + (barH-peH), barW, peH);
+  ctx.fillStyle = '#E08A2B';
+  ctx.fillRect(barX+barW+6, barTop + (barH-keH), barW, keH);
+  ctx.strokeStyle = '#20242B'; ctx.lineWidth=1.5;
+  ctx.strokeRect(barX, barTop, barW, barH);
+  ctx.strokeRect(barX+barW+6, barTop, barW, barH);
+  ctx.font = '600 11px JetBrains Mono'; ctx.fillStyle='#20242B'; ctx.textAlign='center';
+  ctx.fillText('PE', barX+barW/2, barTop+barH+16);
+  ctx.fillText('KE', barX+barW+6+barW/2, barTop+barH+16);
+
+  ctx.font = '600 12px JetBrains Mono'; ctx.textAlign='left'; ctx.fillStyle='#20242B';
+  ctx.fillText(`speed ≈ ${rnd1(Math.sqrt(2*G*curKE))} m/s`, padX, 24);
+  ctx.textAlign='left';
+}
+
+function startEnergyAnim(){
+  phase = 'running';
+  const duration = 1800;
+  const startTime = performance.now();
+  function step(now){
+    const t = (now-startTime)/duration;
+    const u = Math.min(1, t);
+    drawEnergyFrame(u);
+    if(u<1) anim = requestAnimationFrame(step);
+    else { phase='result'; }
+  }
+  anim = requestAnimationFrame(step);
+}
+
+// ---------- INIT ----------
+renderDiffRow();
+newProblem();
+</script>
+</body>
+</html>
