@@ -1543,6 +1543,7 @@ function checkVarTower(){
   }
   s.varianceAnswered = true;
   document.getElementById('vt-input').disabled = true;
+  document.getElementById('l7-next').style.display = 'inline-block';
 
   const maxIdx = s.sqDevs.indexOf(Math.max(...s.sqDevs));
   const idxPool = new Set([maxIdx]);
