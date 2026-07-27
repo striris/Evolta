@@ -182,6 +182,22 @@
   .dtable td.r,.dtable th.r{text-align:right}
   .up{color:var(--pos)}.down{color:var(--neg)}
 
+  /* bar charts (world chapter) */
+  .chart{margin:16px 0}
+  .c-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-faint);margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+  .c-head b{color:var(--navy);font-weight:500}
+  .c-key{display:inline-block;width:9px;height:9px;border-radius:2px;background:#0c86a0;vertical-align:-1px;margin-right:4px}
+  .c-key.hi{background:var(--flame)}
+  .crow{display:grid;grid-template-columns:150px 1fr;gap:0 12px;padding:6px;border-radius:8px;align-items:start}
+  .crow:hover{background:var(--panel2)}
+  .crow .cl{font-size:12.5px;font-weight:600;color:var(--navy);text-align:right;line-height:1.3;padding-top:1px}
+  .ctrack{display:flex;align-items:center;height:16px;border-left:2px solid var(--line2);padding-left:1px}
+  .cbar{height:13px;border-radius:0 4px 4px 0;background:#0c86a0}
+  .cbar.hi{background:var(--flame)}
+  .cval{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--txt);margin-left:8px;white-space:nowrap}
+  .cnote{font-size:11px;color:var(--txt-dim);margin-top:3px}
+  @media(max-width:560px){.crow{grid-template-columns:1fr}.crow .cl{text-align:left;margin-bottom:2px}}
+
   /* benchmark cards */
   .bmk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0}
   .bmk{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
@@ -190,8 +206,13 @@
   .bmk .desc{font-size:11.5px;color:var(--txt-dim);margin-top:5px}
 
   /* routes */
-  .routemap{background:#e9f2f7;border:1px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden}
+  .routemap{background:#e9f2f7;border:1px solid var(--line);border-radius:12px;margin:12px 0 8px;overflow:hidden}
   .routemap svg{display:block;width:100%;height:auto}
+  .routemap .route{fill:none;stroke-width:2.6;stroke-dasharray:9 6;stroke-linecap:round;animation:sail 26s linear infinite}
+  @keyframes sail{to{stroke-dashoffset:-300}}
+  .maplegend{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+  .maplegend .mchip{font-family:var(--mono);font-size:10.5px;color:var(--txt-dim);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:7px}
+  .maplegend .mline{display:inline-block;width:18px;height:0;border-top:3px dashed}
   .route-pick{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
   .route-pick .rbtn{flex:1;min-width:140px;background:var(--panel);border:1.5px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left;transition:.13s;font-family:var(--sans)}
   .route-pick .rbtn:hover{border-color:var(--teal)}
@@ -327,22 +348,43 @@
       <div class="bmk"><span class="px">2022–</span><div class="tag">The Great Rewiring</div><div class="desc">Russia invades Ukraine; Europe loses most of its pipeline gas and pivots to LNG almost overnight. TTF prints all-time records, US cargoes swing the balance, and the Atlantic and Pacific basins become one connected market.</div></div>
     </div>
 
-    <table class="dtable">
-      <tr><th>Top exporters (≈2024)</th><th class="r">mt / yr</th><th>What a trader remembers</th></tr>
-      <tr><td class="mono">🇺🇸 United States</td><td class="mono r">~87</td><td>Flexible FOB, HH-linked, destination-free — the cargoes that actually get traded.</td></tr>
-      <tr><td class="mono">🇦🇺 Australia</td><td class="mono r">~80</td><td>Point-to-point Pacific supply on long-term contracts; little spot flexibility.</td></tr>
-      <tr><td class="mono">🇶🇦 Qatar</td><td class="mono r">~78</td><td>Lowest-cost producer, own mega-fleet, expanding aggressively; prefers long-term oil-indexed deals.</td></tr>
-      <tr><td class="mono">🇷🇺 Russia</td><td class="mono r">~33</td><td>Yamal LNG (Arctic); sanctioned and discounted — politics is a price input.</td></tr>
-      <tr><td class="mono">🇲🇾 Malaysia</td><td class="mono r">~27</td><td>Legacy Pacific supplier, mostly contracted to North Asia.</td></tr>
-    </table>
-    <table class="dtable">
-      <tr><th>Top importers (≈2024)</th><th class="r">mt / yr</th><th>What a trader remembers</th></tr>
-      <tr><td class="mono">🇨🇳 China</td><td class="mono r">~79</td><td>The swing growth buyer — resells cargoes when domestic demand is soft, hoovers them up when it isn't.</td></tr>
-      <tr><td class="mono">🇯🇵 Japan</td><td class="mono r">~66</td><td>The original anchor buyer; nuclear restarts move its demand — and JKM.</td></tr>
-      <tr><td class="mono">🇰🇷 South Korea</td><td class="mono r">~46</td><td>KOGAS is one of the world's largest single buyers; heavy winter seasonality.</td></tr>
-      <tr><td class="mono">🇮🇳 India</td><td class="mono r">~26</td><td>Fiercely price-sensitive — disappears above ~$12–14/MMBtu, reappears below.</td></tr>
-      <tr><td class="mono">🇪🇺 Europe</td><td class="mono r">~100+</td><td>The <b>balancing market</b>: deep storage and regas capacity absorb whatever Asia doesn't want. Europe sets the floor for flexible cargoes.</td></tr>
-    </table>
+    <div class="chart" role="img" aria-label="Top LNG exporters, million tonnes per year, around 2024: United States 87, Australia 80, Qatar 78, Russia 33, Malaysia 27">
+      <div class="c-head"><b>Top exporters</b><span>mt / yr · ≈2024 · <span class="c-key hi"></span>where the tradable cargoes come from</span></div>
+      <div class="crow"><div class="cl">🇺🇸 United States</div><div>
+        <div class="ctrack"><div class="cbar hi" style="width:70%"></div><span class="cval">~87</span></div>
+        <div class="cnote">★ Flexible FOB, HH-linked, destination-free — the cargoes that actually get traded.</div></div></div>
+      <div class="crow"><div class="cl">🇦🇺 Australia</div><div>
+        <div class="ctrack"><div class="cbar" style="width:64%"></div><span class="cval">~80</span></div>
+        <div class="cnote">Point-to-point Pacific supply on long-term contracts; little spot flexibility.</div></div></div>
+      <div class="crow"><div class="cl">🇶🇦 Qatar</div><div>
+        <div class="ctrack"><div class="cbar" style="width:62%"></div><span class="cval">~78</span></div>
+        <div class="cnote">Lowest-cost producer, own mega-fleet, expanding aggressively; prefers long-term oil-indexed deals.</div></div></div>
+      <div class="crow"><div class="cl">🇷🇺 Russia</div><div>
+        <div class="ctrack"><div class="cbar" style="width:26%"></div><span class="cval">~33</span></div>
+        <div class="cnote">Yamal LNG (Arctic); sanctioned and discounted — politics is a price input.</div></div></div>
+      <div class="crow"><div class="cl">🇲🇾 Malaysia</div><div>
+        <div class="ctrack"><div class="cbar" style="width:22%"></div><span class="cval">~27</span></div>
+        <div class="cnote">Legacy Pacific supplier, mostly contracted to North Asia.</div></div></div>
+    </div>
+    <div class="chart" role="img" aria-label="Top LNG importers, million tonnes per year, around 2024: Europe over 100, China 79, Japan 66, South Korea 46, India 26">
+      <div class="c-head"><b>Top importers</b><span>mt / yr · ≈2024 · <span class="c-key hi"></span>the market that sets the floor</span></div>
+      <div class="crow"><div class="cl">🇪🇺 Europe</div><div>
+        <div class="ctrack"><div class="cbar hi" style="width:80%"></div><span class="cval">~100+</span></div>
+        <div class="cnote">★ The <b>balancing market</b>: deep storage and regas capacity absorb whatever Asia doesn't want — Europe sets the floor for flexible cargoes.</div></div></div>
+      <div class="crow"><div class="cl">🇨🇳 China</div><div>
+        <div class="ctrack"><div class="cbar" style="width:63%"></div><span class="cval">~79</span></div>
+        <div class="cnote">The swing growth buyer — resells cargoes when domestic demand is soft, hoovers them up when it isn't.</div></div></div>
+      <div class="crow"><div class="cl">🇯🇵 Japan</div><div>
+        <div class="ctrack"><div class="cbar" style="width:53%"></div><span class="cval">~66</span></div>
+        <div class="cnote">The original anchor buyer; nuclear restarts move its demand — and JKM.</div></div></div>
+      <div class="crow"><div class="cl">🇰🇷 South Korea</div><div>
+        <div class="ctrack"><div class="cbar" style="width:37%"></div><span class="cval">~46</span></div>
+        <div class="cnote">KOGAS is one of the world's largest single buyers; heavy winter seasonality.</div></div></div>
+      <div class="crow"><div class="cl">🇮🇳 India</div><div>
+        <div class="ctrack"><div class="cbar" style="width:21%"></div><span class="cval">~26</span></div>
+        <div class="cnote">Fiercely price-sensitive — disappears above ~$12–14/MMBtu, reappears below.</div></div></div>
+    </div>
+    <p class="dim" style="font-size:11px">Both charts share one scale, so exporter and importer bars compare directly. <span class="c-key hi"></span>Flame marks the two poles every flexible cargo trades between: US supply and the European floor.</p>
 
     <p><b>The mental model:</b> two basins, one arbitrage. Pacific demand (Japan, Korea, China) prices off <b>JKM</b>; the Atlantic prices off <b>TTF</b>. Flexible cargoes — mostly US FOB — flow to whichever pays more after freight. Winter cold, storage levels, nuclear restarts, canal queues and heatwaves all trade through that single JKM–TTF spread. Demand peaks in <b>Northern-Hemisphere winter</b>; shoulder seasons (spring/autumn) are when cargoes go looking for a home.</p>
 
@@ -441,25 +483,76 @@ If every destination is negative … you can cancel the cargo and just eat the f
       <div class="who">Mika</div>
       <p>A cargo is only worth what it's worth <i>somewhere</i>, and getting it somewhere costs a ship. You pay the charter by the day — including the empty ballast leg home — plus canal tolls, port costs, and the cargo that literally evaporates on the way. Boil-off: about 0.10% of the cargo per day.</p>
     </div></div>
+    <div class="factrow">
+      <div class="fact"><div class="v">~700</div><div class="k">LNG carriers worldwide</div></div>
+      <div class="fact"><div class="v">174,000 m³</div><div class="k">the modern workhorse ship</div></div>
+      <div class="fact"><div class="v">0.10%/day</div><div class="k">typical boil-off</div></div>
+      <div class="fact"><div class="v">$40k–300k+</div><div class="k">spot charter, $/day</div></div>
+    </div>
+    <p><b>Getting a ship.</b> Desks hire carriers two ways: a <b>spot (voyage) charter</b> for one trip, or a <b>time charter</b> for months or years at a fixed day-rate. Portfolio players keep a core time-chartered fleet and top up in the spot market — which is why spot rates explode every winter when everyone tops up at once. A ship fixed cheap in the summer is itself a trading position: when freight spikes, holding cheap shipping is as good as holding cargo.</p>
+    <p><b>Boil-off is fuel — and P&amp;L.</b> The ~0.10% of cargo that evaporates daily isn't purely lost: modern ships burn it as engine fuel instead of buying bunker oil. But every MMBtu that boils off is an MMBtu you can't sell at the destination, so long routes quietly shrink your cargo. Ships also keep a <b>heel</b> — a residual pool of LNG after discharge — to stay cold for the next loading; run the tanks warm and you pay for a "cool-down" cargo.</p>
     <div class="routemap">
-      <svg viewBox="0 0 760 300" role="img" aria-label="Routes from Sabine Pass to Tokyo">
-        <rect width="760" height="300" fill="#dcebf4"/>
-        <ellipse cx="120" cy="118" rx="95" ry="52" fill="#c3d9c9"/>
-        <ellipse cx="405" cy="95" rx="120" ry="58" fill="#c3d9c9"/>
-        <ellipse cx="418" cy="205" rx="46" ry="60" fill="#c3d9c9"/>
-        <ellipse cx="660" cy="112" rx="72" ry="55" fill="#c3d9c9"/>
-        <path d="M60 150 C 150 265, 480 275, 640 150" fill="none" stroke="#0f7d8c" stroke-width="3" stroke-dasharray="7 5"/>
-        <path d="M60 150 C 230 120, 330 140, 450 152 C 560 162, 610 140, 645 128" fill="none" stroke="#d9622b" stroke-width="3" stroke-dasharray="7 5"/>
-        <path d="M60 158 C 200 300, 470 305, 560 240 C 620 195, 640 160, 648 140" fill="none" stroke="#2c5a7c" stroke-width="3" stroke-dasharray="7 5"/>
-        <circle cx="60" cy="152" r="7" fill="#12354f"/>
-        <circle cx="648" cy="134" r="7" fill="#12354f"/>
-        <text x="30" y="140" font-size="13" font-family="monospace" fill="#12354f" font-weight="bold">Sabine Pass</text>
-        <text x="600" y="118" font-size="13" font-family="monospace" fill="#12354f" font-weight="bold">Tokyo</text>
-        <text x="300" y="150" font-size="12" font-family="monospace" fill="#d9622b">Panama · 9,200 nm</text>
-        <text x="250" y="245" font-size="12" font-family="monospace" fill="#0f7d8c">Suez · 14,100 nm</text>
-        <text x="330" y="292" font-size="12" font-family="monospace" fill="#2c5a7c">Cape of Good Hope · 15,700 nm</text>
+      <svg viewBox="0 0 900 380" role="img" aria-label="World map showing three routes from Sabine Pass to Tokyo: via Panama across the Pacific, via Suez, and via the Cape of Good Hope">
+        <defs>
+          <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#d3e7f3"/><stop offset="1" stop-color="#e3f0f8"/>
+          </linearGradient>
+        </defs>
+        <rect width="900" height="380" fill="url(#ocean)"/>
+        <g stroke="#ffffff" stroke-width="1" opacity=".35">
+          <line x1="90" y1="0" x2="90" y2="380"/><line x1="180" y1="0" x2="180" y2="380"/><line x1="270" y1="0" x2="270" y2="380"/><line x1="360" y1="0" x2="360" y2="380"/><line x1="450" y1="0" x2="450" y2="380"/><line x1="540" y1="0" x2="540" y2="380"/><line x1="630" y1="0" x2="630" y2="380"/><line x1="720" y1="0" x2="720" y2="380"/><line x1="810" y1="0" x2="810" y2="380"/>
+          <line x1="0" y1="63" x2="900" y2="63"/><line x1="0" y1="126" x2="900" y2="126"/><line x1="0" y1="189" x2="900" y2="189"/><line x1="0" y1="252" x2="900" y2="252"/><line x1="0" y1="315" x2="900" y2="315"/>
+        </g>
+        <g fill="#bcd6c4" stroke="#a6c6b1" stroke-width="1">
+          <path d="M75,35 L250,38 C268,60 262,92 240,105 C232,112 222,116 215,121 L200,128 C215,140 235,158 251,168 L246,172 C222,152 198,140 185,128 C150,115 110,90 90,60 C80,48 75,40 75,35 Z"/>
+          <path d="M258,178 C292,182 308,212 298,246 C288,286 272,314 258,320 C244,306 234,264 238,224 C242,198 248,182 258,178 Z"/>
+          <path d="M320,25 C345,18 370,25 372,42 C360,55 335,52 322,40 Z"/>
+          <path d="M470,30 C488,22 505,28 508,42 C498,52 480,50 470,40 Z"/>
+          <path d="M430,62 C455,48 492,50 512,62 C520,72 516,84 505,90 C488,98 468,96 455,92 C444,86 432,74 430,62 Z"/>
+          <path d="M438,108 C472,98 512,104 528,124 C540,148 532,186 518,222 C508,252 498,270 487,274 C472,268 456,232 448,192 C442,160 434,128 438,108 Z"/>
+          <path d="M535,110 C552,104 568,112 572,126 C566,140 552,146 540,138 C534,128 533,118 535,110 Z"/>
+          <path d="M520,58 C560,36 640,30 710,40 C760,48 805,62 818,80 C824,94 812,104 780,110 C760,120 748,134 732,142 C716,150 700,154 688,162 C676,172 660,186 648,178 C620,164 600,150 585,140 C565,128 545,118 536,106 C528,96 520,76 520,58 Z"/>
+          <path d="M596,138 C614,148 620,168 610,190 C600,182 590,160 590,146 C592,140 594,138 596,138 Z"/>
+          <ellipse cx="683" cy="209" rx="12" ry="5"/><ellipse cx="706" cy="214" rx="13" ry="5"/><ellipse cx="730" cy="210" rx="10" ry="4"/>
+          <path d="M792,82 C802,92 806,108 799,124 C792,130 788,120 787,104 C786,92 788,84 792,82 Z"/>
+          <path d="M700,242 C742,230 782,242 792,266 C786,292 748,302 718,293 C700,283 692,262 700,242 Z"/>
+          <ellipse cx="812" cy="300" rx="7" ry="12"/>
+        </g>
+        <path class="route" stroke="#d9622b" d="M215,121 C224,148 236,164 251,169 C210,178 120,166 2,150"/>
+        <path class="route" stroke="#d9622b" d="M898,148 C860,134 826,118 799,106"/>
+        <path class="route" stroke="#0c86a0" d="M215,121 C300,92 380,92 436,104 C470,112 505,108 531,119 C545,132 552,158 575,176 C605,196 660,198 709,188 C750,178 780,142 799,106"/>
+        <path class="route" stroke="#2c5a7c" d="M215,121 C260,190 380,265 490,272 C570,277 655,232 709,188 C750,177 782,140 799,106"/>
+        <g font-family="IBM Plex Mono,monospace">
+          <rect x="209" y="115" width="9" height="9" fill="#12354f"/>
+          <circle cx="799" cy="106" r="5.5" fill="#12354f"/>
+          <circle cx="251" cy="169" r="4.5" fill="#d9622b" stroke="#fff" stroke-width="1.5"/>
+          <circle cx="531" cy="119" r="4.5" fill="#0c86a0" stroke="#fff" stroke-width="1.5"/>
+          <circle cx="490" cy="272" r="4.5" fill="#2c5a7c" stroke="#fff" stroke-width="1.5"/>
+          <text x="150" y="108" font-size="13" fill="#12354f" font-weight="bold">Sabine Pass</text>
+          <text x="812" y="98" font-size="13" fill="#12354f" font-weight="bold">Tokyo</text>
+          <text x="262" y="163" font-size="11" fill="#b0491a">Panama</text>
+          <text x="543" y="112" font-size="11" fill="#08616f">Suez</text>
+          <text x="452" y="290" font-size="11" fill="#2c5a7c">Cape of Good Hope</text>
+          <text x="12" y="140" font-size="10.5" fill="#b0491a">← crosses the Pacific…</text>
+          <text x="893" y="168" font-size="10.5" fill="#b0491a" text-anchor="end">…and arrives from the east</text>
+          <text x="450" y="348" font-size="10" fill="#8ba0ae" text-anchor="middle">Same start, same finish — three oceans apart. The Panama route splits where it crosses the antimeridian.</text>
+        </g>
       </svg>
     </div>
+    <div class="maplegend">
+      <span class="mchip"><span class="mline" style="border-color:#d9622b"></span>Panama · 9,200 nm · ~20 days</span>
+      <span class="mchip"><span class="mline" style="border-color:#0c86a0"></span>Suez · 14,100 nm · ~31 days</span>
+      <span class="mchip"><span class="mline" style="border-color:#2c5a7c"></span>Cape · 15,700 nm · ~34 days</span>
+      <span class="mchip">⚓ ~19 knots laden · you pay the ballast leg home too</span>
+    </div>
+    <p><b>Freight is the arb's gatekeeper.</b> The JKM–TTF spread only pays if it's wider than the <i>difference</i> in freight between the two destinations. When charter rates spike, distant arbs slam shut first — the world literally gets bigger. That's why a freight view is a price view: every $10k/day on the charter is roughly $0.11/MMBtu on a 20-day route.</p>
+    <table class="dtable">
+      <tr><th style="width:170px">Iron rule of freight</th><th>Why it moves money</th></tr>
+      <tr><td class="mono">Round trip, always</td><td>The ship sails home empty (the <b>ballast leg</b>) and you pay for every day of it. Quoted "days" double before they hit your P&amp;L.</td></tr>
+      <tr><td class="mono">Anchor days = sea days</td><td>A ship queuing at Panama burns charter and boil-off with zero miles gained. Congestion reprices routes, not just schedules.</td></tr>
+      <tr><td class="mono">Boil-off is priced at destination</td><td>Cargo lost en route would have been sold at the delivered price — cost it at JKM, not at your cheap FOB basis.</td></tr>
+      <tr><td class="mono">Speed is a trade</td><td>Steaming faster burns more boil-off but catches a backwardated market before it fades; slow-steaming does the reverse. Laden speed is chosen by the curve, not the captain.</td></tr>
+    </table>
 
     <h2 style="margin-top:6px"><span class="dot"></span>Interactive · Voyage cost calculator</h2>
     <div class="route-pick" id="routePick"></div>
@@ -752,6 +845,7 @@ const STAGES=[
   {nm:'Regas',ico:'🔥',cost:'~$0.3–0.5/MMBtu',d:'<b>Regasification — back to gas.</b> Import terminals warm the liquid back into gas and send it into the grid. Terminal slots are booked capacity — having one is an option on the market behind it.'},
   {nm:'End user',ico:'🏭',cost:'pays the bill',d:'<b>The burner tip.</b> Power stations, factories, heating. Their willingness to pay — versus coal, renewables, nuclear restarts, the weather — ultimately sets JKM and TTF.'},
 ];
+let ch1Placed=[];
 (function initCh1(){
   const wrap=document.getElementById('chainNodes'),detail=document.getElementById('chainDetail');
   STAGES.forEach((s,i)=>{
@@ -765,7 +859,6 @@ const STAGES=[
   });
   buildCh1Game();
 })();
-let ch1Placed=[];
 function buildCh1Game(){
   const slots=document.getElementById('ch1Slots'),chips=document.getElementById('ch1Chips');
   slots.innerHTML='';chips.innerHTML='';ch1Placed=[];
