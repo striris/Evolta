@@ -12,7 +12,8 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+                         'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             background: #faf9f6;
             min-height: 100vh;
             display: flex;
@@ -37,6 +38,51 @@
             font-size: 24px;
             font-weight: 600;
             letter-spacing: -0.5px;
+        }
+
+        .top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            color: #999;
+            text-decoration: none;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            padding: 6px 12px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #2c2c2c;
+            border-color: #2c2c2c;
+            color: #fff;
+        }
+
+        .lang-toggle {
+            font-family: inherit;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+            color: #2c2c2c;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            padding: 6px 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-toggle:hover {
+            background: #2c2c2c;
+            border-color: #2c2c2c;
+            color: #fff;
         }
 
         .difficulty-screen, .game-screen, .results-screen {
@@ -332,25 +378,30 @@
 </head>
 <body>
     <div class="container">
-        <h1>⚡ Quick Math Challenge</h1>
+        <div class="top-row">
+            <a class="back-btn" href="index.html">&larr; Evolta</a>
+            <button class="lang-toggle" id="langToggle" type="button">中文</button>
+        </div>
+
+        <h1><span aria-hidden="true">⚡</span> <span data-i18n="doc_h1">Quick Math Challenge</span></h1>
 
         <!-- Difficulty Selection Screen -->
         <div class="difficulty-screen active">
-            <p style="text-align: center; color: #666; margin-bottom: 8px; font-size: 14px;">
+            <p style="text-align: center; color: #666; margin-bottom: 8px; font-size: 14px;" data-i18n="choose_difficulty">
                 Choose your difficulty level
             </p>
-            <p style="text-align: center; color: #aaa; margin-bottom: 24px; font-size: 12px;">
+            <p style="text-align: center; color: #aaa; margin-bottom: 24px; font-size: 12px;" data-i18n="intro_rule">
                 Land the jump by answering within 5% of the true value.
             </p>
             <div class="difficulty-buttons">
                 <button class="btn" onclick="startGame('easy')">
-                    Easy<br><small style="font-size: 13px; opacity: 0.6; font-weight: 400;">Single digit operations</small>
+                    <span data-i18n="diff_easy">Easy</span><br><small style="font-size: 13px; opacity: 0.6; font-weight: 400;" data-i18n="diff_easy_sub">Single digit operations</small>
                 </button>
                 <button class="btn" onclick="startGame('medium')">
-                    Medium<br><small style="font-size: 13px; opacity: 0.6; font-weight: 400;">Double digit operations</small>
+                    <span data-i18n="diff_medium">Medium</span><br><small style="font-size: 13px; opacity: 0.6; font-weight: 400;" data-i18n="diff_medium_sub">Double digit operations</small>
                 </button>
                 <button class="btn" onclick="startGame('hard')">
-                    Hard<br><small style="font-size: 13px; opacity: 0.6; font-weight: 400;">Advanced calculations</small>
+                    <span data-i18n="diff_hard">Hard</span><br><small style="font-size: 13px; opacity: 0.6; font-weight: 400;" data-i18n="diff_hard_sub">Advanced calculations</small>
                 </button>
             </div>
         </div>
@@ -363,30 +414,30 @@
 
             <div class="game-info">
                 <div class="info-item">
-                    <div class="info-label">Round</div>
+                    <div class="info-label" data-i18n="lbl_round">Round</div>
                     <div class="info-value" id="roundDisplay">1/10</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">Timer</div>
+                    <div class="info-label" data-i18n="lbl_timer">Timer</div>
                     <div class="info-value timer" id="timerDisplay">5</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">Landed</div>
+                    <div class="info-label" data-i18n="lbl_landed">Landed</div>
                     <div class="info-value" id="scoreDisplay">0</div>
                 </div>
             </div>
 
             <canvas class="stage" id="stage" width="360" height="200"></canvas>
-            <div class="stage-caption">Too low → falls short &nbsp;·&nbsp; too high → overshoots</div>
+            <div class="stage-caption" id="stageCaption">Too low → falls short &nbsp;·&nbsp; too high → overshoots</div>
 
             <div class="question" id="questionDisplay"></div>
-            <div class="tolerance-note">Land within <strong>5%</strong> of the true answer</div>
+            <div class="tolerance-note" id="toleranceNote">Land within <strong>5%</strong> of the true answer</div>
 
             <div id="feedbackArea"></div>
 
             <div class="input-group">
                 <input type="text" class="answer-input" id="answerInput"
-                       placeholder="Your answer" readonly>
+                       placeholder="Your answer" data-i18n-placeholder="input_ph" readonly>
             </div>
 
             <div class="numpad">
@@ -404,37 +455,171 @@
                 <button class="numpad-btn delete" onclick="deleteDigit()">⌫</button>
             </div>
 
-            <button class="btn btn-primary submit-btn" id="submitBtn" onclick="submitAnswer()">Jump</button>
+            <button class="btn btn-primary submit-btn" id="submitBtn" onclick="submitAnswer()" data-i18n="btn_jump">Jump</button>
         </div>
 
         <!-- Results Screen -->
         <div class="results-screen">
-            <h2 style="color: #2c2c2c; margin-bottom: 8px; font-size: 20px; font-weight: 600;">Game Complete</h2>
+            <h2 style="color: #2c2c2c; margin-bottom: 8px; font-size: 20px; font-weight: 600;" data-i18n="res_title">Game Complete</h2>
 
             <div class="score-display" id="finalScore">0</div>
-            <p style="color: #999; margin-bottom: 24px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Successful Landings</p>
+            <p style="color: #999; margin-bottom: 24px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="res_landings">Successful Landings</p>
 
             <div class="stats">
                 <div class="stat-row">
-                    <span class="stat-label">Landing Rate</span>
+                    <span class="stat-label" data-i18n="res_rate">Landing Rate</span>
                     <span class="stat-value" id="landingRate">0%</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Total Time</span>
+                    <span class="stat-label" data-i18n="res_time">Total Time</span>
                     <span class="stat-value" id="totalTime">0s</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Difficulty</span>
+                    <span class="stat-label" data-i18n="res_difficulty">Difficulty</span>
                     <span class="stat-value" id="difficultyDisplay">-</span>
                 </div>
             </div>
 
             <button class="btn btn-primary" style="width: 100%; margin-top: 20px;"
-                    onclick="resetGame()">Play Again</button>
+                    onclick="resetGame()" data-i18n="btn_again">Play Again</button>
         </div>
     </div>
 
     <script>
+        // ---------- i18n ----------
+        const I18N = {
+            en: {
+                doc_title:        'Quick Math Challenge',
+                doc_h1:           'Quick Math Challenge',
+                lang_other:       '中文',
+                lang_aria:        'Switch to Chinese',
+
+                choose_difficulty:'Choose your difficulty level',
+                intro_rule:       'Land the jump by answering within 5% of the true value.',
+                diff_easy:        'Easy',
+                diff_easy_sub:    'Single digit operations',
+                diff_medium:      'Medium',
+                diff_medium_sub:  'Double digit operations',
+                diff_hard:        'Hard',
+                diff_hard_sub:    'Advanced calculations',
+
+                lbl_round:        'Round',
+                lbl_timer:        'Timer',
+                lbl_landed:       'Landed',
+                stage_caption:    'Too low → falls short &nbsp;·&nbsp; too high → overshoots',
+                tolerance_note:   'Land within <strong>5%</strong> of the true answer',
+                input_ph:         'Your answer',
+                btn_jump:         'Jump',
+
+                time_prefix:      "Time's up • ",
+                fb_landed:        'Landed it • +1',
+                fb_short:         'Fell short',
+                fb_over:          'Overshot',
+                fb_miss:          (dir, pct) => `${dir} • off by ${pct}%`,
+                fb_timeup_none:   "Time's up • no answer entered",
+                det_answer:       (u, c) => `Your answer: ${u} • Correct: ${c}`,
+                det_needed:       (u, b) => `Your answer: ${u} • needed ${b}`,
+                det_correct:      (c, b) => `Correct: ${c} • needed ${b}`,
+
+                res_title:        'Game Complete',
+                res_landings:     'Successful Landings',
+                res_rate:         'Landing Rate',
+                res_time:         'Total Time',
+                res_difficulty:   'Difficulty',
+                btn_again:        'Play Again',
+                name_easy:        'Easy',
+                name_medium:      'Medium',
+                name_hard:        'Hard'
+            },
+
+            zh: {
+                doc_title:        '速算挑战',
+                doc_h1:           '速算挑战',
+                lang_other:       'EN',
+                lang_aria:        '切换到英文',
+
+                choose_difficulty:'选择难度',
+                intro_rule:       '答案落在真实值的 5% 以内，就能稳稳落地。',
+                diff_easy:        '简单',
+                diff_easy_sub:    '个位数运算',
+                diff_medium:      '中等',
+                diff_medium_sub:  '两位数运算',
+                diff_hard:        '困难',
+                diff_hard_sub:    '进阶运算',
+
+                lbl_round:        '回合',
+                lbl_timer:        '倒计时',
+                lbl_landed:       '着陆',
+                stage_caption:    '答小了 → 跳短 &nbsp;·&nbsp; 答大了 → 跳过头',
+                tolerance_note:   '落在真实答案的 <strong>5%</strong> 以内',
+                input_ph:         '你的答案',
+                btn_jump:         '起跳',
+
+                time_prefix:      '时间到 • ',
+                fb_landed:        '成功着陆 • +1',
+                fb_short:         '跳短了',
+                fb_over:          '跳过头了',
+                fb_miss:          (dir, pct) => `${dir} • 偏差 ${pct}%`,
+                fb_timeup_none:   '时间到 • 未作答',
+                det_answer:       (u, c) => `你的答案：${u} • 正确答案：${c}`,
+                det_needed:       (u, b) => `你的答案：${u} • 需落在 ${b}`,
+                det_correct:      (c, b) => `正确答案：${c} • 需落在 ${b}`,
+
+                res_title:        '游戏结束',
+                res_landings:     '成功着陆次数',
+                res_rate:         '着陆成功率',
+                res_time:         '总用时',
+                res_difficulty:   '难度',
+                btn_again:        '再玩一次',
+                name_easy:        '简单',
+                name_medium:      '中等',
+                name_hard:        '困难'
+            }
+        };
+
+        let LANG = (function () {
+            const q = new URLSearchParams(location.search).get('lang');
+            if (q && I18N[q]) return q;
+            let saved = null;
+            try { saved = localStorage.getItem('evolta_lang'); } catch (e) {}
+            return (saved && I18N[saved]) ? saved : 'en';
+        })();
+
+        function t(key, ...args) {
+            const v = I18N[LANG][key] !== undefined ? I18N[LANG][key] : I18N.en[key];
+            return typeof v === 'function' ? v(...args) : v;
+        }
+
+        function applyLang() {
+            document.documentElement.lang = LANG === 'zh' ? 'zh-CN' : 'en';
+            document.title = t('doc_title');
+
+            const toggle = document.getElementById('langToggle');
+            toggle.textContent = t('lang_other');
+            toggle.setAttribute('aria-label', t('lang_aria'));
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.textContent = t(el.dataset.i18n);
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                el.placeholder = t(el.dataset.i18nPlaceholder);
+            });
+
+            // These two carry markup, so they need innerHTML rather than text.
+            document.getElementById('stageCaption').innerHTML = t('stage_caption');
+            document.getElementById('toleranceNote').innerHTML = t('tolerance_note');
+
+            // A finished game is still on screen — keep its difficulty label current.
+            const diffEl = document.getElementById('difficultyDisplay');
+            if (diffEl && diffEl.textContent !== '-') diffEl.textContent = t('name_' + difficulty);
+        }
+
+        document.getElementById('langToggle').addEventListener('click', () => {
+            LANG = LANG === 'en' ? 'zh' : 'en';
+            try { localStorage.setItem('evolta_lang', LANG); } catch (e) {}
+            applyLang();
+        });
+
         // ---------- GAME STATE ----------
         const TOLERANCE = 0.05;   // 5% band — the width of the landing platform
 
@@ -873,23 +1058,23 @@
         // Shared by the Jump button and by the timer auto-submitting what's typed.
         function resolveJump(userAnswer, auto) {
             const err = relativeError(userAnswer);
-            const prefix = auto ? "Time's up • " : '';
+            const prefix = auto ? t('time_prefix') : '';
 
             playJump(err, (landed) => {
                 if (landed) {
                     score++;
                     document.getElementById('scoreDisplay').textContent = score;
                     showFeedback(
-                        `${prefix}Landed it • +1`,
+                        `${prefix}${t('fb_landed')}`,
                         'correct',
-                        `Your answer: ${userAnswer} • Correct: ${trim(currentAnswer)}`
+                        t('det_answer', userAnswer, trim(currentAnswer))
                     );
                 } else {
-                    const dir = err < 0 ? 'Fell short' : 'Overshot';
+                    const dir = t(err < 0 ? 'fb_short' : 'fb_over');
                     showFeedback(
-                        `${prefix}${dir} • off by ${(Math.abs(err) * 100).toFixed(1)}%`,
+                        `${prefix}${t('fb_miss', dir, (Math.abs(err) * 100).toFixed(1))}`,
                         'wrong',
-                        `Your answer: ${userAnswer} • needed ${bandText()}`
+                        t('det_needed', userAnswer, bandText())
                     );
                 }
                 advanceRound();
@@ -927,9 +1112,9 @@
             // Nothing entered at all: no push off the edge, straight into the pit.
             playJump(-3 * TOLERANCE, () => {
                 showFeedback(
-                    "Time's up • no answer entered",
+                    t('fb_timeup_none'),
                     'wrong',
-                    `Correct: ${trim(currentAnswer)} • needed ${bandText()}`
+                    t('det_correct', trim(currentAnswer), bandText())
                 );
                 advanceRound();
             });
@@ -959,14 +1144,16 @@
             document.getElementById('landingRate').textContent =
                 Math.round((score / totalRounds) * 100) + '%';
             document.getElementById('totalTime').textContent = totalGameTime + 's';
-            document.getElementById('difficultyDisplay').textContent =
-                difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+            document.getElementById('difficultyDisplay').textContent = t('name_' + difficulty);
         }
 
         function resetGame() {
             document.querySelector('.results-screen').classList.remove('active');
             document.querySelector('.difficulty-screen').classList.add('active');
         }
+
+        // ---------- INIT ----------
+        applyLang();
     </script>
 </body>
 </html>

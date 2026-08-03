@@ -199,6 +199,7 @@
         }
 
         .product-card {
+            position: relative;
             padding: 50px 40px;
             border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 2px;
@@ -210,6 +211,27 @@
             transform: translateY(-4px);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
             border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .lang-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 10px;
+            letter-spacing: 1px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: #fff;
+            color: #1a1a1a;
+            white-space: nowrap;
+        }
+
+        /* English-only sits back; bilingual is the thing worth spotting */
+        .lang-badge.en-only {
+            color: #aaa;
+            background: transparent;
         }
 
         .product-icon {
@@ -712,6 +734,7 @@
             <div class="products-grid">
                 <!-- Mathematics -->
                 <div class="product-card">
+                    <span class="lang-badge">EN / 中文</span>
                     <div class="product-icon">∑</div>
                     <h3 class="product-title" data-i18n="prod_math_title">Mathematics</h3>
                     <ul class="product-features">
@@ -725,32 +748,33 @@
 
                 <!-- Philosophy -->
                 <div class="product-card">
+                    <span class="lang-badge">EN / 中文</span>
                     <div class="product-icon">φ</div>
                     <h3 class="product-title" data-i18n="prod_aporia_title">Aporia</h3>
                     <ul class="product-features">
                         <li data-i18n="prod_aporia_f1">Philosophy personality quiz</li>
                         <li data-i18n="prod_aporia_f2">Discover your school of thought</li>
                         <li data-i18n="prod_aporia_f3">Match with great philosophers</li>
-                        <li data-i18n="prod_bilingual">Bilingual (EN / 中文)</li>
                     </ul>
                     <a class="coming-soon" href="Aporia.html" target="_blank" rel="noopener noreferrer" data-i18n="btn_try">Try It Out</a>
                 </div>
 
                 <!-- Atlas -->
                 <div class="product-card">
+                    <span class="lang-badge">EN / 中文</span>
                     <div class="product-icon">🌍</div>
                     <h3 class="product-title" data-i18n="prod_atlas_title">Atlas</h3>
                     <ul class="product-features">
                         <li data-i18n="prod_atlas_f1">Which global city suits you?</li>
                         <li data-i18n="prod_atlas_f2">10 questions, 16 cities</li>
                         <li data-i18n="prod_atlas_f3">Matched across 6 lifestyle dimensions</li>
-                        <li data-i18n="prod_bilingual">Bilingual (EN / 中文)</li>
                     </ul>
                     <a class="coming-soon" href="Atlas.html" target="_blank" rel="noopener noreferrer" data-i18n="btn_try">Try It Out</a>
                 </div>
 
                 <!-- FlipChess -->
                 <div class="product-card">
+                    <span class="lang-badge en-only">EN</span>
                     <div class="product-icon">⚑</div>
                     <h3 class="product-title" data-i18n="prod_reversi_title">Reversi</h3>
                     <ul class="product-features">
@@ -764,6 +788,7 @@
 
                 <!-- Trading -->
                 <div class="product-card">
+                    <span class="lang-badge">EN / 中文</span>
                     <div class="product-icon">⇄</div>
                     <h3 class="product-title" data-i18n="prod_trading_title">Trading</h3>
                     <ul class="product-features">
@@ -777,6 +802,7 @@
 
                 <!-- Corporate Finance -->
                 <div class="product-card">
+                    <span class="lang-badge en-only">EN</span>
                     <div class="product-icon">🧮</div>
                     <h3 class="product-title" data-i18n="prod_ledger_title">The Ledger</h3>
                     <ul class="product-features">
@@ -790,6 +816,7 @@
 
                 <!-- LNG Academy -->
                 <div class="product-card">
+                    <span class="lang-badge en-only">EN</span>
                     <div class="product-icon">🚢</div>
                     <h3 class="product-title" data-i18n="prod_lng_title">LNG Academy</h3>
                     <ul class="product-features">
@@ -803,6 +830,7 @@
 
                 <!-- Physics -->
                 <div class="product-card">
+                    <span class="lang-badge">EN / 中文</span>
                     <div class="product-icon">⚛</div>
                     <h3 class="product-title" data-i18n="prod_collision_title">Collision</h3>
                     <ul class="product-features">
@@ -816,6 +844,7 @@
 
                 <!-- StatLab -->
                 <div class="product-card">
+                    <span class="lang-badge en-only">EN</span>
                     <div class="product-icon">σ</div>
                     <h3 class="product-title" data-i18n="prod_statlab_title">StatLab</h3>
                     <ul class="product-features">
@@ -971,7 +1000,6 @@
                 products_title:   'Free Products',
                 products_tagline: 'learning is a right, not a privilege',
                 btn_try:          'Try It Out',
-                prod_bilingual:   'Bilingual (EN / 中文)',
 
                 prod_math_title:  'Mathematics',
                 prod_math_f1:     'Math games',
@@ -1082,7 +1110,6 @@
                 products_title:   '免费产品',
                 products_tagline: '学习是权利，而非特权',
                 btn_try:          '立即体验',
-                prod_bilingual:   '中英双语',
 
                 prod_math_title:  '数学',
                 prod_math_f1:     '数学小游戏',
@@ -1221,6 +1248,14 @@
             // Two lines separated by a <br>, so it needs markup rather than text.
             document.getElementById('contactBlurb').innerHTML =
                 `${t('contact_blurb1')}<br>${t('contact_blurb2')}`;
+
+            // Stamp the choice onto every internal link, so a game opens in the
+            // language picked here even when localStorage is unavailable.
+            document.querySelectorAll('a[href$=".html"], a[href*=".html?"]').forEach(a => {
+                const href = a.getAttribute('href').split('?')[0];
+                if (!href.endsWith('.html')) return;
+                a.setAttribute('href', href + '?lang=' + LANG);
+            });
         }
 
         langToggle.addEventListener('click', () => {
