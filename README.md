@@ -8,6 +8,8 @@ Evolta is a static web project focused on interactive learning and game-style pa
 - `TradingGamePortal.html` — trading sandbox portal
 - `power-trading.html`, `sweet-spread.html`, `MarketMaking.html`, `HedgingGame.html` — trading-focused pages
 - `MathLab.html`, `Aporia.html`, `Atlas.html`, `FlipChess.html`, `Collision.html` — additional interactive concept/game pages
+- `StatLab.html` — descriptive statistics lab (AI Fundamentals, Topic 1)
+- `TimeSeriesLab.html` — AR / MA / ARMA / ARIMA econometrics lab (Econometrics, Topic 1)
 - `logo.png`, `favicon.png` — shared image assets
 
 ## Run locally
